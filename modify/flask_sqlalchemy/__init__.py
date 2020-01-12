@@ -99,8 +99,6 @@ class SQLAlchemy(_SQLAlchemy):
         Optional kwargs can be use for best query result.
         1. bind_key: str
            - Use if we have more than one database in one system.
-        2. stream_results: bool
-           - Use stream_results==True if we want result on stream mode.
         '''
 
         args = []
@@ -139,35 +137,43 @@ class SQLAlchemy(_SQLAlchemy):
             args.append(parameter)
 
         bind_key = kwargs.get('bind_key')
-        engine = self.get_engine(
-            *(
-                (current_app, bind_key)
-                if isinstance(bind_key, str)
-                else (current_app,)
-            )
-        )
-
-        if (
-            stream_results := kwargs.get('stream_results')
-        ):
-            engine = engine.execution_options(
-                stream_results=stream_results
-            )
-
-        session = self.create_session({'bind': engine})()
+        session = self.create_session({
+            'bind': self.get_engine(
+                *(
+                    (current_app, bind_key)
+                    if isinstance(bind_key, str)
+                    else (current_app,)
+                )
+            ).execution_options(stream_results=True)
+        })()
+        data = []
 
         try:
-            data = session.execute(
+            query_result = session.execute(
                 text(string).bindparams(*args, **_kwargs)
             )
+
+            # memory-efficient built-in SqlAlchemy iterator/generator:
+            # https://stackoverflow.com/questions/7389759/memory-efficient-built-in-sqlalchemy-iterator-generator
+            while True:
+                batch = query_result.fetchmany(100_000)
+
+                if not batch:
+                    break
+
+                data.extend(
+                    dict(
+                        column for column in row.items()
+                    ) for row in batch
+                )
+
+            query_result.close()
             session.commit()
         except Exception:
             session.rollback()
 
             if current_app.debug:
                 raise
-            else:
-                data = None
         finally:
             session.close()
 

@@ -58,4 +58,3 @@ flask-swagger-ui
 Flask-SQLAlchemy
 Flask-WTF
 gunicorn
-python-dotenv
