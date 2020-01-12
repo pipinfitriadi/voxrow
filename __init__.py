@@ -53,7 +53,11 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
+from datetime import date, datetime
 from pathlib import Path
+
+STRING_DATE_FORMAT = '%Y-%m-%d'
+STRING_DATETIME_FORMAT = f'{ STRING_DATE_FORMAT }T%H:%M:%S'
 
 
 def blueprint_name(file):
@@ -67,3 +71,19 @@ def blueprint_name(file):
         name = path.parent.resolve().stem
 
     return name
+
+
+def serialize(object):
+    '''
+    >>> from json import dumps
+    >>> dumps(object, default=serialize)
+    '''
+
+    # How to serialize a datetime object as JSON using Python?
+    # https://code-maven.com/serialize-datetime-object-as-json-in-python
+    if isinstance(object, datetime):
+        object = object.strftime(STRING_DATETIME_FORMAT)
+    elif isinstance(object, date):
+        object = object.strftime(STRING_DATE_FORMAT)
+
+    return object
