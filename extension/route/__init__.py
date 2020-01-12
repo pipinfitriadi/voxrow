@@ -53,55 +53,42 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-from flask import Blueprint
-from werkzeug.exceptions import default_exceptions, HTTPException
+from os.path import abspath, isfile, join
 
-from .. import blueprint_name
+from flask import (
+    Blueprint,
+    current_app,
+    send_from_directory
+)
+
+from ... import blueprint_name
 
 app = Blueprint(
-    (
-        app_name := blueprint_name(__file__)
-    ),
-    __name__
+    blueprint_name(__file__),
+    __name__,
 )
 
 
-@app.app_errorhandler(HTTPException)
-def default_error(error):
-    '''
-    >>> from flask import abort
-    >>> # Cara penggunaan abort ke-1
-    >>> abort(400)
-    >>> # Cara penggunaan abort ke-2
-    >>> abort(400, 'Ini error.')
-    >>> # Cara penggunaan abort ke-3
-    >>> abort(
-    ...  400,
-    ...  {
-    ...   'paremeter': {'name': 'name harus diisi'},
-    ...   'description': 'Ini error.'
-    ...  }
-    ... )
-    '''
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(
+        join('static', 'img'),
+        'favicon.svg',
+        mimetype='image/svg+xml'
+    )
 
-    # Google JSON guide:
-    # https://stackoverflow.com/questions/12806386/standard-json-api-response-format
-    # HTTP status code for “could not fulfill request for *known* reason”:
-    # https://stackoverflow.com/questions/33815690/http-status-code-for-could-not-fulfill-request-for-known-reason
-    # Flask - How to create custom abort() code?
-    # https://stackoverflow.com/questions/12285903/flask-how-to-create-custom-abort-code
-    if isinstance(data := error.description, dict):
-        parameter = data.get('parameter', {})
-        message = data.get('description', None)
 
-        if not message:
-            message = default_exceptions[error.code].description
-    else:
-        parameter = {}
-        message = error.description
+@app.route('/LICENSE')
+def license():
+    if not isfile(
+        join(license_dir := current_app.root_path, 'LICENSE')
+    ):
+        license_dir = abspath(
+            join(app.root_path, '..', '..')
+        )
 
-    return {
-        'error_message': message,
-        'error_name': error.name,
-        'error_parameter': parameter
-    }, error.code
+    return send_from_directory(
+        license_dir,
+        'LICENSE',
+        mimetype='text/plain'
+    )
