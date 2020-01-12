@@ -54,7 +54,5 @@
 flake8
 flask
 flask-jwt-extended
-flask-swagger-ui
 Flask-SQLAlchemy
 Flask-WTF
-gunicorn
