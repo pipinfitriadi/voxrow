@@ -54,6 +54,7 @@
 # and non-infringement.
 
 from datetime import date, datetime
+from json import dumps
 
 from flask import current_app
 from flask_sqlalchemy import BaseQuery, SQLAlchemy as _SQLAlchemy
@@ -70,6 +71,7 @@ from sqlalchemy.types import (
 )
 
 from .model import Model
+from ... import serialize
 
 
 class SQLAlchemy(_SQLAlchemy):
@@ -94,11 +96,13 @@ class SQLAlchemy(_SQLAlchemy):
         )
         self.Model.db = self
 
-    def query(self, string, **kwargs):
+    def __query(self, string, **kwargs):
         '''
         Optional kwargs can be use for best query result.
         1. bind_key: str
-           - Use if we have more than one database in one system.
+           - Use it if we have more than one database in one system.
+        2. json_mode: bool
+           - Use json_mode=True if we want result as string dumps json.
         '''
 
         args = []
@@ -108,7 +112,7 @@ class SQLAlchemy(_SQLAlchemy):
                 filter(
                     lambda kwarg: kwarg[0] not in [
                         'bind_key',
-                        'stream_results'
+                        'json_mode'
                     ],
                     kwargs.items()
                 )
@@ -146,26 +150,54 @@ class SQLAlchemy(_SQLAlchemy):
                 )
             ).execution_options(stream_results=True)
         })()
-        data = []
 
         try:
             query_result = session.execute(
                 text(string).bindparams(*args, **_kwargs)
             )
 
-            # memory-efficient built-in SqlAlchemy iterator/generator:
+            # memory-efficient built-in SqlAlchemy iterator /
+            # generator:
             # https://stackoverflow.com/questions/7389759/memory-efficient-built-in-sqlalchemy-iterator-generator
+            # Python: Using Flask to stream chunked dynamic content to end
+            # users
+            # https://fabianlee.org/2019/11/18/python-using-flask-to-stream-chunked-dynamic-content-to-end-users/
+            # Streaming Contents
+            # https://flask.palletsprojects.com/en/1.1.x/patterns/streaming/#basic-usage
+            # Streaming JSON with Flask
+            # https://blog.al4.co.nz/2016/01/streaming-json-with-flask/
+            # How to serialize a datetime object as JSON using Python?
+            # https://code-maven.com/serialize-datetime-object-as-json-in-python
+            if (json_mode := kwargs.get('json_mode') is True):
+                yield '['
+
             while True:
                 batch = query_result.fetchmany(100_000)
 
                 if not batch:
                     break
 
-                data.extend(
-                    dict(
+                rows = batch.__iter__()
+                prev_row = next(rows)
+
+                def to_result(row, json_mode=False):
+                    data = dict(
                         column for column in row.items()
-                    ) for row in batch
-                )
+                    )
+                    return (
+                        dumps(data, default=serialize)
+                        if json_mode else data
+                    )
+
+                for row in rows:
+                    result = to_result(prev_row, json_mode)
+                    prev_row = row
+                    yield result + ', ' if json_mode else result
+
+                yield to_result(prev_row, json_mode)
+
+            if json_mode:
+                yield ']'
 
             query_result.close()
             session.commit()
@@ -177,4 +209,27 @@ class SQLAlchemy(_SQLAlchemy):
         finally:
             session.close()
 
-        return data
+    def query(self, string, **kwargs):
+        '''
+        Optional kwargs can be use for best query result.
+        1. bind_key: str
+           - Use it if we have more than one database in one system.
+        2. json_mode: bool
+           - Use json_mode=True if we want result as string dumps json.
+        3. generator_mode: bool
+           - Use generator_mode=True if we want result as generator.
+        '''
+
+        # Issue with a python function returning a generator or a normal object
+        # https://stackoverflow.com/questions/25313283/issue-with-a-python-function-returning-a-generator-or-a-normal-object
+        generator_mode = kwargs.pop('generator_mode', None)
+        result = self.__query(string, **kwargs)
+
+        if not generator_mode:
+            result = (
+                ''.join(result)
+                if kwargs.get('json_mode') is True
+                else list(result)
+            )
+
+        return result
