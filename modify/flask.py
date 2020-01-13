@@ -70,14 +70,9 @@ from werkzeug.http import HTTP_STATUS_CODES
 from werkzeug.routing import RequestRedirect
 
 try:
-    from ... import config
-
-    config.TITLE
+    from ...config import TITLE
 except Exception:
-    class Config:
-        TITLE = 'VOXROW'
-
-    config = Config
+    TITLE = 'VOXROW'
 
 
 class Flask(_Flask):
@@ -172,7 +167,7 @@ class Flask(_Flask):
                         'code': status,
                         'message': (
                             f"{ f'{ str(message) } ' if message else '' }"
-                            f'To make { config.TITLE } works, please see the'
+                            f'To make { TITLE } works, please see the'
                             ' Doc in here:'
                             f' { url_for("doc.show", _external=True) }'
                         ),

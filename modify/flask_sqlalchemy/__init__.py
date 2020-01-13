@@ -54,7 +54,6 @@
 # and non-infringement.
 
 from datetime import date, datetime
-from json import dumps
 
 from flask import current_app
 from flask_sqlalchemy import BaseQuery, SQLAlchemy as _SQLAlchemy
@@ -71,7 +70,7 @@ from sqlalchemy.types import (
 )
 
 from .model import Model
-from ... import serialize
+from ... import to_json
 
 
 class SQLAlchemy(_SQLAlchemy):
@@ -166,8 +165,6 @@ class SQLAlchemy(_SQLAlchemy):
             # https://flask.palletsprojects.com/en/1.1.x/patterns/streaming/#basic-usage
             # Streaming JSON with Flask
             # https://blog.al4.co.nz/2016/01/streaming-json-with-flask/
-            # How to serialize a datetime object as JSON using Python?
-            # https://code-maven.com/serialize-datetime-object-as-json-in-python
             if (json_mode := kwargs.get('json_mode') is True):
                 yield '['
 
@@ -185,7 +182,7 @@ class SQLAlchemy(_SQLAlchemy):
                         column for column in row.items()
                     )
                     return (
-                        dumps(data, default=serialize)
+                        to_json(data)
                         if json_mode else data
                     )
 

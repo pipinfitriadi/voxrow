@@ -54,6 +54,7 @@
 # and non-infringement.
 
 from datetime import date, datetime
+from json import dumps
 from pathlib import Path
 
 STRING_DATE_FORMAT = '%Y-%m-%d'
@@ -87,3 +88,7 @@ def serialize(object):
         object = object.strftime(STRING_DATE_FORMAT)
 
     return object
+
+
+def to_json(object):
+    return dumps(object, default=serialize)
