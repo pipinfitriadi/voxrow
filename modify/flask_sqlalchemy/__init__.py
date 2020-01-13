@@ -175,23 +175,27 @@ class SQLAlchemy(_SQLAlchemy):
                     break
 
                 rows = batch.__iter__()
-                prev_row = next(rows)
 
-                def to_result(row, json_mode=False):
-                    data = dict(
-                        column for column in row.items()
-                    )
-                    return (
-                        to_json(data)
-                        if json_mode else data
-                    )
+                try:
+                    prev_row = next(rows)
 
-                for row in rows:
-                    result = to_result(prev_row, json_mode)
-                    prev_row = row
-                    yield result + ', ' if json_mode else result
+                    def to_result(row, json_mode=False):
+                        data = dict(
+                            column for column in row.items()
+                        )
+                        return (
+                            to_json(data)
+                            if json_mode else data
+                        )
 
-                yield to_result(prev_row, json_mode)
+                    for row in rows:
+                        result = to_result(prev_row, json_mode)
+                        prev_row = row
+                        yield result + ', ' if json_mode else result
+
+                    yield to_result(prev_row, json_mode)
+                except StopIteration:
+                    pass
 
             if json_mode:
                 yield ']'
