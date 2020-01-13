@@ -53,17 +53,31 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
+from types import GeneratorType
+
 from flask import (
     Flask as _Flask,
     jsonify,
     render_template,
+    Response,
     request,
+    stream_with_context,
     url_for
 )
 from werkzeug.datastructures import Headers
+from werkzeug.exceptions import default_exceptions
+from werkzeug.http import HTTP_STATUS_CODES
 from werkzeug.routing import RequestRedirect
 
-from ... import config
+try:
+    from ... import config
+
+    config.TITLE
+except Exception:
+    class Config:
+        TITLE = 'VOXROW'
+
+    config = Config
 
 
 class Flask(_Flask):
@@ -146,8 +160,10 @@ class Flask(_Flask):
                     name = rv.get('error_name')
                     parameter = rv.get('error_parameter')
                 else:
-                    message = rv
-                    name = None
+                    message = default_exceptions[status].description
+                    # Flask - How to create custom abort() code?
+                    # https://stackoverflow.com/questions/12285903/flask-how-to-create-custom-abort-code/38648607#38648607
+                    name = HTTP_STATUS_CODES[status]
                     parameter = {}
 
                 data = {
@@ -164,6 +180,15 @@ class Flask(_Flask):
                         'parameter': parameter if parameter else {}
                     }
                 }
+            elif isinstance(rv, GeneratorType):
+                # How to check if an object is a generator object in python
+                # https://stackoverflow.com/questions/6416538/how-to-check-if-an-object-is-a-generator-object-in-python
+                def generator(rv):
+                    yield '{"data": '
+                    yield from rv
+                    yield ', "error": null}'
+
+                data = generator(rv)
             else:
                 data = {
                     'data': rv,
@@ -178,6 +203,22 @@ class Flask(_Flask):
                 )
             ):
                 if (
+                    isinstance(rv, GeneratorType)
+                    and (
+                        status is None
+                        or (
+                            status
+                            and status < 400
+                        )
+                    )
+                ):
+                    # Python flask.stream_with_context() Examples
+                    # https://www.programcreek.com/python/example/58918/flask.stream_with_context
+                    rv = Response(
+                        stream_with_context(data),
+                        mimetype='application/json'
+                    )
+                elif (
                     template
                     and request.accept_mimetypes.best == template_mimetype
                 ):
