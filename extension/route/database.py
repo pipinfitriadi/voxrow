@@ -56,9 +56,11 @@
 from os.path import join
 
 from flask import Blueprint
+from sqlalchemy.schema import CreateSchema, DropSchema
 
 from ... import blueprint_name
 from ...extension.model import db, User
+from ...modify.flask_sqlalchemy import SCHEMA
 
 app = Blueprint(
     (
@@ -70,6 +72,16 @@ app = Blueprint(
 
 
 def database_setup():
+    with db.engine.connect() as conn:
+        # SQLAlchemy: “create schema if not exists”
+        # https://stackoverflow.com/questions/50927740/sqlalchemy-create-schema-if-not-exists
+        if not conn.dialect.has_schema(conn, SCHEMA):
+            # Getting SQLAlchemy to issue CREATE SCHEMA on create_all
+            # https://stackoverflow.com/questions/13677781/getting-sqlalchemy-to-issue-create-schema-on-create-all
+            db.engine.execute(
+                CreateSchema(SCHEMA)
+            )
+
     db.create_all()
 
     if not User.read():
@@ -97,3 +109,9 @@ def create_database():
 @app.cli.command('drop')
 def drop_database():
     db.drop_all()
+
+    with db.engine.connect() as conn:
+        if conn.dialect.has_schema(conn, SCHEMA):
+            db.engine.execute(
+                DropSchema(SCHEMA)
+            )
