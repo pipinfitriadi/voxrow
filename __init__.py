@@ -55,6 +55,7 @@
 
 from datetime import date, datetime
 from json import dumps
+from os import getenv
 from pathlib import Path
 
 STRING_DATE_FORMAT = '%Y-%m-%d'
@@ -92,3 +93,32 @@ def serialize(object):
 
 def to_json(object):
     return dumps(object, default=serialize)
+
+
+def postgres_uri(
+    db_host='localhost',
+    db_port=5432,
+    db_name='postgres',
+    db_user='',
+    db_pass=''
+):
+    return (
+        f'postgresql://{ db_user }:{ db_pass }@'
+        f'{ db_host }:{ db_port }/{ db_name }'
+    )
+
+
+def postgres_uri_from_env(
+    db_host_env='DB_HOST',
+    db_port_env='DB_PORT',
+    db_name_env='DB_NAME',
+    db_user_env='DB_USER',
+    db_pass_env='DB_PASS'
+):
+    return postgres_uri(
+        getenv(db_host_env, 'localhost'),
+        getenv(db_port_env, 5432),
+        getenv(db_name_env, 'postgres'),
+        getenv(db_user_env, ''),
+        getenv(db_pass_env, '')
+    )

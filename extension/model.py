@@ -69,6 +69,7 @@ from sqlalchemy.types import (
     String
 )
 
+from ..modify.flask_sqlalchemy import SCHEMA
 from ..modify.flask_sqlalchemy import SQLAlchemy
 from ..modify.flask_sqlalchemy.types import Password, Username
 
@@ -78,6 +79,22 @@ Model = db.Model
 
 
 class User(Model):
+    # Define minimum length for PostgreSQL string column with SQLAlchemy
+    # https://stackoverflow.com/questions/50174325/define-minimum-length-for-postgresql-string-column-with-sqlalchemy
+    __table_args__ = (
+        CheckConstraint(
+            'char_length(username) >= 5',
+            name='username_min_length'
+        ),
+        CheckConstraint(
+            'char_length(password) >= 8',
+            name='password_min_length'
+        ),
+        # Table Configuration
+        # https://docs.sqlalchemy.org/en/13/orm/extensions/declarative/table_config.html
+        {'schema': SCHEMA}
+    )
+
     id = Column(Integer, primary_key=True)
     is_admin = Column(
         Boolean,
@@ -104,19 +121,6 @@ class User(Model):
         # session; lazy load operation of attribute 'owner' cannot proceed
         # https://stackoverflow.com/questions/27701573/detachedinstanceerror-parent-instance-car-is-not-bound-to-a-session-lazy-lo
         lazy='subquery'
-    )
-
-    # Define minimum length for PostgreSQL string column with SQLAlchemy
-    # https://stackoverflow.com/questions/50174325/define-minimum-length-for-postgresql-string-column-with-sqlalchemy
-    __table_args__ = (
-        CheckConstraint(
-            'char_length(username) >= 5',
-            name='username_min_length'
-        ),
-        CheckConstraint(
-            'char_length(password) >= 8',
-            name='password_min_length'
-        ),
     )
 
     @validates('username')
@@ -154,12 +158,16 @@ class User(Model):
 
 
 class Token(Model):
+    __table_args__ = {'schema': SCHEMA}
+
     # Blacklist with a database
     # https://github.com/vimalloc/flask-jwt-extended/tree/master/examples/database_blacklist
     id = Column(Integer, primary_key=True)
     user_id = Column(
         Integer,
-        ForeignKey('user.id'),
+        # specifying schema name in model gives error
+        # https://github.com/pallets/flask-sqlalchemy/issues/172
+        ForeignKey(f'{ SCHEMA }.user.id'),
         nullable=False
     )
     jti = Column(String(36), nullable=False)

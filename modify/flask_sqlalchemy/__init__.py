@@ -72,6 +72,11 @@ from sqlalchemy.types import (
 from .model import Model
 from ... import to_json
 
+try:
+    from ....config import SCHEMA
+except Exception:
+    SCHEMA = 'VOXROW'
+
 
 class SQLAlchemy(_SQLAlchemy):
     def __init__(
