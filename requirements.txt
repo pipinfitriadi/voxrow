@@ -56,3 +56,4 @@ flask
 flask-jwt-extended
 Flask-SQLAlchemy
 Flask-WTF
+sshtunnel

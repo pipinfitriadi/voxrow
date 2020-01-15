@@ -58,6 +58,8 @@ from json import dumps
 from os import getenv
 from pathlib import Path
 
+from sshtunnel import SSHTunnelForwarder
+
 STRING_DATE_FORMAT = '%Y-%m-%d'
 STRING_DATETIME_FORMAT = f'{ STRING_DATE_FORMAT }T%H:%M:%S'
 
@@ -100,8 +102,36 @@ def postgres_uri(
     db_port=5432,
     db_name='postgres',
     db_user='',
-    db_pass=''
+    db_pass='',
+    ssh_host=None,
+    ssh_port=22,
+    ssh_username=None,
+    ssh_password=None
 ):
+    if all((
+        ssh_host,
+        ssh_port,
+        ssh_username,
+        ssh_password
+    )):
+        # Setup a SSH Tunnel With the Sshtunnel Module in Python
+        # https://blog.ruanbekker.com/blog/2018/04/23/setup-a-ssh-tunnel-with-the-sshtunnel-module-in-python/
+        server = SSHTunnelForwarder(
+            (ssh_host, ssh_port),
+            ssh_username=ssh_username,
+            ssh_password=ssh_password,
+            remote_bind_address=(db_host, db_port)
+        )
+
+        # SSHTunnelForwarder.daemon_forward_servers is not respected:
+        # https://github.com/pahaz/sshtunnel/issues/102
+        server.daemon_forward_servers = True
+        server.daemon_transport = True
+
+        server.start()
+        db_host = server.local_bind_host
+        db_port = server.local_bind_port
+
     return (
         f'postgresql://{ db_user }:{ db_pass }@'
         f'{ db_host }:{ db_port }/{ db_name }'
@@ -113,12 +143,24 @@ def postgres_uri_from_env(
     db_port_env='DB_PORT',
     db_name_env='DB_NAME',
     db_user_env='DB_USER',
-    db_pass_env='DB_PASS'
+    db_pass_env='DB_PASS',
+    ssh_host_env='SSH_HOST',
+    ssh_port_env='SSH_PORT',
+    ssh_username_env='SSH_USERNAME',
+    ssh_password_env='SSH_PASSWORD'
 ):
     return postgres_uri(
         getenv(db_host_env, 'localhost'),
-        getenv(db_port_env, 5432),
+        int(
+            getenv(db_port_env, '5432')
+        ),
         getenv(db_name_env, 'postgres'),
         getenv(db_user_env, ''),
-        getenv(db_pass_env, '')
+        getenv(db_pass_env, ''),
+        getenv(ssh_host_env),
+        int(
+            getenv(ssh_port_env, '22')
+        ),
+        getenv(ssh_username_env),
+        getenv(ssh_password_env)
     )
