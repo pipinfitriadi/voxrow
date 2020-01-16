@@ -97,7 +97,8 @@ def to_json(object):
     return dumps(object, default=serialize)
 
 
-def postgres_uri(
+def database_uri(
+    db_driver='postgresql',
     db_host='localhost',
     db_port=5432,
     db_name='postgres',
@@ -133,12 +134,16 @@ def postgres_uri(
         db_port = server.local_bind_port
 
     return (
-        f'postgresql://{ db_user }:{ db_pass }@'
-        f'{ db_host }:{ db_port }/{ db_name }'
+        (
+            f'postgresql://{ db_user }:{ db_pass }@'
+            f'{ db_host }:{ db_port }/{ db_name }'
+        )
+        if db_driver == 'postgresql' else None
     )
 
 
-def postgres_uri_from_env(
+def database_uri_from_env(
+    db_driver_env='DB_DRIVER',
     db_host_env='DB_HOST',
     db_port_env='DB_PORT',
     db_name_env='DB_NAME',
@@ -149,7 +154,8 @@ def postgres_uri_from_env(
     ssh_username_env='SSH_USERNAME',
     ssh_password_env='SSH_PASSWORD'
 ):
-    return postgres_uri(
+    return database_uri(
+        getenv(db_driver_env, 'postgresql'),
         getenv(db_host_env, 'localhost'),
         int(
             getenv(db_port_env, '5432')
