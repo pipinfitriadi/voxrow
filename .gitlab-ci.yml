@@ -58,18 +58,6 @@
 # Faster CI Builds with Docker Cache
 # https://testdriven.io/blog/faster-ci-builds-with-docker-cache/
 
-
-# Using docker-in-docker image from Container Registry
-# https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#using-docker-in-docker-image-from-container-registry
-# Gitlab CI error during connect: Get http://docker:2375/v1.40/containers/json?all=1: dial tcp: lookup docker on xx.xx.xx.x:xx: no such host
-# https://devops.stackexchange.com/questions/9359/gitlab-ci-error-during-connect-get-http-docker2375-v1-40-containers-jsonall
-# docker login in custom gitlab-runner: No such host (http://docker:2375/v1.39/auth: dial tcp: lookup docker on 172.31.0.2:53: no such host)
-# https://stackoverflow.com/questions/57142416/docker-login-in-custom-gitlab-runner-no-such-host-http-docker2375-v1-39-aut
-# GitLab CI runner can't connect to tcp://localhost:2375 in kubernetes
-# https://stackoverflow.com/questions/55065490/gitlab-ci-runner-cant-connect-to-tcp-localhost2375-in-kubernetes
-services:
-  - docker:19.03.1-dind
-
 stages:
   - Build
   - Test
@@ -80,10 +68,30 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
   DOCKER_HOST: tcp://docker:2375
   DOCKER_TLS_CERTDIR: ""
-  CONTAINER_DOCKER_IMAGE: $CI_REGISTRY_IMAGE/docker
+  CONTAINER_DOCKER_IMAGE: $CI_REGISTRY_IMAGE/docker:latest
 
-before_script:
-  - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
+# Globally-defined image, services, cache, before_script, after_script 
+# https://docs.gitlab.com/ee/ci/yaml/
+default:
+  image: $CONTAINER_DOCKER_IMAGE
+  services:
+    # Using docker-in-docker image from Container Registry
+    # https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#using-docker-in-docker-image-from-container-registry
+    # Gitlab CI error during connect: Get http://docker:2375/v1.40/containers/json?all=1: dial tcp: lookup docker on xx.xx.xx.x:xx: no such host
+    # https://devops.stackexchange.com/questions/9359/gitlab-ci-error-during-connect-get-http-docker2375-v1-40-containers-jsonall
+    # docker login in custom gitlab-runner: No such host (http://docker:2375/v1.39/auth: dial tcp: lookup docker on 172.31.0.2:53: no such host)
+    # https://stackoverflow.com/questions/57142416/docker-login-in-custom-gitlab-runner-no-such-host-http-docker2375-v1-39-aut
+    # GitLab CI runner can't connect to tcp://localhost:2375 in kubernetes
+    # https://stackoverflow.com/questions/55065490/gitlab-ci-runner-cant-connect-to-tcp-localhost2375-in-kubernetes
+    - docker:19.03.1-dind
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
+  after_script:
+    # Unable to pull container image when public project
+    # https://gitlab.com/gitlab-org/gitlab-foss/issues/33122
+    - docker logout $CI_REGISTRY
+  tags:
+    - live
 
 Build Docker Image:
   stage: Build
@@ -94,5 +102,3 @@ Build Docker Image:
     - docker push $CONTAINER_DOCKER_IMAGE
   only:
     - docker-image
-  tags:
-    - live
