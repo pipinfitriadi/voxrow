@@ -59,12 +59,13 @@
 # https://docs.gitlab.com/runner/register/index.html
 # TLS disabled
 # https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-disabled
-which gitlab-runner || ( \
-    curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh | bash \
-    && apt-get install gitlab-runner \
-)
-
-read -p 'Please enter the gitlab-ci coordinator URL (default is https://gitlab.com): ' url \
+( \
+    which gitlab-runner || ( \
+        curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh | bash \
+        && apt-get install gitlab-runner \
+    ) \
+) \
+&& read -p 'Please enter the gitlab-ci coordinator URL (default is https://gitlab.com): ' url \
 && read -p 'Please enter the gitlab-ci description for this runner (default is app_runner): ' description \
 && read -sp 'Please enter the gitlab-ci token for this runner: ' registration_token \
 && gitlab-runner register -n \
