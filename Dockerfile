@@ -63,10 +63,11 @@ RUN apk add --no-cache --virtual .build-deps \
         gcc \
         libc-dev \
         make \
-    && apk add --no-cache openssh \
-    && apk add --no-cache --virtual \
+    # https://github.com/valudio/docker-sshpass/blob/master/node-alpine/Dockerfile
+    && apk add --no-cache \
+        openssh \
         sshpass \
-        py-pip \
+    && apk add --no-cache --virtual py-pip \
     && pip install --no-cache-dir docker-compose \
     && find /usr/local \
         \( -type d -a -name test -o -name tests \) \
