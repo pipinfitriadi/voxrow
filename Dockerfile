@@ -67,7 +67,7 @@ RUN apk add --no-cache --virtual .build-deps \
     && apk add --no-cache \
         openssh \
         sshpass \
-    && apk add --no-cache --virtual py-pip \
+        py-pip \
     && pip install --no-cache-dir docker-compose \
     && find /usr/local \
         \( -type d -a -name test -o -name tests \) \
