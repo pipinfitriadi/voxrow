@@ -1,0 +1,98 @@
+# Copyright 2020 Pipin Fitriadi <pipinfitriadi@gmail.com>
+
+# Licensed under the Microsoft Reference Source License (MS-RSL)
+
+# This license governs use of the accompanying software. If you use the
+# software, you accept this license. If you do not accept the license, do not
+# use the software.
+
+# 1. Definitions
+
+# The terms "reproduce," "reproduction" and "distribution" have the same
+# meaning here as under U.S. copyright law.
+
+# "You" means the licensee of the software.
+
+# "Your company" means the company you worked for when you downloaded the
+# software.
+
+# "Reference use" means use of the software within your company as a reference,
+# in read only form, for the sole purposes of debugging your products,
+# maintaining your products, or enhancing the interoperability of your
+# products with the software, and specifically excludes the right to
+# distribute the software outside of your company.
+
+# "Licensed patents" means any Licensor patent claims which read directly on
+# the software as distributed by the Licensor under this license.
+
+# 2. Grant of Rights
+
+# (A) Copyright Grant- Subject to the terms of this license, the Licensor
+# grants you a non-transferable, non-exclusive, worldwide, royalty-free
+# copyright license to reproduce the software for reference use.
+
+# (B) Patent Grant- Subject to the terms of this license, the Licensor grants
+# you a non-transferable, non-exclusive, worldwide, royalty-free patent
+# license under licensed patents for reference use.
+
+# 3. Limitations
+
+# (A) No Trademark License- This license does not grant you any rights to use
+# the Licensor's name, logo, or trademarks.
+
+# (B) If you begin patent litigation against the Licensor over patents that
+# you think may apply to the software (including a cross-claim or counterclaim
+# in a lawsuit), your license to the software ends automatically.
+
+# (C) The software is licensed "as-is." You bear the risk of using it. The
+# Licensor gives no express warranties, guarantees or conditions. You may have
+# additional consumer rights under your local laws which this license cannot
+# change. To the extent permitted under your local laws, the Licensor excludes
+# the implied warranties of merchantability, fitness for a particular purpose
+# and non-infringement.
+
+# Building Docker images with GitLab CI/CD
+# https://docs.gitlab.com/ee/ci/docker/using_docker_build.html
+# Gitlab CI returns error - no such host error (public runners)
+# https://gitlab.com/gitlab-org/gitlab-foss/issues/65511
+# Faster CI Builds with Docker Cache
+# https://testdriven.io/blog/faster-ci-builds-with-docker-cache/
+
+
+# Using docker-in-docker image from Container Registry
+# https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#using-docker-in-docker-image-from-container-registry
+# Gitlab CI error during connect: Get http://docker:2375/v1.40/containers/json?all=1: dial tcp: lookup docker on xx.xx.xx.x:xx: no such host
+# https://devops.stackexchange.com/questions/9359/gitlab-ci-error-during-connect-get-http-docker2375-v1-40-containers-jsonall
+# docker login in custom gitlab-runner: No such host (http://docker:2375/v1.39/auth: dial tcp: lookup docker on 172.31.0.2:53: no such host)
+# https://stackoverflow.com/questions/57142416/docker-login-in-custom-gitlab-runner-no-such-host-http-docker2375-v1-39-aut
+# GitLab CI runner can't connect to tcp://localhost:2375 in kubernetes
+# https://stackoverflow.com/questions/55065490/gitlab-ci-runner-cant-connect-to-tcp-localhost2375-in-kubernetes
+services:
+  - docker:19.03.1-dind
+
+stages:
+  - Build
+  - Test
+  - Release
+  - Deploy
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+  CONTAINER_DOCKER_IMAGE: $CI_REGISTRY_IMAGE/docker
+
+before_script:
+  - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
+
+Build Docker Image:
+  stage: Build
+  image: docker:19.03.1
+  script:
+    - docker pull $CONTAINER_DOCKER_IMAGE || true
+    - docker build --cache-from $CONTAINER_DOCKER_IMAGE -t $CONTAINER_DOCKER_IMAGE .
+    - docker push $CONTAINER_DOCKER_IMAGE
+  only:
+    - docker-image
+  tags:
+    - live
