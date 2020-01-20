@@ -90,8 +90,6 @@ default:
     # Unable to pull container image when public project
     # https://gitlab.com/gitlab-org/gitlab-foss/issues/33122
     - docker logout $CI_REGISTRY
-  tags:
-    - live
 
 Build Docker Image:
   stage: Build
@@ -102,3 +100,5 @@ Build Docker Image:
     - docker push $CONTAINER_DOCKER_IMAGE
   only:
     - docker-image
+  tags:
+    - live
