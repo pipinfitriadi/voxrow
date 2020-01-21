@@ -59,6 +59,8 @@
 # https://docs.gitlab.com/runner/register/index.html
 # TLS disabled
 # https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-disabled
+# Docker registry login times out
+# https://gitlab.com/gitlab-com/support-forum/issues/1278
 ( \
     which gitlab-runner || ( \
         curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh | bash \
@@ -77,4 +79,5 @@
     --docker-privileged \
     --docker-volumes "/certs/client" \
     --docker-wait-for-services-timeout 0 \
-    --tag-list live
+    --tag-list live \
+    --docker-dns value ["8.8.8.8"]
