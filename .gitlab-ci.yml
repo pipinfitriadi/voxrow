@@ -68,12 +68,12 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
   DOCKER_HOST: tcp://docker:2375
   DOCKER_TLS_CERTDIR: ""
-  CONTAINER_DOCKER_IMAGE: $CI_REGISTRY_IMAGE/docker:latest
+  CONTAINER_DOCKER: $CI_REGISTRY_IMAGE/docker:latest
 
 # Globally-defined image, services, cache, before_script, after_script 
 # https://docs.gitlab.com/ee/ci/yaml/
 default:
-  image: $CONTAINER_DOCKER_IMAGE
+  image: $CONTAINER_DOCKER
   services:
     # Using docker-in-docker image from Container Registry
     # https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#using-docker-in-docker-image-from-container-registry
@@ -91,14 +91,14 @@ default:
     # https://gitlab.com/gitlab-org/gitlab-foss/issues/33122
     - docker logout $CI_REGISTRY
 
-Build Docker Image:
+Build Docker:
   stage: Build
   image: docker:19.03.1
   script:
-    - docker pull $CONTAINER_DOCKER_IMAGE || true
-    - docker build --cache-from $CONTAINER_DOCKER_IMAGE -t $CONTAINER_DOCKER_IMAGE .
-    - docker push $CONTAINER_DOCKER_IMAGE
+    - docker pull $CONTAINER_DOCKER || true
+    - docker build --cache-from $CONTAINER_DOCKER -t $CONTAINER_DOCKER .
+    - docker push $CONTAINER_DOCKER
   only:
-    - docker-image
+    - docker
   tags:
     - live
