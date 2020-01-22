@@ -92,7 +92,11 @@ def post():
         error_parameter = {}
 
         if (
-            user := User.read(User.username == form.username.data)
+            user := User.read(
+                User.username == (
+                    username := form.username.data
+                )
+            )
         ):
             user = user[0]
 

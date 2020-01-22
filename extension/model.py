@@ -172,7 +172,7 @@ class Token(Model):
     )
     jti = Column(String(36), nullable=False)
     token_type = Column(String(10), nullable=False)
-    expires = Column(DateTime, nullable=False)
+    expires = Column(DateTime, nullable=True)
     is_revoked = Column(
         Boolean,
         default=False,
@@ -189,8 +189,8 @@ class Token(Model):
                 jti=token['jti'],
                 token_type=token['type'],
                 expires=datetime.fromtimestamp(
-                    token['exp']
-                )
+                    token.get('exp')
+                ) if token.get('exp') else None
             )
 
         cls.update(
@@ -199,9 +199,7 @@ class Token(Model):
             (cls.is_revoked == False) # noqa
             & (
                 (cls.user_id == token_or_row.user_id)
-                | (
-                    cls.expires <= datetime.now()
-                )
+                | (cls.expires <= datetime.now())
             ),
             {'is_revoked': True}
         )
