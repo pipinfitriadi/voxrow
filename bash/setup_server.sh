@@ -74,4 +74,10 @@ which docker-compose || ( \
     && docker-compose --version
 )
 
-. gitlab_runner.sh
+read -p 'Do you want to install gitlab-runner (y/n)? ' install_gitlab_runner
+if [[ $install_gitlab_runner = "y" ]]; then
+    # How to get the source directory of a Bash script from within the script itself
+    # https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
+    DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+    . $DIR/gitlab_runner.sh
+fi
