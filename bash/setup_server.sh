@@ -55,11 +55,51 @@
 
 apt-get update
 
+# Memasangkan firewall sederhana
+# 1. Melihat daftar aplikasi yang diatur pada firewall.
+# ufw app list
+# 2. Pastikan firewall mengizinkan koneksi SSH, sehingga lain waktu server dapat dimasuki melalui SSH.
+ufw allow OpenSSH
+ufw allow http
+ufw allow https
+# 3. Jalankan firewall.
+ufw --force enable
+# 4. Periksa apakah koneksi SSH diizinkan oleh firewall.
+# ufw status verbose
+
+# Set time zone and NTP
+# 1. Install dbus
+apt-get install dbus
+# 2. Locate your timezone in the list of timezones
+# timedatectl list-timezones
+# 3. Set your timezone
+set timedatectl set-timezone Asia/Jakarta
+# 4. Install NTP
+apt-get install -y ntp
+
 # Get Docker CE
 # https://docs.docker.com/v17.09/engine/installation/linux/docker-ce/debian/
+# How to know if the running platform is Ubuntu or CentOS with help of a Bash script?
+# https://askubuntu.com/questions/459402/how-to-know-if-the-running-platform-is-ubuntu-or-centos-with-help-of-a-bash-scri
+# How to Install Docker On Ubuntu 18.04 Bionic Beaver
+# https://phoenixnap.com/kb/how-to-install-docker-on-ubuntu-18-04
 which docker || ( \
-    apt-get install docker-ce docker-ce-cli containerd.io \
-    && docker run --rm hello-world \
+    apt-get remove \
+        docker \
+        docker-engine \
+        docker.io \
+        containerd \
+        runc \
+    && export os_name=$(awk -F= '/^NAME/{print $2}' /etc/os-release) \
+    && if [[ $os_name = "\"Ubuntu\"" ]]; then \
+            apt install docker.io; \
+        else \
+            apt-get install \
+                docker-ce \
+                docker-ce-cli \
+                containerd.io; \
+        fi; \
+    docker run --rm hello-world \
     && docker rmi -f hello-world \
 )
 
@@ -74,7 +114,7 @@ which docker-compose || ( \
     && docker-compose --version
 )
 
-read -p 'Do you want to install gitlab-runner (y/n)? ' install_gitlab_runner
+read -p 'Do you want to install gitlab-runner (y|n)? ' install_gitlab_runner
 if [[ $install_gitlab_runner = "y" ]]; then
     # How to get the source directory of a Bash script from within the script itself
     # https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
