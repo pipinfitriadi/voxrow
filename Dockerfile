@@ -57,7 +57,7 @@ LABEL maintainer="pipinfitriadi@gmail.com"
 # how to run docker-compose inside docker in docker witch runs inside gitlab-runner conatiner?
 # https://stackoverflow.com/questions/48630005/how-to-run-docker-compose-inside-docker-in-docker-witch-runs-inside-gitlab-runne
 RUN apk add --no-cache --virtual .build-deps \
-        python-dev \
+        python3-dev \
         libffi-dev \
         openssl-dev \
         gcc \
