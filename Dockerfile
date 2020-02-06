@@ -67,7 +67,7 @@ RUN apk add --no-cache --virtual .build-deps \
     && apk add --no-cache \
         openssh \
         sshpass \
-        py-pip \
+        py3-pip \
     && pip3 install --no-cache-dir --upgrade pip \
     && pip3 install --no-cache-dir docker-compose \
     && find /usr/local \
