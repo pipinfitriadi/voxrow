@@ -57,7 +57,6 @@ from flask import abort, Blueprint
 from sqlalchemy.exc import IntegrityError
 
 from ... import blueprint_name
-from ...modify.flask_sqlalchemy.types import Username
 from ...extension.form import UserForm
 from ...extension.model import User
 from ...extension.token import admin_required

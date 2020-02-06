@@ -125,6 +125,7 @@ class SQLAlchemy(_SQLAlchemy):
             for parameter_type, database_column_type in [
                 [int, Integer],
                 [float, Float],
+                [datetime, DateTime]
                 [date, Date],
                 [dict, JSON],
                 [bool, Boolean],

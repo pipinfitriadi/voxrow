@@ -67,7 +67,6 @@ from flask_jwt_extended import (
 from ... import blueprint_name
 from ...extension.form import UserForm
 from ...extension.model import Token, User
-from ...modify.flask_sqlalchemy.types import Username
 
 app = Blueprint(
     (

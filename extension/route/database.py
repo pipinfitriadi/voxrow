@@ -53,8 +53,6 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-from os.path import join
-
 from flask import Blueprint
 from sqlalchemy.schema import CreateSchema, DropSchema
 
