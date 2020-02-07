@@ -47,6 +47,20 @@
                 "shell"
             ],
             "jinja": true
+        },
+        {
+            "name": "Flake8",
+            "type": "python",
+            "request": "launch",
+            "module": "flake8",
+            "args": [
+                "web",
+                "--exclude",
+                "web/env",
+                "--ignore",
+                "E203,E231,F821,F999,W503"
+            ],
+            "jinja": true
         }
     ]
 }
