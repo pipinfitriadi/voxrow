@@ -62,3 +62,7 @@ sudo apt-get update
 if ! [ -x "$(command -v make)" ]; then
     sudo apt-get install build-essential
 fi
+
+if ! [ -x "$(command -v git-flow)" ]; then
+    sudo apt-get install git-flow
+fi
