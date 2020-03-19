@@ -133,7 +133,6 @@ create_user:
 		fi;\
 		if [ $${is_superuser} = y ]; then\
 			sudo usermod -aG sudo $${username};\
-			rsync --archive --chown=$${username}:$${username} ~/.ssh /home/$${username};\
 		fi
 
 firewall:
