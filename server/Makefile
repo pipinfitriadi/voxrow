@@ -82,11 +82,14 @@ initial_setup_server: update_server\
 
 # Authenticate to Ubuntu Server Using SSH Keys.
 # https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys-on-ubuntu-1804
+# WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED
+# https://www.digitalocean.com/community/questions/warning-remote-host-identification-has-changed
 local_ssh_key_to_server:
 	@echo "Authenticate to Ubuntu Server Using SSH Keys."
 	@read -p "Remote host: " remote_host;\
 		read -p "Username: " username;\
 		if [ $${remote_host} ] && [ $${username} ]; then\
+			ssh-keygen -R $${remote_host};\
 			cat ~/.ssh/id_rsa.pub\
 			| ssh $${username}@$${remote_host}\
 			"mkdir -p ~/.ssh\
