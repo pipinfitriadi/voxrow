@@ -60,14 +60,32 @@
 # https://coderwall.com/p/cezf6g/define-your-own-function-in-a-makefile
 define install_program
 	@if [ $1 ]\
-	&& ! [ -x "$(command -v $1)" ]; then\
-		if [ $2 ]; then\
-			sudo apt-get install $2 -y;\
-		else\
-			sudo apt-get install $1 -y;\
-		fi;\
-	fi
+		&& ! [ -x "$(command -v $1)" ]; then\
+			if [ $2 ]; then\
+				sudo apt-get install $2 -y;\
+			else\
+				sudo apt-get install $1 -y;\
+			fi;\
+		fi
 endef
+
+initial_setup_server: update_server gitflow create_user firewall timezone_ntp harden_network ddos_protection
+	@echo Initial setup server is finished!
+	@sudo reboot
+
+# Authenticate to Ubuntu Server Using SSH Keys
+# https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys-on-ubuntu-1804
+local_ssh_key_to_server:
+	@read -p "Remote host: " remote_host;\
+		read -p "Username: " username;\
+		if [ $${remote_host} ] && [ $${username} ]; then\
+			cat ~/.ssh/id_rsa.pub\
+			| ssh $${username}@$${remote_host}\
+			"mkdir -p ~/.ssh\
+				&& touch ~/.ssh/authorized_keys\
+				&& chmod -R go= ~/.ssh\
+				&& cat >> ~/.ssh/authorized_keys";\
+		fi
 
 update_server:
 	@sudo apt-get update
@@ -76,16 +94,19 @@ gitflow:
 	$(call install_program, git-flow)
 
 # Membuat akun reguler server dan pilihan untuk memberikan hak akses superuser ke akun tersebut.
+# Enabling External Access for Your Regular User
+# https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-18-04
 create_user:
 	@read -p "Username: " username;\
-	read -p "Is superuser? [y/n] " is_superuser;\
-	is_superuser=$${is_superuser:-n};\
-	if [ $${username} ]; then\
-		sudo adduser $${username};\
-	fi;\
-	if [ $${is_superuser} = y ]; then\
-		sudo usermod -aG sudo $${username};\
-	fi
+		read -p "Is superuser? [y/n] " is_superuser;\
+		is_superuser=$${is_superuser:-n};\
+		if [ $${username} ]; then\
+			sudo adduser $${username};\
+		fi;\
+		if [ $${is_superuser} = y ]; then\
+			sudo usermod -aG sudo $${username};\
+			rsync --archive --chown=$${username}:$${username} ~/.ssh /home/$${username};\
+		fi
 
 # Memasangkan firewall sederhana.
 firewall:
@@ -95,15 +116,38 @@ firewall:
 	@sudo ufw enable
 	@sudo ufw status verbose
 
+# Mengamankan Shared Memory.
+secure_sharedmemory:
+	@sudo cp -f fstab /etc/fstab
+
+# Pasang zona waktu & NTP.
+# Set time zone and NTP
+# https://medium.com/@AKcryptoGUY/how-to-secure-vps-hyper-v-9ceee0d1c2a9
+timezone_ntp:
+	$(call install_program, dbus)
+	@read -p "Server's timezone? [Asia/Jakarta] " timezone;\
+		timezone=$${timezone:-"Asia/Jakarta"};\
+		sudo timedatectl set-timezone $${timezone}
+	$(call install_program, ntp)
+	@echo Timezone: $$(cat /etc/timezone)
+
 # Non-aktifkan login SSH user root dan autentikasi password SSH.
 deactivate_root:
 	@sudo cp -f sshd_config /etc/ssh/sshd_config
 	@sudo systemctl restart sshd
 
-secure_sharedmemory:
-	@sudo cp -f fstab /etc/fstab
-
+# Pasang Fail2ban.
 fail2ban_setup:
 	$(call install_program, fail2ban)
-	@sudo cp -f fail2ban /etc/fail2ban/jail.local
+	@sudo cp -f jail.local /etc/fail2ban/jail.local
 	@sudo systemctl restart fail2ban
+
+# Harden the networking layer.
+# https://medium.com/@AKcryptoGUY/how-to-secure-vps-hyper-v-9ceee0d1c2a9
+harden_network:
+	@sudo cp -f sysctl.conf /etc/sysctl.conf
+
+# DDos Protection.
+# https://medium.com/@AKcryptoGUY/how-to-secure-vps-hyper-v-9ceee0d1c2a9
+ddos_protection:
+	@sudo cp -f before.rules /etc/ufw/before.rules
