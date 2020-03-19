@@ -120,13 +120,16 @@ dipergunakan perintah Git berikut ini:
     $ git clone https://gitlab.com/voxrow/voxrowlib.git voxrowlib
     ```
 
+    > Jangan jalankan perintah ini di _folder_ `root/` milik _server_!
+
 2. Masuk ke _folder_ `server/`:
 
     ```shell
     $ cd voxrowlib/server/
     ```
 
-3. Pastikan GNU Make sudah ada, dengan menjalankan perintah ini:
+3. Pastikan [GNU Make](https://www.gnu.org/software/make/) sudah ada, dengan
+menjalankan perintah ini:
 
     ```shell
     $ . make_gnu_install.sh
@@ -138,6 +141,15 @@ dipergunakan perintah Git berikut ini:
 4. Jalankan perintah di komputer lokal dan _server_ sebagai berikut:
 
     - Komputer lokal:
+
+        Pastikan terlebih dahulu bahwa _SSH Key Pair_ sudah dibuat, baca baik-baik
+        instruksi dalam prosesnya! Berikut ini adalah perintahnya:
+
+        ```shell
+        $ sudo ssh-keygen
+        ```
+
+        Salin _public key_ komputer lokal ke _server_ dengan perintah ini:
 
         ```shell
         $ make local_ssh_key_to_server
@@ -158,7 +170,7 @@ dipergunakan perintah Git berikut ini:
         lagi. Perintahnya adalah sebagai berikut:
 
         ```shell
-        $ cd ../../ && rm -rf voxrowlib/
+        $ cd ../../ && sudo rm -rf voxrowlib/
         ```
 
 ---
