@@ -64,6 +64,7 @@ Daftar isi:
         - [Editor](#editor)
         - [Repositori Git](#repositori-git)
         - [Tata Cara Penulisan Markdown](#tata-cara-penulisan-markdown)
+    - [Server](#server)
     - [Lisensi](#lisensi)
 
 <!-- /TOC -->
@@ -86,8 +87,9 @@ antara lain:
 
 ### Repositori Git
 
-Git GUI [Sourcetree](https://www.sourcetreeapp.com/) dapat dipergunakan untuk
-memudahkan pengelolaan repositori, pada sistem operasi Windows atau MacOS.
+[Git](https://git-scm.com/) GUI [Sourcetree](https://www.sourcetreeapp.com/) dapat
+dipergunakan untuk memudahkan pengelolaan repositori, pada sistem operasi Windows
+atau MacOS.
 
 _Branching model_ [Git-Flow](https://github.com/nvie/gitflow) dari Vincent Driessen
 dipergunakan untuk memudahkan pengelolaan _feature_, _release_, dan _hotfix_ di
@@ -101,6 +103,63 @@ Beberapa sumber ini dapat dijadikan acuan tata cara penulisan _markdown_:
 - [_GitLab Markdown_](https://docs.gitlab.com/ee/user/markdown.html)
 - [_Wikipedia: Markdown_](https://en.m.wikipedia.org/wiki/Markdown)
 - [Berkas readme.md yang dibuat oleh Ben Strahan](https://gist.github.com/benstr/8744304#file-readme-md)
+
+---
+
+## _Server_
+
+Disarankan untuk menggunakan [Ubuntu 18.04 x64](https://ubuntu.com/download/desktop)
+(_CPU_ minimal 1 vCore, _RAM_ minimal 512 MB, _Storage_ minimal 10 GB SSD, dan _Bandwidth_
+minimal 500 GB), supaya memudahkan pengelolaan _server_ dengan mengunakan _script_
+VOXROWLib. Adapun langkah yang harus dipersiapkan adalah sebagai berikut:
+
+1. Pastikan telah ada _source-code_ VOXROWLib di komputer lokal dan _server_. Dapat
+dipergunakan perintah Git berikut ini:
+
+    ```shell
+    $ git clone https://gitlab.com/voxrow/voxrowlib.git voxrowlib
+    ```
+
+2. Masuk ke _folder_ `server/`:
+
+    ```shell
+    $ cd voxrowlib/server/
+    ```
+
+3. Pastikan GNU Make sudah ada, dengan menjalankan perintah ini:
+
+    ```shell
+    $ . make_gnu_install.sh
+    ```
+
+    > _Script_ ini hanya dapat dipergunakan di Ubuntu Linux, instalasi untuk OS
+    selain ini silahkan cari di internet.
+
+4. Jalankan perintah di komputer lokal dan _server_ sebagai berikut:
+
+    - Komputer lokal:
+
+        ```shell
+        $ make local_ssh_key_to_server
+        ```
+
+        Ikuti instruksi yang dimintakan saat proses berjalan.
+
+        > Masukkan alamat _server_ dan _username_ `root`.
+
+    - _Server_:
+
+        ```shell
+        $ make
+        ```
+
+        Ikuti instruksi yang dimintakan saat proses berjalan. Setelah proses berakhir,
+        hapuslah _source_code_ VOXROWLib dari _server_, karena sudah tidak diperlukan
+        lagi. Perintahnya adalah sebagai berikut:
+
+        ```shell
+        $ cd ../../ && rm -rf voxrowlib/
+        ```
 
 ---
 
