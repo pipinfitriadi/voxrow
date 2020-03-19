@@ -83,7 +83,8 @@ endef
 # https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys-on-ubuntu-1804
 initial_setup_server: update_server\
 	gitflow\
-	create_user\
+	create_superuser\
+	create_deployer\
 	firewall\
 	secure_sharedmemory\
 	timezone_ntp\
@@ -107,8 +108,9 @@ local_ssh_key_to_server:
 			cat ~/.ssh/id_rsa.pub\
 			| ssh $${username}@$${remote_host}\
 			"mkdir -p ~/.ssh\
+				&& chmod 700 ~/.ssh\
 				&& touch ~/.ssh/authorized_keys\
-				&& chmod -R go= ~/.ssh\
+				&& chmod 600 ~/.ssh/authorized_keys\
 				&& cat >> ~/.ssh/authorized_keys";\
 			echo "Authenticate is done!";\
 		fi
@@ -128,24 +130,37 @@ gitflow:
 create_user:
 	$(call install_program, setfacl, acl)
 	@echo "Membuat akun reguler server dan pilihan untuk memberikan hak akses superuser ke akun tersebut."
-	@read -p "Username: " username;\
+	@read -p "Username? " username;\
 		read -p "Is superuser? [y/n] " is_superuser;\
 		read -p "Is deployer? [y/n] " is_deployer;\
-		is_superuser=$${is_superuser:-n};\
-		is_deployer=$${is_deployer:-n};\
 		if [ $${username} ]; then\
 			sudo adduser $${username};\
-		fi;\
-		if [ $${is_superuser} = y ]; then\
+			if [ $${is_superuser:-n} = y ]; then\
+				sudo usermod -aG sudo $${username};\
+			else\
+				sudo setfacl -R -m u:$${username}:rwx /home/$${username}/;\
+			fi;\
+			if [ $${is_deployer:-n} = y ]; then\
+				echo $${username} 'ALL=(ALL:ALL) NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo;\
+			fi;\
+		fi
+
+create_superuser:
+	$(call install_program, setfacl, acl)
+	@echo "Membuat akun superuser server."
+	@read -p "Username? " username;\
+		if [ $${username} ]; then\
+			sudo adduser $${username};\
 			sudo usermod -aG sudo $${username};\
-		else\
-			sudo setfacl -R -m u:$${username}:rwx /home/$${username}/;\
-		fi;\
-		if [ $${is_deployer} = y ]; then\
-			echo '$${username} ALL=(ALL:ALL) NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo;\
-		else\
-			echo '$${username} ALL=(ALL:ALL) ALL' | sudo EDITOR='tee -a' visudo;\
-		fi;\
+		fi
+
+create_deployer:
+	$(call install_program, setfacl, acl)
+	@echo "Membuat akun deployer server."
+	@read -p "Username? [deployer] " username;\
+		sudo adduser $${username:-deployer};\
+		sudo setfacl -R -m u:$${username}:rwx /home/$${username}/;\
+		echo $${username} 'ALL=(ALL:ALL) NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo
 
 firewall:
 	@echo "Memasangkan firewall sederhana."
@@ -186,7 +201,7 @@ ddos_protection:
 deactivate_root:
 	@echo "Non-aktifkan login SSH user root dan autentikasi password SSH."
 	@sudo cp -f sshd_config /etc/ssh/sshd_config
-	@sudo systemctl restart sshd
+	@sudo systemctl restart ssh
 
 fail2ban_setup:
 	@echo "Pasang Fail2ban."
