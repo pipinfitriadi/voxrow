@@ -69,7 +69,16 @@ define install_program
 		fi
 endef
 
-initial_setup_server: update_server gitflow create_user firewall secure_sharedmemory timezone_ntp harden_network ddos_protection deactivate_root fail2ban_setup
+initial_setup_server: update_server\
+	gitflow\
+	create_user\
+	firewall\
+	secure_sharedmemory\
+	timezone_ntp\
+	harden_network\
+	ddos_protection\
+	deactivate_root\
+	fail2ban_setup
 	@echo "Initial setup server is finished!"
 	@sudo reboot
 
