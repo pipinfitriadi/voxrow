@@ -58,6 +58,15 @@ and non-infringement.
 Daftar isi:
 
 <!-- TOC -->
+
+- [VOXROWLib](#voxrowlib)
+    - [Pengaturan Awal](#pengaturan-awal)
+    - [Source-code](#source-code)
+        - [Editor](#editor)
+        - [Repositori Git](#repositori-git)
+        - [Tata Cara Penulisan Markdown](#tata-cara-penulisan-markdown)
+    - [Lisensi](#lisensi)
+
 <!-- /TOC -->
 
 ---

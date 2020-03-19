@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Copyright 2020 Pipin Fitriadi <pipinfitriadi@gmail.com>
 
 # Licensed under the Microsoft Reference Source License (MS-RSL)
@@ -53,25 +51,25 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-apt-get update
+# Makefile Tutorial
+# https://makefiletutorial.com/
+# Passing additional variables from command line to make
+# https://stackoverflow.com/questions/2826029/passing-additional-variables-from-command-line-to-mak
 
-# Get Docker CE
-# https://docs.docker.com/v17.09/engine/installation/linux/docker-ce/debian/
-which docker || ( \
-    apt-get install docker-ce docker-ce-cli containerd.io \
-    && docker run --rm hello-world \
-    && docker rmi -f hello-world \
-)
+# Define your own function in a Makefile
+# https://coderwall.com/p/cezf6g/define-your-own-function-in-a-makefile
+define install_program
+	@if [ $1 ]\
+	&& ! [ -x "$(shell command -v $1)" ];\
+	then\
+		if [ $2 ]; then\
+			sudo apt-get install $2;\
+		else\
+			sudo apt-get install $1;\
+		fi;\
+	fi
+endef
 
-which curl || apt-get install curl
-
-# Install Docker Compose
-# https://docs.docker.com/compose/install/
-which docker-compose || ( \
-    curl -L "https://github.com/docker/compose/releases/download/1.25.0/docker-compose-$(uname -s)-$(uname -m)" \
-        -o /usr/local/bin/docker-compose \
-    && chmod +x /usr/local/bin/docker-compose \
-    && docker-compose --version
-)
-
-. gitlab_runner.sh
+setup_server:
+	@sudo apt-get update
+	$(call install_program, git-flow)

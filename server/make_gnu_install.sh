@@ -55,35 +55,6 @@
 
 # # How do I install make?
 # # https://askubuntu.com/questions/161104/how-do-i-install-make
-# if ! [ -x "$(command -v make)" ]; then
-#     sudo apt-get install build-essential
-# else
-#     which make
-# fi
-
-# if ! [ -x "$(command -v git-flow)" ]; then
-#     sudo apt-get install git-flow
-# else
-#     which git-flow
-# fi
-
-install_program() {
-    # Passing parameters to a Bash function
-    # https://stackoverflow.com/questions/6212219/passing-parameters-to-a-bash-function
-    program_name=$1
-
-    if [ $program_name ]; then
-        # How can I check if a program exists from a Bash script?
-        # https://stackoverflow.com/questions/592620/how-can-i-check-if-a-program-exists-from-a-bash-script
-        if ! [ -x "$(command -v $program_name)" ]; then
-            sudo apt-get install $program_name
-        fi
-    fi
-}
-
-main() {
-    # sudo apt-get update
-    install_program make
-}
-
-main
+if ! [ -x "$(command -v make)" ]; then
+    sudo apt-get install build-essential
+fi
