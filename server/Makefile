@@ -60,8 +60,7 @@
 # https://coderwall.com/p/cezf6g/define-your-own-function-in-a-makefile
 define install_program
 	@if [ $1 ]\
-	&& ! [ -x "$(shell command -v $1)" ];\
-	then\
+	&& ! [ -x "$(command -v $1)" ]; then\
 		if [ $2 ]; then\
 			sudo apt-get install $2;\
 		else\
@@ -70,6 +69,41 @@ define install_program
 	fi
 endef
 
-setup_server:
+update_server:
 	@sudo apt-get update
+
+gitflow:
 	$(call install_program, git-flow)
+
+# Membuat akun reguler server dan pilihan untuk memberikan hak akses superuser ke akun tersebut.
+create_user:
+	@read -p "Username: " username;\
+	read -p "Is superuser? [y/n] " is_superuser;\
+	is_superuser=$${is_superuser:-n};\
+	if [ $${username} ]; then\
+		sudo adduser $${username};\
+	fi;\
+	if [ $${is_superuser} = y ]; then\
+		sudo usermod -aG sudo $${username};\
+	fi
+
+# Memasangkan firewall sederhana.
+firewall:
+	@sudo ufw app list
+	@sudo ufw allow http
+	@sudo ufw allow https
+	@sudo ufw enable
+	@sudo ufw status verbose
+
+# Non-aktifkan login SSH user root dan autentikasi password SSH.
+deactivate_root:
+	@sudo cp -f sshd_config /etc/ssh/sshd_config
+	@sudo systemctl restart sshd
+
+secure_sharedmemory:
+	@sudo cp -f fstab /etc/fstab
+
+fail2ban_setup:
+	$(call install_program, fail2ban)
+	@sudo cp -f fail2ban /etc/fail2ban/jail.local
+	@sudo systemctl restart fail2ban
