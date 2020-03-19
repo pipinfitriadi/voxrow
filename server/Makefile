@@ -123,12 +123,16 @@ gitflow:
 
 # Enabling External Access for Your Regular User
 # https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-18-04
+# How do I edit /etc/sudoers from a script?
+# https://stackoverflow.com/questions/323957/how-do-i-edit-etc-sudoers-from-a-script
 create_user:
 	$(call install_program, setfacl, acl)
 	@echo "Membuat akun reguler server dan pilihan untuk memberikan hak akses superuser ke akun tersebut."
 	@read -p "Username: " username;\
 		read -p "Is superuser? [y/n] " is_superuser;\
+		read -p "Is deployer? [y/n] " is_deployer;\
 		is_superuser=$${is_superuser:-n};\
+		is_deployer=$${is_deployer:-n};\
 		if [ $${username} ]; then\
 			sudo adduser $${username};\
 		fi;\
@@ -136,7 +140,12 @@ create_user:
 			sudo usermod -aG sudo $${username};\
 		else\
 			sudo setfacl -R -m u:$${username}:rwx /home/$${username}/;\
-		fi
+		fi;\
+		if [ $${is_deployer} = y ]; then\
+			echo '$${username} ALL=(ALL:ALL) NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo;\
+		else\
+			echo '$${username} ALL=(ALL:ALL) ALL' | sudo EDITOR='tee -a' visudo;\
+		fi;\
 
 firewall:
 	@echo "Memasangkan firewall sederhana."
