@@ -76,7 +76,9 @@ initial_setup_server: update_server\
 	secure_sharedmemory\
 	timezone_ntp\
 	harden_network\
-	ddos_protection
+	ddos_protection\
+	deactivate_root\
+	fail2ban_setup
 	@echo "Initial setup server is finished!"
 	@sudo reboot
 
@@ -124,6 +126,7 @@ create_user:
 firewall:
 	@echo "Memasangkan firewall sederhana."
 	@sudo ufw app list
+	@sudo ufw allow OpenSSH
 	@sudo ufw allow http
 	@sudo ufw allow https
 	@sudo ufw enable
