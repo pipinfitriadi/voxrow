@@ -124,6 +124,7 @@ gitflow:
 # Enabling External Access for Your Regular User
 # https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-18-04
 create_user:
+	$(call install_program, setfacl, acl)
 	@echo "Membuat akun reguler server dan pilihan untuk memberikan hak akses superuser ke akun tersebut."
 	@read -p "Username: " username;\
 		read -p "Is superuser? [y/n] " is_superuser;\
@@ -133,6 +134,8 @@ create_user:
 		fi;\
 		if [ $${is_superuser} = y ]; then\
 			sudo usermod -aG sudo $${username};\
+		else\
+			sudo setfacl -R -m u:$${username}:rwx /home/$${username}/;\
 		fi
 
 firewall:
