@@ -69,13 +69,14 @@ define install_program
 		fi
 endef
 
-initial_setup_server: update_server gitflow create_user firewall timezone_ntp harden_network ddos_protection
-	@echo Initial setup server is finished!
+initial_setup_server: update_server gitflow create_user firewall secure_sharedmemory timezone_ntp harden_network ddos_protection deactivate_root fail2ban_setup
+	@echo "Initial setup server is finished!"
 	@sudo reboot
 
-# Authenticate to Ubuntu Server Using SSH Keys
+# Authenticate to Ubuntu Server Using SSH Keys.
 # https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys-on-ubuntu-1804
 local_ssh_key_to_server:
+	@echo "Authenticate to Ubuntu Server Using SSH Keys."
 	@read -p "Remote host: " remote_host;\
 		read -p "Username: " username;\
 		if [ $${remote_host} ] && [ $${username} ]; then\
@@ -88,15 +89,17 @@ local_ssh_key_to_server:
 		fi
 
 update_server:
+	@echo "Update Server."
 	@sudo apt-get update
 
 gitflow:
+	@echo "Install Git-Flow"
 	$(call install_program, git-flow)
 
-# Membuat akun reguler server dan pilihan untuk memberikan hak akses superuser ke akun tersebut.
 # Enabling External Access for Your Regular User
 # https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-18-04
 create_user:
+	@echo "Membuat akun reguler server dan pilihan untuk memberikan hak akses superuser ke akun tersebut."
 	@read -p "Username: " username;\
 		read -p "Is superuser? [y/n] " is_superuser;\
 		is_superuser=$${is_superuser:-n};\
@@ -108,22 +111,22 @@ create_user:
 			rsync --archive --chown=$${username}:$${username} ~/.ssh /home/$${username};\
 		fi
 
-# Memasangkan firewall sederhana.
 firewall:
+	@echo "Memasangkan firewall sederhana."
 	@sudo ufw app list
 	@sudo ufw allow http
 	@sudo ufw allow https
 	@sudo ufw enable
 	@sudo ufw status verbose
 
-# Mengamankan Shared Memory.
 secure_sharedmemory:
+	@echo "Mengamankan Shared Memory."
 	@sudo cp -f fstab /etc/fstab
 
 # Pasang zona waktu & NTP.
-# Set time zone and NTP
 # https://medium.com/@AKcryptoGUY/how-to-secure-vps-hyper-v-9ceee0d1c2a9
 timezone_ntp:
+	@echo "Pasang zona waktu & NTP."
 	$(call install_program, dbus)
 	@read -p "Server's timezone? [Asia/Jakarta] " timezone;\
 		timezone=$${timezone:-"Asia/Jakarta"};\
@@ -131,23 +134,25 @@ timezone_ntp:
 	$(call install_program, ntp)
 	@echo Timezone: $$(cat /etc/timezone)
 
-# Non-aktifkan login SSH user root dan autentikasi password SSH.
-deactivate_root:
-	@sudo cp -f sshd_config /etc/ssh/sshd_config
-	@sudo systemctl restart sshd
-
-# Pasang Fail2ban.
-fail2ban_setup:
-	$(call install_program, fail2ban)
-	@sudo cp -f jail.local /etc/fail2ban/jail.local
-	@sudo systemctl restart fail2ban
-
 # Harden the networking layer.
 # https://medium.com/@AKcryptoGUY/how-to-secure-vps-hyper-v-9ceee0d1c2a9
 harden_network:
+	@echo "Harden the networking layer."
 	@sudo cp -f sysctl.conf /etc/sysctl.conf
 
 # DDos Protection.
 # https://medium.com/@AKcryptoGUY/how-to-secure-vps-hyper-v-9ceee0d1c2a9
 ddos_protection:
+	@echo "DDos Protection."
 	@sudo cp -f before.rules /etc/ufw/before.rules
+
+deactivate_root:
+	@echo "Non-aktifkan login SSH user root dan autentikasi password SSH."
+	@sudo cp -f sshd_config /etc/ssh/sshd_config
+	@sudo systemctl restart sshd
+
+fail2ban_setup:
+	@echo "Pasang Fail2ban."
+	$(call install_program, fail2ban)
+	@sudo cp -f jail.local /etc/fail2ban/jail.local
+	@sudo systemctl restart fail2ban
