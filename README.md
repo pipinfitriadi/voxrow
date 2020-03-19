@@ -60,7 +60,6 @@ Daftar isi:
 <!-- TOC -->
 
 - [VOXROWLib](#voxrowlib)
-    - [Pengaturan Awal](#pengaturan-awal)
     - [Source-code](#source-code)
         - [Editor](#editor)
         - [Repositori Git](#repositori-git)
@@ -68,49 +67,6 @@ Daftar isi:
     - [Lisensi](#lisensi)
 
 <!-- /TOC -->
-
----
-
-## Pengaturan Awal
-
-1. Pastika sudah terpasang Python dengan minimal versi [3.8.0](https://www.python.org/downloads/release/python-380/).
-2. Pastikan _environtment_ lokal sudah terpasang.
-
-    Khusus untuk _distro_ [Debian](https://www.debian.org/) atau [Ubuntu](https://ubuntu.com/),
-    terlebih dahulu harus dilakukan instalasi berikut ini:
-
-    ```shell
-    $ sudo apt update
-    $ sudo apt install python3-pip python3-venv
-    ```
-
-    Adapun instruksi untuk memasang _environtment_ lokal adalah sebagai berikut:
-
-    ```shell
-    $ python3 -m venv env
-    ```
-
-    Instruksi yang terkait _environtment_ lokal yang dapat dipergunakan antara lain:
-
-    - Aktivasi:
-
-        ```shell
-        $ . env/bin/activate
-        (env) $
-        ```
-
-    - Deaktivasi:
-
-        ```shell
-        (env) $ deactivate
-        $
-        ```
-
-3. Pastikan [pustaka pendukung](requirements.txt) terpasang di _environtment_ lokal:
-
-    ```shell
-    (env) $ pip install -r requirements.txt
-    ```
 
 ---
 

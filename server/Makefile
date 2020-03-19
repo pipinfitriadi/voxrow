@@ -56,6 +56,16 @@
 # Passing additional variables from command line to make
 # https://stackoverflow.com/questions/2826029/passing-additional-variables-from-command-line-to-mak
 
+# Referensi:
+# How to Harden your Ubuntu 18.04 Server
+# https://hostadvice.com/how-to/how-to-harden-your-ubuntu-18-04-server/
+# How to Harden Ubuntu Server 18.04 in 5 Easy Steps
+# https://www.lifewire.com/harden-ubuntu-server-security-4178243
+# How to Secure and Harden Cloud/VPS VM (Ubuntu/CentOS)?
+# https://geekflare.com/cloud-vm-security-guide/#3-Disable-Password-based-Authentication
+# How to harden Ubuntu Server 16.04 security in five steps
+# https://www.techrepublic.com/article/how-to-harden-ubuntu-server-16-04-security-in-five-steps/
+
 # Define your own function in a Makefile
 # https://coderwall.com/p/cezf6g/define-your-own-function-in-a-makefile
 define install_program
@@ -69,6 +79,8 @@ define install_program
 		fi
 endef
 
+# Buat SSH Key Pair di komputer lokal dan salin SSH Public Key ke server.
+# https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys-on-ubuntu-1804
 initial_setup_server: update_server\
 	gitflow\
 	create_user\
