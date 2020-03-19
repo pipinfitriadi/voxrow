@@ -110,6 +110,7 @@ local_ssh_key_to_server:
 				&& touch ~/.ssh/authorized_keys\
 				&& chmod -R go= ~/.ssh\
 				&& cat >> ~/.ssh/authorized_keys";\
+			echo "Authenticate is done!";\
 		fi
 
 update_server:
