@@ -137,6 +137,7 @@ create_user:
 			sudo adduser $${username};\
 			if [ $${is_superuser:-n} = y ]; then\
 				sudo usermod -aG sudo $${username};\
+				sudo chown -R $${username}:$${username} ~/.ssh
 			else\
 				sudo setfacl -R -m u:$${username}:rwx /home/$${username}/;\
 			fi;\
