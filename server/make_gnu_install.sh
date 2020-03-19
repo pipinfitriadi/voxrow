@@ -56,5 +56,5 @@
 # # How do I install make?
 # # https://askubuntu.com/questions/161104/how-do-i-install-make
 if ! [ -x "$(command -v make)" ]; then
-    sudo apt-get install build-essential
+    sudo apt-get install build-essential -y
 fi

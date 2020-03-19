@@ -62,9 +62,9 @@ define install_program
 	@if [ $1 ]\
 	&& ! [ -x "$(command -v $1)" ]; then\
 		if [ $2 ]; then\
-			sudo apt-get install $2;\
+			sudo apt-get install $2 -y;\
 		else\
-			sudo apt-get install $1;\
+			sudo apt-get install $1 -y;\
 		fi;\
 	fi
 endef
