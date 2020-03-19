@@ -76,9 +76,7 @@ initial_setup_server: update_server\
 	secure_sharedmemory\
 	timezone_ntp\
 	harden_network\
-	ddos_protection\
-	deactivate_root\
-	fail2ban_setup
+	ddos_protection
 	@echo "Initial setup server is finished!"
 	@sudo reboot
 
