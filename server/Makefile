@@ -137,7 +137,7 @@ create_user:
 			sudo adduser $${username};\
 			if [ $${is_superuser:-n} = y ]; then\
 				sudo usermod -aG sudo $${username};\
-				sudo chown -R $${username}:$${username} ~/.ssh\
+				sudo chown -R $${username}:$${username} ~/.ssh;\
 			else\
 				sudo setfacl -R -m u:$${username}:rwx /home/$${username}/;\
 			fi;\
@@ -153,7 +153,7 @@ create_superuser:
 		if [ $${username} ]; then\
 			sudo adduser $${username};\
 			sudo usermod -aG sudo $${username};\
-			sudo chown -R $${username}:$${username} ~/.ssh\
+			sudo chown -R $${username}:$${username} ~/.ssh;\
 		fi
 
 create_deployer:
