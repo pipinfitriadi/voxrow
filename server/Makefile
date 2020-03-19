@@ -198,6 +198,8 @@ ddos_protection:
 	@echo "DDos Protection."
 	@sudo cp -f before.rules /etc/ufw/before.rules
 
+# How to Set Up SSH Keys on Ubuntu 18.04
+# https://linuxize.com/post/how-to-set-up-ssh-keys-on-ubuntu-1804/
 deactivate_root:
 	@echo "Non-aktifkan login SSH user root dan autentikasi password SSH."
 	@sudo cp -f sshd_config /etc/ssh/sshd_config
