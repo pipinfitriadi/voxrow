@@ -90,7 +90,10 @@ initial_setup_server: update_server\
 	fail2ban_setup\
 	docker_install\
 	dockercompose\
-	gitlabrunner
+	gitlabrunner\
+	create_superuser\
+	create_deployer\
+	deactivate_root
 	@echo "===================== Initial setup server is finished! ====================="
 	@sudo reboot
 
@@ -107,9 +110,8 @@ local_sshkey_to_server:
 			cat ~/.ssh/id_rsa.pub\
 			| ssh $${username}@$${remote_host}\
 			"mkdir -p ~/.ssh\
-				&& chmod 700 ~/.ssh\
 				&& touch ~/.ssh/authorized_keys\
-				&& chmod 600 ~/.ssh/authorized_keys\
+				&& chmod -R go= ~/.ssh\
 				&& cat >> ~/.ssh/authorized_keys";\
 			echo "Authenticate is done!";\
 		fi
@@ -144,7 +146,7 @@ timezone_ntp:
 
 secure_sharedmemory:
 	@echo "===================== Mengamankan Shared Memory ====================="
-	@sudo cp -f fstab /etc/fstab
+	@sudo echo 'tmpfs /run/shm tmpfs defaults,noexec,nosuid 0 0' >> /etc/fstab
 
 # Harden the networking layer.
 # https://medium.com/@AKcryptoGUY/how-to-secure-vps-hyper-v-9ceee0d1c2a9
@@ -211,13 +213,14 @@ create_user:
 			sudo adduser $${username};\
 			if [ $${is_superuser:-n} = y ]; then\
 				sudo usermod -aG sudo $${username};\
-				sudo chown -R $${username}:$${username} ~/.ssh;\
+				rsync --archive --chown=$${username}:$${username} ~/.ssh /home/$${username};\
 			else\
 				sudo setfacl -R -m u:$${username}:rwx /home/$${username}/;\
 			fi;\
 			if [ $${is_deployer:-n} = y ]; then\
 				echo $${username} 'ALL=(ALL:ALL) NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo;\
 			fi;\
+			echo "Create $${username} is done!";\
 		fi
 
 create_superuser:
@@ -227,7 +230,8 @@ create_superuser:
 		if [ $${username} ]; then\
 			sudo adduser $${username};\
 			sudo usermod -aG sudo $${username};\
-			sudo chown -R $${username}:$${username} ~/.ssh;\
+			rsync --archive --chown=$${username}:$${username} ~/.ssh /home/$${username};\
+			echo "Create $${username} is done!";\
 		fi
 
 create_deployer:
@@ -236,11 +240,13 @@ create_deployer:
 	@read -p "Username? [deployer] " username;\
 		sudo adduser $${username:-deployer};\
 		sudo setfacl -R -m u:$${username}:rwx /home/$${username}/;\
-		echo $${username} 'ALL=(ALL:ALL) NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo
+		echo $${username} 'ALL=(ALL:ALL) NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo;\
+		echo "Create $${username} is done!"
+
 
 # How to Set Up SSH Keys on Ubuntu 18.04
 # https://linuxize.com/post/how-to-set-up-ssh-keys-on-ubuntu-1804/
 deactivate_root:
 	@echo "===================== Non-aktifkan login SSH user root dan autentikasi password SSH ====================="
 	@sudo cp -f sshd_config /etc/ssh/sshd_config
-	@sudo systemctl restart ssh
+	@sudo systemctl restart sshd
