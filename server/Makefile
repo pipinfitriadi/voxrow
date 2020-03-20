@@ -85,6 +85,7 @@ initial_setup_server: update_server\
 	gitflow\
 	firewall\
 	timezone_ntp\
+	secure_sharedmemory\
 	harden_network\
 	ddos_protection\
 	fail2ban_setup\
