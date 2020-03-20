@@ -72,9 +72,9 @@ define install_program
 	@if [ $1 ]\
 		&& ! [ -x "$(command -v $1)" ]; then\
 			if [ $2 ]; then\
-				sudo apt-get install $2 -y;\
+				sudo apt-get install -y $2;\
 			else\
-				sudo apt-get install $1 -y;\
+				sudo apt-get install -y $1;\
 			fi;\
 		fi
 endef
@@ -83,24 +83,24 @@ endef
 # https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys-on-ubuntu-1804
 initial_setup_server: update_server\
 	gitflow\
-	create_superuser\
-	create_deployer\
 	firewall\
-	secure_sharedmemory\
 	timezone_ntp\
+	secure_sharedmemory\
 	harden_network\
 	ddos_protection\
-	deactivate_root\
-	fail2ban_setup
-	@echo "Initial setup server is finished!"
+	fail2ban_setup\
+	docker_install\
+	docker_compose_install\
+	gitlab_runner_install
+	@echo "===================== Initial setup server is finished! ====================="
 	@sudo reboot
 
 # Authenticate to Ubuntu Server Using SSH Keys.
 # https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys-on-ubuntu-1804
 # WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED
 # https://www.digitalocean.com/community/questions/warning-remote-host-identification-has-changed
-local_ssh_key_to_server:
-	@echo "Authenticate to Ubuntu Server Using SSH Keys."
+local_sshkey_to_server:
+	@echo "===================== Authenticate to Ubuntu Server Using SSH Keys ====================="
 	@read -p "Remote host: " remote_host;\
 		read -p "Username: " username;\
 		if [ $${remote_host} ] && [ $${username} ]; then\
@@ -116,20 +116,91 @@ local_ssh_key_to_server:
 		fi
 
 update_server:
-	@echo "Update Server."
+	@echo "===================== Update Server ====================="
 	@sudo apt-get update
 
 gitflow:
 	@echo "Install Git-Flow"
 	$(call install_program, git-flow)
 
+firewall:
+	@echo "===================== Memasangkan firewall sederhana ====================="
+	@sudo ufw app list
+	@sudo ufw allow OpenSSH
+	@sudo ufw allow http
+	@sudo ufw allow https
+	@sudo ufw enable
+	@sudo ufw status verbose
+
+# Pasang zona waktu & NTP.
+# https://medium.com/@AKcryptoGUY/how-to-secure-vps-hyper-v-9ceee0d1c2a9
+timezone_ntp:
+	@echo "===================== Pasang zona waktu & NTP ====================="
+	$(call install_program, dbus)
+	@read -p "Server's timezone? [Asia/Jakarta] " timezone;\
+		timezone=$${timezone:-"Asia/Jakarta"};\
+		sudo timedatectl set-timezone $${timezone}
+	$(call install_program, ntp)
+	@echo Timezone: $$(cat /etc/timezone)
+
+secure_sharedmemory:
+	@echo "===================== Mengamankan Shared Memory ====================="
+	@sudo cp -f fstab /etc/fstab
+
+# Harden the networking layer.
+# https://medium.com/@AKcryptoGUY/how-to-secure-vps-hyper-v-9ceee0d1c2a9
+harden_network:
+	@echo "===================== Harden the networking layer ====================="
+	@sudo cp -f sysctl.conf /etc/sysctl.conf
+
+# DDos Protection.
+# https://medium.com/@AKcryptoGUY/how-to-secure-vps-hyper-v-9ceee0d1c2a9
+ddos_protection:
+	@echo "===================== DDos Protection ====================="
+	@sudo cp -f before.rules /etc/ufw/before.rules
+
+fail2ban_setup:
+	@echo "===================== Pasang Fail2ban ====================="
+	$(call install_program, fail2ban)
+	@sudo cp -f jail.local /etc/fail2ban/jail.local
+	@sudo systemctl restart fail2ban
+
+# Get Docker Engine - Community for Ubuntu
+# https://docs.docker.com/install/linux/docker-ce/ubuntu/
+docker_install:
+	@echo "===================== Pasang Docker ====================="
+	@sudo apt-get remove docker docker-engine docker.io containerd runc
+	@sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+	@curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+	@sudo apt-key fingerprint 0EBFCD88
+	@sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+	$(call install_program, docker, 'docker-ce docker-ce-cli containerd.io')
+	@sudo docker run --rm hello-world
+
+# Install Docker Compose
+# https://docs.docker.com/compose/install/
+docker_compose_install:
+	@echo "===================== Pasang Docker Compose ====================="
+	$(call install_program, curl)
+	@sudo curl -L "https://github.com/docker/compose/releases/download/1.25.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+	@sudo chmod +x /usr/local/bin/docker-compose
+	@docker-compose --version
+
+# Install GitLab Runner
+# https://docs.gitlab.com/runner/install/linux-repository.html
+gitlab_runner_install:
+	@echo "===================== Pasang GitLab Runner ====================="
+	$(call install_program, curl)
+	@curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh | sudo bash
+	$(call install_program, gitlab-runner)
+
 # Enabling External Access for Your Regular User
 # https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-18-04
 # How do I edit /etc/sudoers from a script?
 # https://stackoverflow.com/questions/323957/how-do-i-edit-etc-sudoers-from-a-script
 create_user:
+	@echo "===================== Membuat akun reguler server dan pilihan untuk memberikan hak akses superuser ke akun tersebut ====================="
 	$(call install_program, setfacl, acl)
-	@echo "Membuat akun reguler server dan pilihan untuk memberikan hak akses superuser ke akun tersebut."
 	@read -p "Username? " username;\
 		read -p "Is superuser? [y/n] " is_superuser;\
 		read -p "Is deployer? [y/n] " is_deployer;\
@@ -147,8 +218,8 @@ create_user:
 		fi
 
 create_superuser:
+	@echo "===================== Membuat akun superuser server ====================="
 	$(call install_program, setfacl, acl)
-	@echo "Membuat akun superuser server."
 	@read -p "Username? " username;\
 		if [ $${username} ]; then\
 			sudo adduser $${username};\
@@ -157,61 +228,16 @@ create_superuser:
 		fi
 
 create_deployer:
+	@echo "===================== Membuat akun deployer server ====================="
 	$(call install_program, setfacl, acl)
-	@echo "Membuat akun deployer server."
 	@read -p "Username? [deployer] " username;\
 		sudo adduser $${username:-deployer};\
 		sudo setfacl -R -m u:$${username}:rwx /home/$${username}/;\
 		echo $${username} 'ALL=(ALL:ALL) NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo
 
-tes:
-	@su - deployer && who && echo $${HOME}
-
-firewall:
-	@echo "Memasangkan firewall sederhana."
-	@sudo ufw app list
-	@sudo ufw allow OpenSSH
-	@sudo ufw allow http
-	@sudo ufw allow https
-	@sudo ufw enable
-	@sudo ufw status verbose
-
-secure_sharedmemory:
-	@echo "Mengamankan Shared Memory."
-	@sudo cp -f fstab /etc/fstab
-
-# Pasang zona waktu & NTP.
-# https://medium.com/@AKcryptoGUY/how-to-secure-vps-hyper-v-9ceee0d1c2a9
-timezone_ntp:
-	@echo "Pasang zona waktu & NTP."
-	$(call install_program, dbus)
-	@read -p "Server's timezone? [Asia/Jakarta] " timezone;\
-		timezone=$${timezone:-"Asia/Jakarta"};\
-		sudo timedatectl set-timezone $${timezone}
-	$(call install_program, ntp)
-	@echo Timezone: $$(cat /etc/timezone)
-
-# Harden the networking layer.
-# https://medium.com/@AKcryptoGUY/how-to-secure-vps-hyper-v-9ceee0d1c2a9
-harden_network:
-	@echo "Harden the networking layer."
-	@sudo cp -f sysctl.conf /etc/sysctl.conf
-
-# DDos Protection.
-# https://medium.com/@AKcryptoGUY/how-to-secure-vps-hyper-v-9ceee0d1c2a9
-ddos_protection:
-	@echo "DDos Protection."
-	@sudo cp -f before.rules /etc/ufw/before.rules
-
 # How to Set Up SSH Keys on Ubuntu 18.04
 # https://linuxize.com/post/how-to-set-up-ssh-keys-on-ubuntu-1804/
 deactivate_root:
-	@echo "Non-aktifkan login SSH user root dan autentikasi password SSH."
+	@echo "===================== Non-aktifkan login SSH user root dan autentikasi password SSH ====================="
 	@sudo cp -f sshd_config /etc/ssh/sshd_config
 	@sudo systemctl restart ssh
-
-fail2ban_setup:
-	@echo "Pasang Fail2ban."
-	$(call install_program, fail2ban)
-	@sudo cp -f jail.local /etc/fail2ban/jail.local
-	@sudo systemctl restart fail2ban
