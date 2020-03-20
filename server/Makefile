@@ -174,7 +174,7 @@ docker_install:
 	@curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 	@sudo apt-key fingerprint 0EBFCD88
 	@echo "===================== Verify that you now have the key with the fingerprint 9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88, by searching for the last 8 characters of the fingerprint ===================== "
-	@sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+	@sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $$(lsb_release -cs) stable"
 	@sudo apt-get install -y docker-ce docker-ce-cli containerd.io
 	@sudo docker run --rm hello-world
 
@@ -183,7 +183,7 @@ docker_install:
 docker_compose_install:
 	@echo "===================== Pasang Docker Compose ====================="
 	$(call install_program, curl)
-	@sudo curl -L "https://github.com/docker/compose/releases/download/1.25.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+	@sudo curl -L "https://github.com/docker/compose/releases/download/1.25.4/docker-compose-$$(uname -s)-$$(uname -m)" -o /usr/local/bin/docker-compose
 	@sudo chmod +x /usr/local/bin/docker-compose
 	@docker-compose --version
 
