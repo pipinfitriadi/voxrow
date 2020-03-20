@@ -203,6 +203,8 @@ gitlabrunner:
 # https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-18-04
 # How do I edit /etc/sudoers from a script?
 # https://stackoverflow.com/questions/323957/how-do-i-edit-etc-sudoers-from-a-script
+# how to pass environment variable to sudo su
+# https://unix.stackexchange.com/questions/202383/how-to-pass-environment-variable-to-sudo-su
 create_user:
 	@echo "===================== Membuat akun reguler server dan pilihan untuk memberikan hak akses superuser ke akun tersebut ====================="
 	$(call install_program, setfacl, acl)
@@ -243,16 +245,16 @@ create_deployer:
 		sudo setfacl -R -m u:$${username}:rwx /home/$${username}/;\
 		echo $${username} 'ALL=(ALL:ALL) NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo;\
 		if [ $${email} ]; then\
-			sudo -H -u $${username} bash -c 'ssh-keygen -t rsa -C $${email} -b 4096'\
-			&& sudo -H -u $${username} bash -c 'cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys'\
-			&& sudo -H -u $${username} bash -c 'cat ~/.ssh/id_rsa'\
-			&& sudo -H -u $${username} bash -c 'cat ~/.ssh/id_rsa.pub';\
+			su - $${username} -c 'ssh-keygen -t rsa -C $${email} -b 4096'\
+			&& su - $${username} -c 'cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys'\
+			&& su - $${username} -c 'cat ~/.ssh/id_rsa'\
+			&& su - $${username} -c 'cat ~/.ssh/id_rsa.pub';\
 		fi;\
 		echo "Create $${username} is done!"
 
 tes:
 	@read -p "Email? " email;\
-		sudo -H -u deployer bash -c 'ssh-keygen -t rsa -C $${email} -b 4096';\
+		sudo email=$${email} su deployer -c 'echo ssh-keygen -t rsa -C $${email} -b 4096';\
 
 # How to Set Up SSH Keys on Ubuntu 18.04
 # https://linuxize.com/post/how-to-set-up-ssh-keys-on-ubuntu-1804/
