@@ -85,9 +85,12 @@ initial_setup_server: update_server\
 	gitflow\
 	firewall\
 	timezone_ntp\
+	harden_network\
+	ddos_protection\
+	fail2ban_setup\
 	docker_install\
-	docker_compose_install\
-	gitlab_runner_install
+	dockercompose\
+	gitlabrunner
 	@echo "===================== Initial setup server is finished! ====================="
 	@sudo reboot
 
@@ -179,7 +182,7 @@ docker_install:
 
 # Install Docker Compose
 # https://docs.docker.com/compose/install/
-docker_compose_install:
+dockercompose:
 	@echo "===================== Pasang Docker Compose ====================="
 	$(call install_program, curl)
 	@sudo curl -L "https://github.com/docker/compose/releases/download/1.25.4/docker-compose-$$(uname -s)-$$(uname -m)" -o /usr/local/bin/docker-compose
@@ -188,7 +191,7 @@ docker_compose_install:
 
 # Install GitLab Runner
 # https://docs.gitlab.com/runner/install/linux-repository.html
-gitlab_runner_install:
+gitlabrunner:
 	@echo "===================== Pasang GitLab Runner ====================="
 	$(call install_program, curl)
 	@curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh | sudo bash
