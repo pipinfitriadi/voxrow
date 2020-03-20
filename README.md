@@ -161,6 +161,8 @@ menjalankan perintah ini:
 
     - _Server_:
 
+        > Pastikan anda masuk sebagai _username_ `root`!
+
         ```shell
         $ make
         ```
