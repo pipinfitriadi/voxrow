@@ -254,7 +254,7 @@ create_deployer:
 
 tes:
 	@read -p "Email? " email;\
-		su - deployer -c "echo ssh-keygen -t rsa -C $${email} -b 4096";\
+		su - deployer -c "pwd && ssh-keygen -t rsa -C $${email} -b 4096";\
 
 # How to Set Up SSH Keys on Ubuntu 18.04
 # https://linuxize.com/post/how-to-set-up-ssh-keys-on-ubuntu-1804/
