@@ -243,6 +243,9 @@ create_deployer:
 		echo $${username} 'ALL=(ALL:ALL) NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo;\
 		echo "Create $${username} is done!"
 
+tes:
+	@read -p "Username? [deployer] " username;\
+		echo $${username:-deployer} 'ALL=(ALL:ALL) NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo
 
 # How to Set Up SSH Keys on Ubuntu 18.04
 # https://linuxize.com/post/how-to-set-up-ssh-keys-on-ubuntu-1804/
