@@ -227,14 +227,14 @@ create_user:
 					echo "===================== Buat SSH Keygen dan kosongkan password SSH saat pembuatan! ====================="\
 					&& su - $${username} -c "ssh-keygen -t rsa -C $${email} -b 4096"\
 					&& su - $${username} -c 'cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys'\
-					&& echo "===================== Salin isi dari private key ke GitLab ====================="\
-					&& echo "===================== bagian Settings > CI/CD > Variables repositori ====================="\
+					&& echo "===================== Salin isi dari private key ke repositori GitLab ====================="\
+					&& echo "===================== bagian Settings > CI/CD > Variables ====================="\
 					&& echo "===================== Beri nama varibale SSH_PRIVATE_KEY. Tambahkan juga variable ====================="\
 					&& echo "===================== IP_ADDRESS dan masukkan IP Address Server ke dalamnya. ====================="\
 					&& su - $${username} -c 'cat ~/.ssh/id_rsa'\
-					&& echo "===================== Salin isi dari public key ke GitLab ====================="\
-					&& echo "===================== bagian Settings > Repository > Deploy Keys repositori ====================="\
-					&& echo "===================== Isi title dengan SSH Public Key | {{VPS}} | User deployer. ====================="\
+					&& echo "===================== Salin isi dari public key ke repositori GitLab ====================="\
+					&& echo "===================== bagian Settings > CI/CD > Deploy Keys ====================="\
+					&& echo "===================== Isi title dengan USERNAME_DEPLOYER@IP_ADDRESS ====================="\
 					&& echo "===================== Langkah ini diperlukan, karena repositori yang dipergunakan mode private. ====================="\
 					&& su - $${username} -c 'cat ~/.ssh/id_rsa.pub';\
 				fi;\
@@ -270,9 +270,9 @@ create_deployer:
 			&& echo "===================== Beri nama varibale SSH_PRIVATE_KEY. Tambahkan juga variable ====================="\
 			&& echo "===================== IP_ADDRESS dan masukkan IP Address Server ke dalamnya. ====================="\
 			&& su - $${username} -c 'cat ~/.ssh/id_rsa'\
-			&& echo "===================== Salin isi dari public key ke GitLab ====================="\
-			&& echo "===================== bagian Settings > Repository > Deploy Keys repositori ====================="\
-			&& echo "===================== Isi title dengan SSH Public Key | {{VPS}} | User deployer. ====================="\
+			&& echo "===================== Salin isi dari public key ke repositori GitLab ====================="\
+			&& echo "===================== bagian Settings > CI/CD > Deploy Keys ====================="\
+			&& echo "===================== Isi title dengan USERNAME_DEPLOYER@IP_ADDRESS ====================="\
 			&& echo "===================== Langkah ini diperlukan, karena repositori yang dipergunakan mode private. ====================="\
 			&& su - $${username} -c 'cat ~/.ssh/id_rsa.pub';\
 		fi;\
