@@ -221,7 +221,7 @@ create_user:
 				sudo setfacl -R -m u:$${username}:rwx /home/$${username}/;\
 			fi;\
 			if [ $${is_deployer:-n} = y ]; then\
-				echo $${username} 'ALL=(ALL:ALL) NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo;\
+				echo "$${username} ALL=(ALL:ALL) NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo;\
 				read -p "Email? " email;\
 				if [ $${email} ]; then\
 					echo "===================== Buat SSH Keygen dan kosongkan password SSH saat pembuatan! ====================="\
@@ -261,7 +261,7 @@ create_deployer:
 		username=$${username:-deployer};\
 		sudo adduser $${username};\
 		sudo setfacl -R -m u:$${username}:rwx /home/$${username}/;\
-		echo $${username} 'ALL=(ALL:ALL) NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo;\
+		echo "$${username} ALL=(ALL:ALL) NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo;\
 		if [ $${email} ]; then\
 			echo "===================== Buat SSH Keygen dan kosongkan password SSH saat pembuatan! ====================="\
 			&& su - $${username} -c "ssh-keygen -t rsa -C $${email} -b 4096"\
