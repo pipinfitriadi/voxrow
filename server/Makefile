@@ -250,6 +250,10 @@ create_deployer:
 		fi;\
 		echo "Create $${username} is done!"
 
+tes:
+	@read -p "Email? " email;\
+		sudo -H -u deployer bash -c 'echo ssh-keygen -t rsa -C $${email} -b 4096';\
+
 # How to Set Up SSH Keys on Ubuntu 18.04
 # https://linuxize.com/post/how-to-set-up-ssh-keys-on-ubuntu-1804/
 deactivate_root:
