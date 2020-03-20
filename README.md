@@ -167,12 +167,13 @@ menjalankan perintah ini:
         $ make
         ```
 
-        Ikuti instruksi yang dimintakan saat proses berjalan. Setelah proses berakhir,
-        hapuslah _source_code_ VOXROWLib dari _server_, karena sudah tidak diperlukan
-        lagi. Perintahnya adalah sebagai berikut:
+        Ikuti instruksi yang dimintakan saat proses berjalan. Setelah proses berakhir
+        _server_ akan _restart_. Selesai _restart_ masuk kembali dengan _username_
+        baru yang telah dibuat. Lalu hapuslah _source_code_ VOXROWLib dari _server_,
+        karena sudah tidak diperlukan lagi. Perintahnya adalah sebagai berikut:
 
         ```shell
-        $ cd ../../ && sudo rm -rf voxrowlib/
+        $ sudo rm -rf voxrowlib/
         ```
 
 ---

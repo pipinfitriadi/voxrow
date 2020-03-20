@@ -258,7 +258,8 @@ create_deployer:
 	$(call install_program, setfacl, acl)
 	@read -p "Username? [deployer] " username;\
 		read -p "Email? " email;\
-		sudo adduser $${username:-deployer};\
+		username=$${username:-deployer};\
+		sudo adduser $${username};\
 		sudo setfacl -R -m u:$${username}:rwx /home/$${username}/;\
 		echo $${username} 'ALL=(ALL:ALL) NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo;\
 		if [ $${email} ]; then\
