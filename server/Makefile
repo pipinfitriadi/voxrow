@@ -238,18 +238,21 @@ create_deployer:
 	@echo "===================== Membuat akun deployer server ====================="
 	$(call install_program, setfacl, acl)
 	@read -p "Username? [deployer] " username;\
-		sudo adduser $${username:-deployer};\
-		sudo setfacl -R -m u:$${username}:rwx /home/$${username}/;\
-		echo $${username} 'ALL=(ALL:ALL) NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo;\
-		echo "Create $${username} is done!"
-
-tes:
-	@read -p "Username? [deployer] " username;\
-		echo $${username:-deployer} 'ALL=(ALL:ALL) NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo
+		read -p "Email? " email;\
+		sudo adduser $${username:-deployer}\
+		&& sudo setfacl -R -m u:$${username}:rwx /home/$${username}/\
+		&& echo $${username} 'ALL=(ALL:ALL) NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo\
+		&& if [ $${email} ]; then\
+				sudo -H -u $${username} bash -c 'ssh-keygen -t rsa -C $${email} -b 4096'\
+				&& sudo -H -u $${username} bash -c 'cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys'\
+				&& sudo -H -u $${username} bash -c 'cat ~/.ssh/id_rsa'\
+				&& sudo -H -u $${username} bash -c 'cat ~/.ssh/id_rsa.pub';\
+			fi\
+		&& echo "Create $${username} is done!"
 
 # How to Set Up SSH Keys on Ubuntu 18.04
 # https://linuxize.com/post/how-to-set-up-ssh-keys-on-ubuntu-1804/
 deactivate_root:
 	@echo "===================== Non-aktifkan login SSH user root dan autentikasi password SSH ====================="
-	@sudo cp -f sshd_config /etc/ssh/sshd_config
-	@sudo systemctl restart sshd
+	@sudo cp -f sshd_config /etc/ssh/sshd_config\
+	&& sudo systemctl restart sshd
