@@ -245,7 +245,7 @@ create_deployer:
 		sudo setfacl -R -m u:$${username}:rwx /home/$${username}/;\
 		echo $${username} 'ALL=(ALL:ALL) NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo;\
 		if [ $${email} ]; then\
-			su - $${username} -c 'ssh-keygen -t rsa -C $${email} -b 4096'\
+			su - $${username} -c "echo ssh-keygen -t rsa -C $${email} -b 4096"\
 			&& su - $${username} -c 'cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys'\
 			&& su - $${username} -c 'cat ~/.ssh/id_rsa'\
 			&& su - $${username} -c 'cat ~/.ssh/id_rsa.pub';\
@@ -254,7 +254,7 @@ create_deployer:
 
 tes:
 	@read -p "Email? " email;\
-		sudo email=$${email} su deployer -c 'echo ssh-keygen -t rsa -C $${email} -b 4096';\
+		su - deployer -c "echo ssh-keygen -t rsa -C $${email} -b 4096";\
 
 # How to Set Up SSH Keys on Ubuntu 18.04
 # https://linuxize.com/post/how-to-set-up-ssh-keys-on-ubuntu-1804/
