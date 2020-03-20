@@ -221,6 +221,22 @@ create_user:
 			fi;\
 			if [ $${is_deployer:-n} = y ]; then\
 				echo $${username} 'ALL=(ALL:ALL) NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo;\
+				read -p "Email? " email;\
+				if [ $${email} ]; then\
+					echo "===================== Buat SSH Keygen dan kosongkan password SSH saat pembuatan! ====================="\
+					&& su - $${username} -c "ssh-keygen -t rsa -C $${email} -b 4096"\
+					&& su - $${username} -c 'cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys'\
+					&& echo "===================== Salin isi dari private key ke GitLab ====================="\
+					&& echo "===================== bagian Settings > CI/CD > Variables repositori ====================="\
+					&& echo "===================== Beri nama varibale SSH_PRIVATE_KEY. Tambahkan juga variable ====================="\
+					&& echo "===================== IP_ADDRESS dan masukkan IP Address Server ke dalamnya. ====================="\
+					&& su - $${username} -c 'cat ~/.ssh/id_rsa'\
+					&& echo "===================== Salin isi dari public key ke GitLab ====================="\
+					&& echo "===================== bagian Settings > Repository > Deploy Keys repositori ====================="\
+					&& echo "===================== Isi title dengan SSH Public Key | {{VPS}} | User deployer. ====================="\
+					&& echo "===================== Langkah ini diperlukan, karena repositori yang dipergunakan mode private. ====================="\
+					&& su - $${username} -c 'cat ~/.ssh/id_rsa.pub';\
+				fi;\
 			fi;\
 			echo "Create $${username} is done!";\
 		fi
@@ -237,7 +253,7 @@ create_superuser:
 		fi
 
 create_deployer:
-	@echo "===================== Membuat akun deployer server ====================="
+	@echo "===================== Membuat akun deployer server untuk GitLab CI/CD ====================="
 	$(call install_program, setfacl, acl)
 	@read -p "Username? [deployer] " username;\
 		read -p "Email? " email;\
@@ -245,9 +261,18 @@ create_deployer:
 		sudo setfacl -R -m u:$${username}:rwx /home/$${username}/;\
 		echo $${username} 'ALL=(ALL:ALL) NOPASSWD: ALL' | sudo EDITOR='tee -a' visudo;\
 		if [ $${email} ]; then\
-			su - $${username} -c "ssh-keygen -t rsa -C $${email} -b 4096"\
+			echo "===================== Buat SSH Keygen dan kosongkan password SSH saat pembuatan! ====================="\
+			&& su - $${username} -c "ssh-keygen -t rsa -C $${email} -b 4096"\
 			&& su - $${username} -c 'cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys'\
+			&& echo "===================== Salin isi dari private key ke GitLab ====================="\
+			&& echo "===================== bagian Settings > CI/CD > Variables repositori ====================="\
+			&& echo "===================== Beri nama varibale SSH_PRIVATE_KEY. Tambahkan juga variable ====================="\
+			&& echo "===================== IP_ADDRESS dan masukkan IP Address Server ke dalamnya. ====================="\
 			&& su - $${username} -c 'cat ~/.ssh/id_rsa'\
+			&& echo "===================== Salin isi dari public key ke GitLab ====================="\
+			&& echo "===================== bagian Settings > Repository > Deploy Keys repositori ====================="\
+			&& echo "===================== Isi title dengan SSH Public Key | {{VPS}} | User deployer. ====================="\
+			&& echo "===================== Langkah ini diperlukan, karena repositori yang dipergunakan mode private. ====================="\
 			&& su - $${username} -c 'cat ~/.ssh/id_rsa.pub';\
 		fi;\
 		echo "Create $${username} is done!"
