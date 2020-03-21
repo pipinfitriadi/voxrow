@@ -76,8 +76,8 @@ default:
 Build Docker Image:
   stage: Build
   script:
-    # - . server/build_docker_image.sh
-    - cd server/ && make build_docker_image && cd ../
+    - . server/build_docker_image.sh
+    # - cd server/ && make build_docker_image && cd ../
   only:
     - docker
   tags:
