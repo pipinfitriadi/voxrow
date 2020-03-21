@@ -293,7 +293,7 @@ register_runner:
 	@read -p 'Please enter the gitlab-ci coordinator URL: [https://gitlab.com] ' url;\
 		read -p 'Please enter the gitlab-ci description for this runner: [app_runner]: ' description;\
 		read -p 'Please enter the gitlab-ci token for this runner: ' registration_token;\
-		gitlab-runner register -n\
+		sudo gitlab-runner register -n\
 			--url $${url:-'https://gitlab.com/'}\
 			--registration-token $${registration_token}\
 			--executor shell\
