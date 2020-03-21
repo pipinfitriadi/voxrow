@@ -81,5 +81,3 @@ Linter Test:
     - live
   script:
     - . server/linter_test.sh
-  after_script:
-    - docker-compose -f server/docker-compose/linter_test.yml down -v
