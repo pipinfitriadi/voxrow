@@ -83,7 +83,7 @@ VOXROWLib. Adapun langkah yang harus dipersiapkan adalah sebagai berikut:
 dipergunakan perintah Git berikut ini:
 
     ```shell
-    $ git clone https://gitlab.com/voxrow/voxrowlib.git
+    $ git clone --recurse-submodules -j8 https://gitlab.com/voxrow/voxrowlib.git
     ```
 
     > Jangan jalankan perintah ini di _folder_ `root/` milik _server_!
