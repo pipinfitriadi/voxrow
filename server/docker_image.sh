@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Copyright 2020 Pipin Fitriadi <pipinfitriadi@gmail.com>
 
 # Licensed under the Microsoft Reference Source License (MS-RSL)
@@ -51,31 +53,21 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-# Referensi:
-# https://docs.gitlab.com/ce/ci/ssh_keys/README.html
-# https://gitlab.com/gitlab-examples/ssh-private-key/-/blob/master/.gitlab-ci.yml
-# https://gitlab.com/voxrow/voxrow/-/tree/205bae29c7b51bb8a785aeb017366fa16b637eda#gitlab-continuous-integration-and-delivery-cicd
+# Better way for multiline ssh command
+# https://forum.gitlab.com/t/better-way-for-multiline-ssh-command/23420
+set -e
+filename='server/docker-compose/Dockerfile'
+# How do I find the most recent git commit that modified a file?
+# https://stackoverflow.com/questions/4784575/how-do-i-find-the-most-recent-git-commit-that-modified-a-file
+last_commit_hash=$(git log -n 1 --pretty=format:%H)
+file_last_commit_hash=$(git log -n 1 --pretty=format:%H -- $filename)
 
-stages:
-  - Build
-  - Test
-  - Release
-  - Deploy
-variables:
-  GIT_SUBMODULE_STRATEGY: recursive
-Build Docker Image:
-  stage: Build
-  script:
-    - . server/docker_image.sh
-  only:
-    - docker
-  tags:
-    - live
-Linter Test:
-  stage: Test
-  script:
-    - . server/linter_test.sh
-  only:
-    - master
-  tags:
-    - live
+if [ $last_commit_hash == $file_last_commit_hash ]; then
+    # Docker Registry login and docker CI template
+    # https://gitlab.com/gitlab-org/gitlab-runner/issues/2861
+    echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
+    docker-compose -f server/docker-compose/docker_image.yml pull || true
+    docker-compose -f server/docker-compose/docker_image.yml build
+    docker-compose -f server/docker-compose/docker_image.yml push
+    docker logout $CI_REGISTRY
+fi

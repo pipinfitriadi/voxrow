@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Copyright 2020 Pipin Fitriadi <pipinfitriadi@gmail.com>
 
 # Licensed under the Microsoft Reference Source License (MS-RSL)
@@ -53,21 +51,35 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-# Better way for multiline ssh command
-# https://forum.gitlab.com/t/better-way-for-multiline-ssh-command/23420
-set -e
-filename='server/Dockerfile'
-# How do I find the most recent git commit that modified a file?
-# https://stackoverflow.com/questions/4784575/how-do-i-find-the-most-recent-git-commit-that-modified-a-file
-last_commit_hash=$(git log -n 1 --pretty=format:%H)
-file_last_commit_hash=$(git log -n 1 --pretty=format:%H -- $filename)
+FROM docker:19.03.1
+LABEL maintainer="pipinfitriadi@gmail.com"
 
-if [ $last_commit_hash == $file_last_commit_hash ]; then
-    # Docker Registry login and docker CI template
-    # https://gitlab.com/gitlab-org/gitlab-runner/issues/2861
-    echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
-    docker pull $CONTAINER_DOCKER || true
-    docker build --cache-from $CONTAINER_DOCKER -t $CONTAINER_DOCKER -f $filename .
-    docker push $CONTAINER_DOCKER
-    docker logout $CI_REGISTRY
-fi
+# how to run docker-compose inside docker in docker witch runs inside gitlab-runner conatiner?
+# https://stackoverflow.com/questions/48630005/how-to-run-docker-compose-inside-docker-in-docker-witch-runs-inside-gitlab-runne
+RUN apk add --no-cache --virtual .build-deps \
+        python3-dev \
+        libffi-dev \
+        openssl-dev \
+        gcc \
+        libc-dev \
+        make \
+    # https://github.com/valudio/docker-sshpass/blob/master/node-alpine/Dockerfile
+    && apk add --no-cache \
+        openssh \
+        sshpass \
+        py3-pip \
+    && pip3 install --no-cache-dir --upgrade pip \
+    && pip3 install --no-cache-dir docker-compose \
+    && find /usr/local \
+        \( -type d -a -name test -o -name tests \) \
+        -o \( -type f -a -name '*.pyc' -o -name '*.pyo' \) \
+        -exec rm -rf '{}' + \
+    && runDeps="$( \
+        scanelf --needed --nobanner --recursive /usr/local \
+            | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' \
+            | sort -u \
+            | xargs -r apk info --installed \
+            | sort -u \
+        )" \
+    && apk add --virtual .rundeps $runDeps \
+    && apk del --no-cache .build-deps

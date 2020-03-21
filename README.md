@@ -98,7 +98,7 @@ dipergunakan perintah Git berikut ini:
 menjalankan perintah ini:
 
     ```shell
-    $ . make_gnu_install.sh
+    $ . make_gnu.sh
     ```
 
     > _Script_ ini hanya dapat dipergunakan di Ubuntu Linux, instalasi untuk OS

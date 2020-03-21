@@ -199,6 +199,8 @@ gitlabrunner:
 	$(call install_program, curl)
 	@curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh | sudo bash
 	$(call install_program, gitlab-runner)
+	@usermod -aG docker gitlab-runner
+	@sudo service docker restart
 
 # Enabling External Access for Your Regular User
 # https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-18-04
@@ -288,7 +290,11 @@ deactivate_root:
 
 linter_test:
 	@echo "===================== Linter Test ====================="
-	@cd ../ && flake8 --exclude env/ --ignore E203,E231,F821,F999,W503 && cd server/
+	@cd ../\
+		&& flake8\
+			--exclude env/\
+			--ignore E203,E231,F821,F999,W503\
+		&& cd server/
 
 # Permission denied when executing docker commands from Gitlab CI/CD pipeline
 # https://stackoverflow.com/questions/51769403/permission-denied-when-executing-docker-commands-from-gitlab-ci-cd-pipeline
@@ -302,23 +308,4 @@ register_runner:
 			--registration-token $$registration_token\
 			--executor shell\
 			--description $${description:-app_runner}\
-			--tag-list live\
-		&& usermod -aG docker gitlab-runner\
-		&& sudo service docker restart
-
-# How do I find the most recent git commit that modified a file?
-# https://stackoverflow.com/questions/4784575/how-do-i-find-the-most-recent-git-commit-that-modified-a-file
-# Docker Registry login and docker CI template
-# https://gitlab.com/gitlab-org/gitlab-runner/issues/2861
-build_docker_image:
-	@echo "===================== Build Docker Image ====================="
-	@filename='server/Dockerfile';\
-		last_commit_hash=$$(git log -n 1 --pretty=format:%H);\
-		file_last_commit_hash=$$(git log -n 1 --pretty=format:%H -- $$filename);\
-		if [ $$last_commit_hash == $$file_last_commit_hash ]; then\
-			echo $$CI_REGISTRY_PASSWORD | docker login -u $$CI_REGISTRY_USER $$CI_REGISTRY --password-stdin\
-			&& docker pull $$CONTAINER_DOCKER || true\
-			&& docker build --cache-from $$CONTAINER_DOCKER -t $$CONTAINER_DOCKER -f $$filename .\
-			&& docker push $$CONTAINER_DOCKER\
-			&& docker logout $$CI_REGISTRY;\
-		fi
+			--tag-list live
