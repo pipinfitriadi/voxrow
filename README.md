@@ -60,49 +60,15 @@ Daftar isi:
 <!-- TOC -->
 
 - [VOXROWLib](#voxrowlib)
+    - [Server](#server)
     - [Source-code](#source-code)
         - [Editor](#editor)
         - [Repositori Git](#repositori-git)
         - [Tata Cara Penulisan Markdown](#tata-cara-penulisan-markdown)
-    - [Server](#server)
+        - [Python](#python)
     - [Lisensi](#lisensi)
 
 <!-- /TOC -->
-
----
-
-## _Source-code_
-
-### _Editor_
-
-[VSCode](https://code.visualstudio.com/) (Visual Studio Code) dipergunakan untuk
-memudahkan dalam penulisan _source-code_.
-
-Beberapa _extension_ VSCode dipasangkan untuk memudahkan penulisan _source-code_,
-antara lain:
-
-- [_Auto Markdown TOC_](https://marketplace.visualstudio.com/items?itemName=huntertran.auto-markdown-toc)
-- [_Markdownlint_](https://marketplace.visualstudio.com/items?itemName=DavidAnson.vscode-markdownlint)
-- [_Python extension for Visual Studio Code_](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
-
-### Repositori Git
-
-[Git](https://git-scm.com/) GUI [Sourcetree](https://www.sourcetreeapp.com/) dapat
-dipergunakan untuk memudahkan pengelolaan repositori, pada sistem operasi Windows
-atau MacOS.
-
-_Branching model_ [Git-Flow](https://github.com/nvie/gitflow) dari Vincent Driessen
-dipergunakan untuk memudahkan pengelolaan _feature_, _release_, dan _hotfix_ di
-dalam repositori.
-
-### Tata Cara Penulisan _Markdown_
-
-Beberapa sumber ini dapat dijadikan acuan tata cara penulisan _markdown_:
-
-- [_GitLab: List of supported languages and lexers_](https://github.com/rouge-ruby/rouge/wiki/List-of-supported-languages-and-lexers)
-- [_GitLab Markdown_](https://docs.gitlab.com/ee/user/markdown.html)
-- [_Wikipedia: Markdown_](https://en.m.wikipedia.org/wiki/Markdown)
-- [Berkas readme.md yang dibuat oleh Ben Strahan](https://gist.github.com/benstr/8744304#file-readme-md)
 
 ---
 
@@ -117,7 +83,7 @@ VOXROWLib. Adapun langkah yang harus dipersiapkan adalah sebagai berikut:
 dipergunakan perintah Git berikut ini:
 
     ```shell
-    $ git clone https://gitlab.com/voxrow/voxrowlib.git voxrowlib
+    $ git clone https://gitlab.com/voxrow/voxrowlib.git
     ```
 
     > Jangan jalankan perintah ini di _folder_ `root/` milik _server_!
@@ -175,6 +141,88 @@ menjalankan perintah ini:
         ```shell
         $ sudo rm -rf voxrowlib/
         ```
+
+---
+
+## _Source-code_
+
+> Sebagai catatan beberapa perintah aplikasi di komputer lokal ini dapat berjalan
+dengan baik di OS MacOS dan Linux. Adapun untuk OS Windows perlu dilakukan sedikit
+penyesuaian.
+
+### _Editor_
+
+[VSCode](https://code.visualstudio.com/) (Visual Studio Code) dipergunakan untuk
+memudahkan dalam penulisan _source-code_.
+
+Beberapa _extension_ VSCode dipasangkan untuk memudahkan penulisan _source-code_,
+antara lain:
+
+- [_Auto Markdown TOC_](https://marketplace.visualstudio.com/items?itemName=huntertran.auto-markdown-toc)
+- [_Markdownlint_](https://marketplace.visualstudio.com/items?itemName=DavidAnson.vscode-markdownlint)
+- [_Python extension for Visual Studio Code_](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+
+### Repositori Git
+
+[Git](https://git-scm.com/) GUI [Sourcetree](https://www.sourcetreeapp.com/) dapat
+dipergunakan untuk memudahkan pengelolaan repositori, pada sistem operasi Windows
+atau MacOS.
+
+_Branching model_ [Git-Flow](https://github.com/nvie/gitflow) dari Vincent Driessen
+dipergunakan untuk memudahkan pengelolaan _feature_, _release_, dan _hotfix_ di
+dalam repositori.
+
+### Tata Cara Penulisan _Markdown_
+
+Beberapa sumber ini dapat dijadikan acuan tata cara penulisan _markdown_:
+
+- [_GitLab: List of supported languages and lexers_](https://github.com/rouge-ruby/rouge/wiki/List-of-supported-languages-and-lexers)
+- [_GitLab Markdown_](https://docs.gitlab.com/ee/user/markdown.html)
+- [_Wikipedia: Markdown_](https://en.m.wikipedia.org/wiki/Markdown)
+- [Berkas readme.md yang dibuat oleh Ben Strahan](https://gist.github.com/benstr/8744304#file-readme-md)
+
+### Python
+
+Dipergunakan [Python 3.8.0](https://www.python.org/downloads/release/python-380/)
+(versi minimal).
+
+Dalam mengembangkan _source-code_ di komputer lokal, maka pertamakali perlu dibuat
+_environtment_ python dengan langkah berikut ini:
+
+1. Pastikan versi python yang dipergunakan sudah sesuai.
+
+    ```shell
+    $ python3 -V
+    ````
+
+2. Buat _environtment_ python.
+
+    ```shell
+    $ python3 -m venv env
+    ````
+
+    Instruksi terkait _environtment_ python yang dapat dipergunakan antara lain:
+
+    - Aktivasi:
+
+        ```shell
+        $ . env/bin/activate
+        ```
+
+        > Kembangkan _source-code_ dengan kondisi _environtment_ python sedang teraktivasi.
+
+    - Deaktivasi:
+
+        ```shell
+        (env) $ deactivate
+        ```
+
+3. Pastikan [pustaka pendukung](requirements.txt) terpasang di _environtment_ python.
+
+    ```shell
+    (env) $ pip install --upgrade pip
+    (env) $ pip install -r requirements.txt
+    ```
 
 ---
 
