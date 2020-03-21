@@ -134,9 +134,21 @@ menjalankan perintah ini:
         ```
 
         Ikuti instruksi yang dimintakan saat proses berjalan. Setelah proses berakhir
-        _server_ akan _restart_. Selesai _restart_ masuk kembali dengan _username_
-        baru yang telah dibuat. Lalu hapuslah _source_code_ VOXROWLib dari _server_,
-        karena sudah tidak diperlukan lagi. Perintahnya adalah sebagai berikut:
+        _server_ akan _reboot_. Selesai _reboot_ masuk kembali dengan _username_
+        baru yang telah dibuat.
+
+        [GitLab CI/CD](https://docs.gitlab.com/ee/ci/) dipergunakan untuk mempermudah
+        proses _release_ aplikasi. Registrasi [GitLab Runner](https://docs.gitlab.com/runner/)
+        di _private server_ perlu dilakukan untuk proses [CI/CD](https://en.wikipedia.org/wiki/CI/CD),
+        berikut adalah perintahnya:
+
+        ```shell
+        $ make register_runner
+        ```
+
+        Setelah seluruh proses selesai dijalankan, maka hapuslah _source-code_
+        VOXROWLib dari _server_, karena sudah tidak diperlukan lagi. Perintahnya
+        adalah sebagai berikut:
 
         ```shell
         $ sudo rm -rf voxrowlib/
