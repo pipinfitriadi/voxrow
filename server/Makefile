@@ -289,13 +289,17 @@ deactivate_root:
 linter_test:
 	@cd ../ && flake8 --exclude env/ --ignore E203,E231,F821,F999,W503 && cd server/
 
+# Permission denied when executing docker commands from Gitlab CI/CD pipeline
+# https://stackoverflow.com/questions/51769403/permission-denied-when-executing-docker-commands-from-gitlab-ci-cd-pipeline
 register_runner:
 	@read -p 'Please enter the gitlab-ci coordinator URL: [https://gitlab.com] ' url;\
 		read -p 'Please enter the gitlab-ci description for this runner: [app_runner]: ' description;\
 		read -p 'Please enter the gitlab-ci token for this runner: ' registration_token;\
 		sudo gitlab-runner register -n\
-			--url $${url:-'https://gitlab.com/'}\
-			--registration-token $${registration_token}\
-			--executor shell\
-			--description $${description:-app_runner}\
-			--tag-list live
+				--url $${url:-'https://gitlab.com/'}\
+				--registration-token $${registration_token}\
+				--executor shell\
+				--description $${description:-app_runner}\
+				--tag-list live\
+			&& usermod -aG docker gitlab-runner\
+			&& sudo service docker restart
