@@ -73,7 +73,7 @@ default:
     - chmod 700 ~/.ssh
     - ssh-keyscan "$SSH_HOST" >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
-Build Docker:
+Build Docker Image:
   stage: Build
   script:
     # Docker Registry login and docker CI template
