@@ -53,31 +53,8 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-# Install GitLab Runner using the official GitLab repositories
-# https://docs.gitlab.com/runner/install/linux-repository.html
-# Registering Runners
-# https://docs.gitlab.com/runner/register/index.html
-# TLS disabled
-# https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-disabled
-# Docker registry login times out
-# https://gitlab.com/gitlab-com/support-forum/issues/1278
-( \
-    which gitlab-runner || ( \
-        curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh | bash \
-        && apt-get install gitlab-runner \
-    ) \
-) \
-&& read -p 'Please enter the gitlab-ci coordinator URL (default is https://gitlab.com): ' url \
-&& read -p 'Please enter the gitlab-ci description for this runner (default is app_runner): ' description \
-&& read -sp 'Please enter the gitlab-ci token for this runner: ' registration_token \
-&& gitlab-runner register -n \
-    --url ${url:-'https://gitlab.com/'} \
-    --registration-token $registration_token \
-    --executor docker \
-    --description ${description:-app_runner} \
-    --docker-image docker:19.03.1 \
-    --docker-privileged \
-    --docker-volumes "/certs/client" \
-    --docker-wait-for-services-timeout 0 \
-    --tag-list live \
-    --docker-dns value ["8.8.8.8"]
+# # How do I install make?
+# # https://askubuntu.com/questions/161104/how-do-i-install-make
+if ! [ -x "$(command -v make)" ]; then
+    sudo apt-get install build-essential -y
+fi

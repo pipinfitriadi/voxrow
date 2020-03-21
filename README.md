@@ -1,3 +1,58 @@
+<!--
+Copyright 2020 Pipin Fitriadi <pipinfitriadi@gmail.com>
+
+Licensed under the Microsoft Reference Source License (MS-RSL)
+
+This license governs use of the accompanying software. If you use the
+software, you accept this license. If you do not accept the license, do not
+use the software.
+
+1. Definitions
+
+The terms "reproduce," "reproduction" and "distribution" have the same
+meaning here as under U.S. copyright law.
+
+"You" means the licensee of the software.
+
+"Your company" means the company you worked for when you downloaded the
+software.
+
+"Reference use" means use of the software within your company as a reference,
+in read only form, for the sole purposes of debugging your products,
+maintaining your products, or enhancing the interoperability of your
+products with the software, and specifically excludes the right to
+distribute the software outside of your company.
+
+"Licensed patents" means any Licensor patent claims which read directly on
+the software as distributed by the Licensor under this license.
+
+2. Grant of Rights
+
+(A) Copyright Grant- Subject to the terms of this license, the Licensor
+grants you a non-transferable, non-exclusive, worldwide, royalty-free
+copyright license to reproduce the software for reference use.
+
+(B) Patent Grant- Subject to the terms of this license, the Licensor grants
+you a non-transferable, non-exclusive, worldwide, royalty-free patent
+license under licensed patents for reference use.
+
+3. Limitations
+
+(A) No Trademark License- This license does not grant you any rights to use
+the Licensor's name, logo, or trademarks.
+
+(B) If you begin patent litigation against the Licensor over patents that
+you think may apply to the software (including a cross-claim or counterclaim
+in a lawsuit), your license to the software ends automatically.
+
+(C) The software is licensed "as-is." You bear the risk of using it. The
+Licensor gives no express warranties, guarantees or conditions. You may have
+additional consumer rights under your local laws which this license cannot
+change. To the extent permitted under your local laws, the Licensor excludes
+the implied warranties of merchantability, fitness for a particular purpose
+and non-infringement.
+-->
+
 # VOXROWLib
 
 Daftar isi:
@@ -5,92 +60,121 @@ Daftar isi:
 <!-- TOC -->
 
 - [VOXROWLib](#voxrowlib)
-    - [Pengaturan Awal](#pengaturan-awal)
-    - [Source-code Editor](#source-code-editor)
-        - [Extension](#extension)
-    - [Git](#git)
-        - [GUI](#gui)
-        - [Branching Model](#branching-model)
+    - [Source-code](#source-code)
+        - [Editor](#editor)
+        - [Repositori Git](#repositori-git)
+        - [Tata Cara Penulisan Markdown](#tata-cara-penulisan-markdown)
+    - [Server](#server)
     - [Lisensi](#lisensi)
 
 <!-- /TOC -->
 
 ---
 
-## Pengaturan Awal
+## _Source-code_
 
-1. Pastika sudah terpasang Python dengan minimal versi [3.8.0](https://www.python.org/downloads/release/python-380/).
-2. Pastikan _environtment_ lokal sudah terpasang.
+### _Editor_
 
-    Khusus untuk _distro_ [Debian](https://www.debian.org/) atau [Ubuntu](https://ubuntu.com/),
-    terlebih dahulu harus dilakukan instalasi berikut ini:
+[VSCode](https://code.visualstudio.com/) (Visual Studio Code) dipergunakan untuk
+memudahkan dalam penulisan _source-code_.
 
-    ```shell
-    $ sudo apt update
-    $ sudo apt install python3-pip python3-venv
-    ```
+Beberapa _extension_ VSCode dipasangkan untuk memudahkan penulisan _source-code_,
+antara lain:
 
-    Adapun instruksi untuk memasang _environtment_ lokal adalah sebagai berikut:
+- [_Auto Markdown TOC_](https://marketplace.visualstudio.com/items?itemName=huntertran.auto-markdown-toc)
+- [_Markdownlint_](https://marketplace.visualstudio.com/items?itemName=DavidAnson.vscode-markdownlint)
+- [_Python extension for Visual Studio Code_](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
 
-    ```shell
-    $ python3 -m venv env
-    ```
+### Repositori Git
 
-    Instruksi yang terkait _environtment_ lokal yang dapat dipergunakan antara lain:
+[Git](https://git-scm.com/) GUI [Sourcetree](https://www.sourcetreeapp.com/) dapat
+dipergunakan untuk memudahkan pengelolaan repositori, pada sistem operasi Windows
+atau MacOS.
 
-    - Aktivasi:
+_Branching model_ [Git-Flow](https://github.com/nvie/gitflow) dari Vincent Driessen
+dipergunakan untuk memudahkan pengelolaan _feature_, _release_, dan _hotfix_ di
+dalam repositori.
 
-        ```shell
-        $ . env/bin/activate
-        (env) $
-        ```
+### Tata Cara Penulisan _Markdown_
 
-    - Deaktivasi:
+Beberapa sumber ini dapat dijadikan acuan tata cara penulisan _markdown_:
 
-        ```shell
-        (env) $ deactivate
-        $
-        ```
-
-3. Pastikan [pustaka pendukung](requirements.txt) terpasang di _environtment_ lokal:
-
-    ```shell
-    (env) $ pip install -r requirements.txt
-    ```
+- [_GitLab: List of supported languages and lexers_](https://github.com/rouge-ruby/rouge/wiki/List-of-supported-languages-and-lexers)
+- [_GitLab Markdown_](https://docs.gitlab.com/ee/user/markdown.html)
+- [_Wikipedia: Markdown_](https://en.m.wikipedia.org/wiki/Markdown)
+- [Berkas readme.md yang dibuat oleh Ben Strahan](https://gist.github.com/benstr/8744304#file-readme-md)
 
 ---
 
-## _Source-code Editor_
+## _Server_
 
-[VSCode](https://code.visualstudio.com/) dipergunakan untuk memudahkan dalam
-penulisan _source-code_.
+Disarankan untuk menggunakan [Ubuntu 18.04 x64](https://ubuntu.com/download/desktop)
+(_CPU_ minimal 1 vCore, _RAM_ minimal 512 MB, _Storage_ minimal 10 GB SSD, dan _Bandwidth_
+minimal 500 GB), supaya memudahkan pengelolaan _server_ dengan mengunakan _script_
+VOXROWLib. Adapun langkah yang harus dipersiapkan adalah sebagai berikut:
 
-### _Extension_
+1. Pastikan telah ada _source-code_ VOXROWLib di komputer lokal dan _server_. Dapat
+dipergunakan perintah Git berikut ini:
 
-Beberapa _extension_ juga perlu dipasangkan ke VSCode:
+    ```shell
+    $ git clone https://gitlab.com/voxrow/voxrowlib.git voxrowlib
+    ```
 
-- [Auto Markdown TOC](https://marketplace.visualstudio.com/items?itemName=huntertran.auto-markdown-toc)
-- [Markdownlint](https://marketplace.visualstudio.com/items?itemName=DavidAnson.vscode-markdownlint):
-aturan penggunaannya dapat dilihat [di sini](https://github.com/markdownlint/markdownlint/blob/master/docs/RULES.md)
-- [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+    > Jangan jalankan perintah ini di _folder_ `root/` milik _server_!
 
----
+2. Masuk ke _folder_ `server/`:
 
-## Git
+    ```shell
+    $ cd voxrowlib/server/
+    ```
 
-Dipergunakan [Git](https://git-scm.com/) untuk pengelolaan repositori dari _source
-code_.
+3. Pastikan [GNU Make](https://www.gnu.org/software/make/) sudah ada, dengan
+menjalankan perintah ini:
 
-### GUI
+    ```shell
+    $ . make_gnu_install.sh
+    ```
 
-Pada sistem operasi Windows atau MacOS, Git GUI [Sourcetree](https://www.sourcetreeapp.com/)
-dapat dipergunakan untuk memudahkan pengelolaan repositori.
+    > _Script_ ini hanya dapat dipergunakan di Ubuntu Linux, instalasi untuk OS
+    selain ini silahkan cari di internet.
 
-### _Branching Model_
+4. Jalankan perintah di komputer lokal dan _server_ sebagai berikut:
 
-Dipergunakan [git-flow](https://github.com/nvie/gitflow) dari Vincent Driessen
-untuk memudahkan pengelolaan _feature_, _release_, dan _hotfix_ di dalam
-repositori (_branching model_).
+    - Komputer lokal:
+
+        Pastikan terlebih dahulu bahwa _SSH Key Pair_ sudah dibuat, baca baik-baik
+        instruksi dalam prosesnya! Berikut ini adalah perintahnya:
+
+        ```shell
+        $ sudo ssh-keygen
+        ```
+
+        Salin _public key_ komputer lokal ke _server_ dengan perintah ini:
+
+        ```shell
+        $ make local_ssh_key_to_server
+        ```
+
+        Ikuti instruksi yang dimintakan saat proses berjalan.
+
+        > Masukkan alamat _server_ dan _username_ `root`.
+
+    - _Server_:
+
+        > Pastikan anda masuk sebagai _username_ `root`!
+
+        ```shell
+        $ make
+        ```
+
+        Ikuti instruksi yang dimintakan saat proses berjalan. Setelah proses berakhir
+        _server_ akan _restart_. Selesai _restart_ masuk kembali dengan _username_
+        baru yang telah dibuat. Lalu hapuslah _source_code_ VOXROWLib dari _server_,
+        karena sudah tidak diperlukan lagi. Perintahnya adalah sebagai berikut:
+
+        ```shell
+        $ sudo rm -rf voxrowlib/
+        ```
 
 ---
 
