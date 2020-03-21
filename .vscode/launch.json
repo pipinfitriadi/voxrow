@@ -7,46 +7,6 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal"
-        },
-        {
-            "name": "Python: Run Web",
-            "type": "python",
-            "request": "launch",
-            "module": "web"
-        },
-        {
-            "name": "Flask: Run Web",
-            "type": "python",
-            "request": "launch",
-            "module": "flask",
-            "env": {
-                "FLASK_APP": "web",
-                "FLASK_ENV": "development",
-                "FLASK_DEBUG": "0"
-            },
-            "args": [
-                "run",
-                "--port",
-                "5000",
-                "--host",
-                "0.0.0.0"
-            ],
-            "jinja": true
-        },
-        {
-            "name": "Flask: Shell",
-            "type": "python",
-            "request": "launch",
-            "module": "flask",
-            "env": {
-                "FLASK_APP": "web:app",
-                "FLASK_ENV": "development",
-                "FLASK_DEBUG": "0"
-            },
-            "args": [
-                "shell"
-            ],
-            "jinja": true
         }
     ]
 }
