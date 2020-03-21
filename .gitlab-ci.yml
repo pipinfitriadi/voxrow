@@ -65,17 +65,21 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
 Build Docker Image:
   stage: Build
-  script:
-    - . server/docker_image.sh
   only:
     - docker
   tags:
     - live
+  script:
+    - . server/docker_image.sh
+  after_script:
+    - docker logout $CI_REGISTRY
 Linter Test:
   stage: Test
-  script:
-    - . server/linter_test.sh
   only:
     - master
   tags:
     - live
+  script:
+    - . server/linter_test.sh
+  after_script:
+    - docker-compose -f server/docker-compose/linter_test.yml down -v

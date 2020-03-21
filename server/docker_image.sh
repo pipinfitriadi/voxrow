@@ -69,5 +69,4 @@ if [ $last_commit_hash == $file_last_commit_hash ]; then
     docker-compose -f server/docker-compose/docker_image.yml pull || true
     docker-compose -f server/docker-compose/docker_image.yml build
     docker-compose -f server/docker-compose/docker_image.yml push
-    docker logout $CI_REGISTRY
 fi
