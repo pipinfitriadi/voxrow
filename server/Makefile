@@ -70,13 +70,13 @@
 # https://coderwall.com/p/cezf6g/define-your-own-function-in-a-makefile
 define install_program
 	@if [ $1 ]\
-		&& ! [ -x "$(command -v $1)" ]; then\
-			if [ $2 ]; then\
-				sudo apt-get install -y $2;\
-			else\
-				sudo apt-get install -y $1;\
-			fi;\
-		fi
+	&& ! [ -x "$(command -v $1)" ]; then\
+		if [ $2 ]; then\
+			sudo apt-get install -y $2;\
+		else\
+			sudo apt-get install -y $1;\
+		fi;\
+	fi
 endef
 
 # Buat SSH Key Pair di komputer lokal dan salin SSH Public Key ke server.
@@ -111,9 +111,9 @@ local_sshkey_to_server:
 			cat ~/.ssh/id_rsa.pub\
 			| ssh $$username@$$remote_host\
 			"mkdir -p ~/.ssh\
-				&& touch ~/.ssh/authorized_keys\
-				&& chmod -R go= ~/.ssh\
-				&& cat >> ~/.ssh/authorized_keys";\
+			&& touch ~/.ssh/authorized_keys\
+			&& chmod -R go= ~/.ssh\
+			&& cat >> ~/.ssh/authorized_keys";\
 			echo "Authenticate is done!";\
 		fi
 
@@ -298,13 +298,13 @@ register_runner:
 		read -p 'Please enter the gitlab-ci description for this runner: [app_runner]: ' description;\
 		read -p 'Please enter the gitlab-ci token for this runner: ' registration_token;\
 		sudo gitlab-runner register -n\
-				--url $${url:-'https://gitlab.com/'}\
-				--registration-token $$registration_token\
-				--executor shell\
-				--description $${description:-app_runner}\
-				--tag-list live\
-			&& usermod -aG docker gitlab-runner\
-			&& sudo service docker restart
+			--url $${url:-'https://gitlab.com/'}\
+			--registration-token $$registration_token\
+			--executor shell\
+			--description $${description:-app_runner}\
+			--tag-list live\
+		&& usermod -aG docker gitlab-runner\
+		&& sudo service docker restart
 
 # How do I find the most recent git commit that modified a file?
 # https://stackoverflow.com/questions/4784575/how-do-i-find-the-most-recent-git-commit-that-modified-a-file
@@ -316,11 +316,11 @@ build_docker_image:
 		last_commit_hash=$$(git log -n 1 --pretty=format:%H);\
 		file_last_commit_hash=$$(git log -n 1 --pretty=format:%H -- $$filename);\
 		if [ $$last_commit_hash ]\
-			&& [ $$file_last_commit_hash ]\
-			&& [ $$last_commit_hash == $$file_last_commit_hash ]; then\
-				echo $$CI_REGISTRY_PASSWORD | docker login -u $$CI_REGISTRY_USER $$CI_REGISTRY --password-stdin
-				docker pull $$CONTAINER_DOCKER || true
-				docker build --cache-from $$CONTAINER_DOCKER -t $$CONTAINER_DOCKER -f $$filename .
-				docker push $$CONTAINER_DOCKER
-				docker logout $$CI_REGISTRY
-			fi
+		&& [ $$file_last_commit_hash ]\
+		&& [ $$last_commit_hash == $$file_last_commit_hash ]; then\
+			echo $$CI_REGISTRY_PASSWORD | docker login -u $$CI_REGISTRY_USER $$CI_REGISTRY --password-stdin\
+			&& docker pull $$CONTAINER_DOCKER || true\
+			&& docker build --cache-from $$CONTAINER_DOCKER -t $$CONTAINER_DOCKER -f $$filename .\
+			&& docker push $$CONTAINER_DOCKER\
+			&& docker logout $$CI_REGISTRY;\
+		fi
