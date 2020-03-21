@@ -62,6 +62,6 @@ last_commit_hash=$(git log -n 1 --pretty=format:%H)
 file_last_commit_hash=$(git log -n 1 --pretty=format:%H -- *.py)
 
 if [ $last_commit_hash == $file_last_commit_hash ]; then
-    docker-compose -f server/docker-compose/linter_test.yml build
+    docker-compose -f server/docker-compose/linter_test.yml up
     docker-compose -f server/docker-compose/linter_test.yml down -v
 fi
