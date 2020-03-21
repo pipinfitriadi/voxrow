@@ -76,7 +76,9 @@ default:
 Build Docker:
   stage: Build
   script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    # Docker Registry login and docker CI template
+    # https://gitlab.com/gitlab-org/gitlab-runner/issues/2861
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
     - docker pull $CONTAINER_DOCKER || true
     - docker build --cache-from $CONTAINER_DOCKER -t $CONTAINER_DOCKER -f server/Dockerfile .
     - docker push $CONTAINER_DOCKER
