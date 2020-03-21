@@ -230,11 +230,11 @@ create_user:
 					&& echo "===================== Salin isi dari private key ke repositori GitLab ====================="\
 					&& echo "===================== bagian Settings > CI/CD > Variables ====================="\
 					&& echo "===================== Beri nama varibale SSH_PRIVATE_KEY. Tambahkan juga variable ====================="\
-					&& echo "===================== IP_ADDRESS dan masukkan IP Address Server ke dalamnya. ====================="\
+					&& echo "===================== SSH_HOST dan masukkan Host Server ke dalamnya. ====================="\
 					&& su - $${username} -c 'cat ~/.ssh/id_rsa'\
 					&& echo "===================== Salin isi dari public key ke repositori GitLab ====================="\
 					&& echo "===================== bagian Settings > CI/CD > Deploy Keys ====================="\
-					&& echo "===================== Isi title dengan USERNAME_DEPLOYER@IP_ADDRESS ====================="\
+					&& echo "===================== Isi title dengan USERNAME_DEPLOYER@SSH_HOST ====================="\
 					&& echo "===================== Langkah ini diperlukan, karena repositori yang dipergunakan mode private. ====================="\
 					&& su - $${username} -c 'cat ~/.ssh/id_rsa.pub';\
 				fi;\
@@ -269,11 +269,11 @@ create_deployer:
 			&& echo "===================== Salin isi dari private key ke GitLab ====================="\
 			&& echo "===================== bagian Settings > CI/CD > Variables repositori ====================="\
 			&& echo "===================== Beri nama varibale SSH_PRIVATE_KEY. Tambahkan juga variable ====================="\
-			&& echo "===================== IP_ADDRESS dan masukkan IP Address Server ke dalamnya. ====================="\
+			&& echo "===================== SSH_HOST dan masukkan Host Server ke dalamnya. ====================="\
 			&& su - $${username} -c 'cat ~/.ssh/id_rsa'\
 			&& echo "===================== Salin isi dari public key ke repositori GitLab ====================="\
 			&& echo "===================== bagian Settings > CI/CD > Deploy Keys ====================="\
-			&& echo "===================== Isi title dengan USERNAME_DEPLOYER@IP_ADDRESS ====================="\
+			&& echo "===================== Isi title dengan USERNAME_DEPLOYER@SSH_HOST ====================="\
 			&& echo "===================== Langkah ini diperlukan, karena repositori yang dipergunakan mode private. ====================="\
 			&& su - $${username} -c 'cat ~/.ssh/id_rsa.pub';\
 		fi;\
