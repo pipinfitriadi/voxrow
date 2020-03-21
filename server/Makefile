@@ -315,6 +315,7 @@ build_docker_image:
 	@filename='server/Dockerfile';\
 		last_commit_hash=$$(git log -n 1 --pretty=format:%H);\
 		file_last_commit_hash=$$(git log -n 1 --pretty=format:%H -- $$filename);\
+		echo $$last_commit_hash $$file_last_commit_hash;\
 		if [ $$last_commit_hash ]\
 		&& [ $$file_last_commit_hash ]\
 		&& [ $$last_commit_hash == $$file_last_commit_hash ]; then\
