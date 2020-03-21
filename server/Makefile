@@ -229,8 +229,8 @@ create_user:
 					&& su - $${username} -c 'cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys'\
 					&& echo "===================== Salin isi dari private key ke repositori GitLab ====================="\
 					&& echo "===================== bagian Settings > CI/CD > Variables ====================="\
-					&& echo "===================== Beri nama varibale SSH_PRIVATE_KEY. Tambahkan juga variable ====================="\
-					&& echo "===================== SSH_HOST dan masukkan Host Server ke dalamnya. ====================="\
+					&& echo "===================== Beri nama varibale SSH_PRIVATE_KEY, jangan pilih Protected State! ====================="\
+					&& echo "===================== Tambahkan juga variable SSH_HOST dan masukkan Host Server ke dalamnya. ====================="\
 					&& su - $${username} -c 'cat ~/.ssh/id_rsa'\
 					&& echo "===================== Salin isi dari public key ke repositori GitLab ====================="\
 					&& echo "===================== bagian Settings > CI/CD > Deploy Keys ====================="\
@@ -268,8 +268,8 @@ create_deployer:
 			&& su - $${username} -c 'cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys'\
 			&& echo "===================== Salin isi dari private key ke GitLab ====================="\
 			&& echo "===================== bagian Settings > CI/CD > Variables repositori ====================="\
-			&& echo "===================== Beri nama varibale SSH_PRIVATE_KEY. Tambahkan juga variable ====================="\
-			&& echo "===================== SSH_HOST dan masukkan Host Server ke dalamnya. ====================="\
+			&& echo "===================== Beri nama varibale SSH_PRIVATE_KEY, jangan pilih Protected State! ====================="\
+			&& echo "===================== Tambahkan juga variable SSH_HOST dan masukkan Host Server ke dalamnya. ====================="\
 			&& su - $${username} -c 'cat ~/.ssh/id_rsa'\
 			&& echo "===================== Salin isi dari public key ke repositori GitLab ====================="\
 			&& echo "===================== bagian Settings > CI/CD > Deploy Keys ====================="\
