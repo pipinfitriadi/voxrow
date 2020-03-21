@@ -106,10 +106,10 @@ local_sshkey_to_server:
 	@echo "===================== Authenticate to Ubuntu Server Using SSH Keys ====================="
 	@read -p "Remote host: " remote_host;\
 		read -p "Username: " username;\
-		if [ $${remote_host} ] && [ $${username} ]; then\
-			ssh-keygen -R $${remote_host};\
+		if [ $$remote_host ] && [ $$username ]; then\
+			ssh-keygen -R $$remote_host;\
 			cat ~/.ssh/id_rsa.pub\
-			| ssh $${username}@$${remote_host}\
+			| ssh $$username@$$remote_host\
 			"mkdir -p ~/.ssh\
 				&& touch ~/.ssh/authorized_keys\
 				&& chmod -R go= ~/.ssh\
@@ -141,7 +141,7 @@ timezone_ntp:
 	$(call install_program, dbus)
 	@read -p "Server's timezone? [Asia/Jakarta] " timezone;\
 		timezone=$${timezone:-"Asia/Jakarta"};\
-		sudo timedatectl set-timezone $${timezone}
+		sudo timedatectl set-timezone $$timezone
 	$(call install_program, ntp)
 	@echo Timezone: $$(cat /etc/timezone)
 
@@ -212,45 +212,45 @@ create_user:
 	@read -p "Username? " username;\
 		read -p "Is superuser? [y/n] " is_superuser;\
 		read -p "Is deployer? [y/n] " is_deployer;\
-		if [ $${username} ]; then\
-			sudo adduser $${username};\
+		if [ $$username ]; then\
+			sudo adduser $$username;\
 			if [ $${is_superuser:-n} = y ]; then\
-				sudo usermod -aG sudo $${username};\
-				rsync --archive --chown=$${username}:$${username} ~/.ssh /home/$${username};\
+				sudo usermod -aG sudo $$username;\
+				rsync --archive --chown=$$username:$$username ~/.ssh /home/$$username;\
 			else\
-				sudo setfacl -R -m u:$${username}:rwx /home/$${username}/;\
+				sudo setfacl -R -m u:$$username:rwx /home/$$username/;\
 			fi;\
 			if [ $${is_deployer:-n} = y ]; then\
-				echo "$${username} ALL=(ALL:ALL) NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo;\
+				echo "$$username ALL=(ALL:ALL) NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo;\
 				read -p "Email? " email;\
-				if [ $${email} ]; then\
+				if [ $$email ]; then\
 					echo "===================== Buat SSH Keygen dan kosongkan password SSH saat pembuatan! ====================="\
-					&& su - $${username} -c "ssh-keygen -t rsa -C $${email} -b 4096"\
-					&& su - $${username} -c 'cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys'\
+					&& su - $$username -c "ssh-keygen -t rsa -C $$email -b 4096"\
+					&& su - $$username -c 'cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys'\
 					&& echo "===================== Salin isi dari private key ke repositori GitLab ====================="\
 					&& echo "===================== bagian Settings > CI/CD > Variables ====================="\
 					&& echo "===================== Beri nama varibale SSH_PRIVATE_KEY, jangan pilih Protected State! ====================="\
 					&& echo "===================== Tambahkan juga variable SSH_HOST dan masukkan Host Server ke dalamnya. ====================="\
-					&& su - $${username} -c 'cat ~/.ssh/id_rsa'\
+					&& su - $$username -c 'cat ~/.ssh/id_rsa'\
 					&& echo "===================== Salin isi dari public key ke repositori GitLab ====================="\
 					&& echo "===================== bagian Settings > CI/CD > Deploy Keys ====================="\
 					&& echo "===================== Isi title dengan USERNAME_DEPLOYER@SSH_HOST ====================="\
 					&& echo "===================== Langkah ini diperlukan, karena repositori yang dipergunakan mode private. ====================="\
-					&& su - $${username} -c 'cat ~/.ssh/id_rsa.pub';\
+					&& su - $$username -c 'cat ~/.ssh/id_rsa.pub';\
 				fi;\
 			fi;\
-			echo "Create $${username} is done!";\
+			echo "Create $$username is done!";\
 		fi
 
 create_superuser:
 	@echo "===================== Membuat akun superuser server ====================="
 	$(call install_program, setfacl, acl)
 	@read -p "Username? " username;\
-		if [ $${username} ]; then\
-			sudo adduser $${username};\
-			sudo usermod -aG sudo $${username};\
-			rsync --archive --chown=$${username}:$${username} ~/.ssh /home/$${username};\
-			echo "Create $${username} is done!";\
+		if [ $$username ]; then\
+			sudo adduser $$username;\
+			sudo usermod -aG sudo $$username;\
+			rsync --archive --chown=$$username:$$username ~/.ssh /home/$$username;\
+			echo "Create $$username is done!";\
 		fi
 
 create_deployer:
@@ -259,25 +259,25 @@ create_deployer:
 	@read -p "Username? [deployer] " username;\
 		read -p "Email? " email;\
 		username=$${username:-deployer};\
-		sudo adduser $${username};\
-		sudo setfacl -R -m u:$${username}:rwx /home/$${username}/;\
-		echo "$${username} ALL=(ALL:ALL) NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo;\
-		if [ $${email} ]; then\
+		sudo adduser $$username;\
+		sudo setfacl -R -m u:$$username:rwx /home/$$username/;\
+		echo "$$username ALL=(ALL:ALL) NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo;\
+		if [ $$email ]; then\
 			echo "===================== Buat SSH Keygen dan kosongkan password SSH saat pembuatan! ====================="\
-			&& su - $${username} -c "ssh-keygen -t rsa -C $${email} -b 4096"\
-			&& su - $${username} -c 'cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys'\
+			&& su - $$username -c "ssh-keygen -t rsa -C $$email -b 4096"\
+			&& su - $$username -c 'cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys'\
 			&& echo "===================== Salin isi dari private key ke GitLab ====================="\
 			&& echo "===================== bagian Settings > CI/CD > Variables repositori ====================="\
 			&& echo "===================== Beri nama varibale SSH_PRIVATE_KEY, jangan pilih Protected State! ====================="\
 			&& echo "===================== Tambahkan juga variable SSH_HOST dan masukkan Host Server ke dalamnya. ====================="\
-			&& su - $${username} -c 'cat ~/.ssh/id_rsa'\
+			&& su - $$username -c 'cat ~/.ssh/id_rsa'\
 			&& echo "===================== Salin isi dari public key ke repositori GitLab ====================="\
 			&& echo "===================== bagian Settings > CI/CD > Deploy Keys ====================="\
 			&& echo "===================== Isi title dengan USERNAME_DEPLOYER@SSH_HOST ====================="\
 			&& echo "===================== Langkah ini diperlukan, karena repositori yang dipergunakan mode private. ====================="\
-			&& su - $${username} -c 'cat ~/.ssh/id_rsa.pub';\
+			&& su - $$username -c 'cat ~/.ssh/id_rsa.pub';\
 		fi;\
-		echo "Create $${username} is done!"
+		echo "Create $$username is done!"
 
 # How to Set Up SSH Keys on Ubuntu 18.04
 # https://linuxize.com/post/how-to-set-up-ssh-keys-on-ubuntu-1804/
@@ -287,19 +287,40 @@ deactivate_root:
 	@sudo systemctl restart sshd
 
 linter_test:
+	@echo "===================== Linter Test ====================="
 	@cd ../ && flake8 --exclude env/ --ignore E203,E231,F821,F999,W503 && cd server/
 
 # Permission denied when executing docker commands from Gitlab CI/CD pipeline
 # https://stackoverflow.com/questions/51769403/permission-denied-when-executing-docker-commands-from-gitlab-ci-cd-pipeline
 register_runner:
+	@echo "===================== Register Gitlab Runner ====================="
 	@read -p 'Please enter the gitlab-ci coordinator URL: [https://gitlab.com] ' url;\
 		read -p 'Please enter the gitlab-ci description for this runner: [app_runner]: ' description;\
 		read -p 'Please enter the gitlab-ci token for this runner: ' registration_token;\
 		sudo gitlab-runner register -n\
 				--url $${url:-'https://gitlab.com/'}\
-				--registration-token $${registration_token}\
+				--registration-token $$registration_token\
 				--executor shell\
 				--description $${description:-app_runner}\
 				--tag-list live\
 			&& usermod -aG docker gitlab-runner\
 			&& sudo service docker restart
+
+# How do I find the most recent git commit that modified a file?
+# https://stackoverflow.com/questions/4784575/how-do-i-find-the-most-recent-git-commit-that-modified-a-file
+# Docker Registry login and docker CI template
+# https://gitlab.com/gitlab-org/gitlab-runner/issues/2861
+build_docker_image:
+	@echo "===================== Build Docker Image ====================="
+	@filename='server/Dockerfile';\
+		last_commit_hash=$$(git log -n 1 --pretty=format:%H);\
+		file_last_commit_hash=$$(git log -n 1 --pretty=format:%H -- $$filename);\
+		if [ $$last_commit_hash ]\
+			&& [ $$file_last_commit_hash ]\
+			&& [ $$last_commit_hash == $$file_last_commit_hash ]; then\
+				echo $$CI_REGISTRY_PASSWORD | docker login -u $$CI_REGISTRY_USER $$CI_REGISTRY --password-stdin
+				docker pull $$CONTAINER_DOCKER || true
+				docker build --cache-from $$CONTAINER_DOCKER -t $$CONTAINER_DOCKER -f $$filename .
+				docker push $$CONTAINER_DOCKER
+				docker logout $$CI_REGISTRY
+			fi
