@@ -2,7 +2,19 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
+            "name": "Linter Test",
+            "type": "python",
+            "request": "launch",
+            "module": "flake8",
+            "args": [
+                "--exclude",
+                "env/",
+                "--ignore",
+                "E203,E231,F821,F999,W503"
+            ]
+        },
+        {
+            "name": "Run Current File",
             "type": "python",
             "request": "launch",
             "program": "${file}",

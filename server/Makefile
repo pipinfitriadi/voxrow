@@ -285,3 +285,6 @@ deactivate_root:
 	@echo "===================== Non-aktifkan login SSH user root dan autentikasi password SSH ====================="
 	@sudo cp -f sshd_config /etc/ssh/sshd_config
 	@sudo systemctl restart sshd
+
+linter_test:
+	@cd ../ && flake8 --exclude env/ --ignore E203,E231,F821,F999,W503 && cd server/
