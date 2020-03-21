@@ -288,3 +288,14 @@ deactivate_root:
 
 linter_test:
 	@cd ../ && flake8 --exclude env/ --ignore E203,E231,F821,F999,W503 && cd server/
+
+register_runner:
+	@read -p 'Please enter the gitlab-ci coordinator URL: [https://gitlab.com] ' url\
+		&& read -p 'Please enter the gitlab-ci description for this runner: [app_runner]: ' description\
+		&& read -sp 'Please enter the gitlab-ci token for this runner: ' registration_token\
+		&& gitlab-runner register -n\
+			--url $${url:-'https://gitlab.com/'}\
+			--registration-token $${registration_token}\
+			--executor shell\
+			--description $${description:-app_runner}\
+			--tag-list live \

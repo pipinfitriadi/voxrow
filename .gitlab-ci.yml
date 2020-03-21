@@ -51,53 +51,36 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-# Building Docker images with GitLab CI/CD
-# https://docs.gitlab.com/ee/ci/docker/using_docker_build.html
-# Gitlab CI returns error - no such host error (public runners)
-# https://gitlab.com/gitlab-org/gitlab-foss/issues/65511
-# Faster CI Builds with Docker Cache
-# https://testdriven.io/blog/faster-ci-builds-with-docker-cache/
+# Referensi:
+# https://docs.gitlab.com/ce/ci/ssh_keys/README.html
+# https://gitlab.com/gitlab-examples/ssh-private-key/-/blob/master/.gitlab-ci.yml
+# https://gitlab.com/voxrow/voxrow/-/tree/205bae29c7b51bb8a785aeb017366fa16b637eda#gitlab-continuous-integration-and-delivery-cicd
 
 stages:
   - Build
   - Test
   - Release
   - Deploy
-
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
-  DOCKER_HOST: tcp://docker:2375
-  DOCKER_TLS_CERTDIR: ""
   CONTAINER_DOCKER: $CI_REGISTRY_IMAGE/docker:latest
-
-# Globally-defined image, services, cache, before_script, after_script 
-# https://docs.gitlab.com/ee/ci/yaml/
 default:
-  image: $CONTAINER_DOCKER
-  services:
-    # Using docker-in-docker image from Container Registry
-    # https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#using-docker-in-docker-image-from-container-registry
-    # Gitlab CI error during connect: Get http://docker:2375/v1.40/containers/json?all=1: dial tcp: lookup docker on xx.xx.xx.x:xx: no such host
-    # https://devops.stackexchange.com/questions/9359/gitlab-ci-error-during-connect-get-http-docker2375-v1-40-containers-jsonall
-    # docker login in custom gitlab-runner: No such host (http://docker:2375/v1.39/auth: dial tcp: lookup docker on 172.31.0.2:53: no such host)
-    # https://stackoverflow.com/questions/57142416/docker-login-in-custom-gitlab-runner-no-such-host-http-docker2375-v1-39-aut
-    # GitLab CI runner can't connect to tcp://localhost:2375 in kubernetes
-    # https://stackoverflow.com/questions/55065490/gitlab-ci-runner-cant-connect-to-tcp-localhost2375-in-kubernetes
-    - docker:19.03.1-dind
   before_script:
-    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
-  after_script:
-    # Unable to pull container image when public project
-    # https://gitlab.com/gitlab-org/gitlab-foss/issues/33122
-    - docker logout $CI_REGISTRY
-
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client git -y )'
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan "$IP_ADDRESS" >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
 Build Docker:
   stage: Build
-  image: docker:19.03.1
   script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker pull $CONTAINER_DOCKER || true
     - docker build --cache-from $CONTAINER_DOCKER -t $CONTAINER_DOCKER .
     - docker push $CONTAINER_DOCKER
+    - docker logout $CI_REGISTRY
   only:
     - docker
   tags:
