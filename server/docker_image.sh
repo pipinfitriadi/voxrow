@@ -68,7 +68,14 @@ if [ $last_commit_hash == $file_last_commit_hash ]; then
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2861
     echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
 
-    docker-compose -f server/docker-compose/docker_image.yml pull || true
-    docker-compose -f server/docker-compose/docker_image.yml build
-    docker-compose -f server/docker-compose/docker_image.yml push
+    docker-compose \
+        pull \
+        -f server/docker-compose/docker_image.yml \
+        || true
+    docker-compose \
+        build \
+        -f server/docker-compose/docker_image.yml
+    docker-compose \
+        push \
+        -f server/docker-compose/docker_image.yml
 fi
