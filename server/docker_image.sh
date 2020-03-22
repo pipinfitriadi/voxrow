@@ -66,16 +66,20 @@ file_last_commit_hash=$(git log -n 1 --pretty=format:%H -- $filename)
 if [ $last_commit_hash == $file_last_commit_hash ]; then
     # Docker Registry login and docker CI template
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2861
-    echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
+    echo $CI_REGISTRY_PASSWORD \
+        | docker login \
+            -u $CI_REGISTRY_USER \
+            $CI_REGISTRY \
+            --password-stdin
 
     docker-compose \
-        pull \
-        -f server/docker-compose/docker_image.yml \
+        pull docker_image \
+        -f server/docker-compose/build_and_test.yml \
         || true
     docker-compose \
         build \
-        -f server/docker-compose/docker_image.yml
+        -f server/docker-compose/build_and_test.yml
     docker-compose \
-        push \
-        -f server/docker-compose/docker_image.yml
+        push docker_image \
+        -f server/docker-compose/build_and_test.yml
 fi

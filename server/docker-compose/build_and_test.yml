@@ -59,3 +59,18 @@ services:
             cache_from:
                 - registry.gitlab.com/voxrow/voxrowlib/docker:latest
         image: registry.gitlab.com/voxrow/voxrowlib/docker:latest
+    linter_test:
+        image: python:3.8-alpine
+        container_name: linter_test
+        volumes:
+            - ./../../:/home/:ro
+        working_dir: /home/
+        environment:
+            - EXCLUDE='env/,web/voxrowlib/env/'
+            - IGNORE='E203,E231,F821,F999,W503'
+        command: >
+            /bin/ash -c "
+            apk add git
+            && pip install --upgrade pip git+https://github.com/pycqa/pyflakes flake8
+            && flake8 --exclude $$EXCLUDE --ignore $$IGNORE
+            "
