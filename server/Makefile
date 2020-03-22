@@ -222,6 +222,7 @@ create_user:
 			else \
 				sudo setfacl -R -m u:$$username:rwx /home/$$username/; \
 			fi; \
+			sudo usermod -aG docker $$username; \
 			if [ $${is_deployer:-n} = y ]; then \
 				echo "$$username ALL=(ALL:ALL) NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo; \
 				read -p "Email? " email; \
@@ -253,6 +254,7 @@ create_superuser:
 			sudo adduser $$username; \
 			sudo usermod -aG sudo $$username; \
 			rsync --archive --chown=$$username:$$username ~/.ssh /home/$$username; \
+			sudo usermod -aG docker $$username; \
 			echo "Create $$username is done!"; \
 		fi
 
@@ -263,6 +265,7 @@ create_deployer:
 		read -p "Email? " email; \
 		username=$${username:-deployer}; \
 		sudo adduser $$username; \
+		sudo usermod -aG docker $$username; \
 		sudo setfacl -R -m u:$$username:rwx /home/$$username/; \
 		echo "$$username ALL=(ALL:ALL) NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo; \
 		if [ $$email ]; then \
