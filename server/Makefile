@@ -199,7 +199,7 @@ gitlabrunner:
 	$(call install_program, curl)
 	@curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh | sudo bash
 	$(call install_program, gitlab-runner)
-	@usermod -aG docker gitlab-runner
+	@sudo usermod -aG docker gitlab-runner
 	@sudo service docker restart
 
 # Enabling External Access for Your Regular User
