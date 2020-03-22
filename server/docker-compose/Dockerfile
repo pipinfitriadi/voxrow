@@ -73,8 +73,9 @@ RUN apk add \
         py3-pip \
     && pip3 install \
         --no-cache-dir \
-        --upgrade \
-        pip \
+        --upgrade pip \
+    && pip3 install \
+        --no-cache-dir \
         docker-compose \
     && find /usr/local \
         \( -type d -a -name test -o -name tests \) \
