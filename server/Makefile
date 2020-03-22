@@ -232,6 +232,7 @@ create_user:
 					&& echo "===================== Salin isi dari private key ke repositori GitLab =====================" \
 					&& echo "===================== bagian Settings > CI/CD > Variables =====================" \
 					&& echo "===================== Beri nama varibale SSH_PRIVATE_KEY, jangan pilih Protected State! =====================" \
+					&& echo "===================== Tambahkan variable USERNAME_DEPLOYER dan masukkan username yang telah dibuat ke dalamnya. =====================" \
 					&& echo "===================== Tambahkan juga variable SSH_HOST dan masukkan Host Server ke dalamnya. =====================" \
 					&& su - $$username -c 'cat ~/.ssh/id_rsa' \
 					&& echo "===================== Salin isi dari public key ke repositori GitLab =====================" \
@@ -271,6 +272,7 @@ create_deployer:
 			&& echo "===================== Salin isi dari private key ke GitLab =====================" \
 			&& echo "===================== bagian Settings > CI/CD > Variables repositori =====================" \
 			&& echo "===================== Beri nama varibale SSH_PRIVATE_KEY, jangan pilih Protected State! =====================" \
+			&& echo "===================== Tambahkan variable USERNAME_DEPLOYER dan masukkan username yang telah dibuat ke dalamnya. =====================" \
 			&& echo "===================== Tambahkan juga variable SSH_HOST dan masukkan Host Server ke dalamnya. =====================" \
 			&& su - $$username -c 'cat ~/.ssh/id_rsa' \
 			&& echo "===================== Salin isi dari public key ke repositori GitLab =====================" \
