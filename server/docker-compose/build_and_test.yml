@@ -66,8 +66,8 @@ services:
             - ./../../:/home/:ro
         working_dir: /home/
         environment:
-            - EXCLUDE='env/,web/voxrowlib/env/'
-            - IGNORE='E203,E231,F821,F999,W503'
+            - EXCLUDE=env/,web/voxrowlib/env/
+            - IGNORE=E203,E231,F821,F999,W503
         command: >
             /bin/ash -c "
             apk add git
