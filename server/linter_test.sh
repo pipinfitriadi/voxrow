@@ -64,6 +64,6 @@ file_last_commit_hash=$(git log -n 1 --pretty=format:%H -- *.py)
 if [ $last_commit_hash == $file_last_commit_hash ]; then
     COMPOSE_FILE='server/docker-compose/build_and_test.yml'
     docker-compose \
-        run --rm linter_test \
-        -f $COMPOSE_FILE
+        -f $COMPOSE_FILE \
+        run --rm linter_test
 fi

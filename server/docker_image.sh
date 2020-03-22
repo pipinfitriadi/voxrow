@@ -74,13 +74,13 @@ if [ $last_commit_hash == $file_last_commit_hash ]; then
 
     COMPOSE_FILE='server/docker-compose/build_and_test.yml'
     docker-compose \
-        pull docker_image \
         -f $COMPOSE_FILE \
+        pull docker_image \
         || true
     docker-compose \
-        build \
-        -f $COMPOSE_FILE
+        -f $COMPOSE_FILE \
+        build
     docker-compose \
-        push docker_image \
-        -f $COMPOSE_FILE
+        -f $COMPOSE_FILE \
+        push docker_image 
 fi
