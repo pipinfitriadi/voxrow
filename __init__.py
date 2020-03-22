@@ -170,3 +170,4 @@ def database_uri_from_env(
         getenv(ssh_username_env),
         getenv(ssh_password_env)
     )
+
