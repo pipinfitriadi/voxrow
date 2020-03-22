@@ -72,14 +72,15 @@ if [ $last_commit_hash == $file_last_commit_hash ]; then
             $CI_REGISTRY \
             --password-stdin
 
+    COMPOSE_FILE='server/docker-compose/build_and_test.yml'
     docker-compose \
         pull docker_image \
-        -f server/docker-compose/build_and_test.yml \
+        -f $COMPOSE_FILE \
         || true
     docker-compose \
         build \
-        -f server/docker-compose/build_and_test.yml
+        -f $COMPOSE_FILE
     docker-compose \
         push docker_image \
-        -f server/docker-compose/build_and_test.yml
+        -f $COMPOSE_FILE
 fi
