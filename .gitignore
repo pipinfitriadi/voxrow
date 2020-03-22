@@ -54,7 +54,7 @@
 *.egg-info/
 __pycache__/
 .pytest_cache/
-build/
+builds/
 dist/
 env/
 htmlcov/
