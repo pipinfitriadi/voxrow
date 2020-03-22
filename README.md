@@ -232,7 +232,7 @@ _environtment_ python dengan langkah berikut ini:
 3. Pastikan [pustaka pendukung](requirements.txt) terpasang di _environtment_ python.
 
     ```shell
-    (env) $ pip install --upgrade pip -r requirements.txt
+    (env) $ pip install --upgrade pip && pip install -r requirements.txt
     ```
 
 ---
