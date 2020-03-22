@@ -80,7 +80,7 @@ minimal 500 GB), supaya memudahkan pengelolaan _server_ dengan mengunakan _scrip
 VOXROWLib. Adapun langkah yang harus dipersiapkan adalah sebagai berikut:
 
 1. Pastikan telah ada _source-code_ VOXROWLib di komputer lokal dan _server_. Dapat
-dipergunakan perintah Git berikut ini:
+dipergunakan perintah [Git](https://git-scm.com/) berikut ini:
 
     ```shell
     $ git clone --recurse-submodules -j8 https://gitlab.com/voxrow/voxrowlib.git
@@ -176,7 +176,7 @@ antara lain:
 
 ### Repositori Git
 
-[Git](https://git-scm.com/) GUI [Sourcetree](https://www.sourcetreeapp.com/) dapat
+Git GUI [Sourcetree](https://www.sourcetreeapp.com/) dapat
 dipergunakan untuk memudahkan pengelolaan repositori, pada sistem operasi Windows
 atau MacOS.
 
@@ -232,8 +232,7 @@ _environtment_ python dengan langkah berikut ini:
 3. Pastikan [pustaka pendukung](requirements.txt) terpasang di _environtment_ python.
 
     ```shell
-    (env) $ pip install --upgrade pip
-    (env) $ pip install -r requirements.txt
+    (env) $ pip install --upgrade pip -r requirements.txt
     ```
 
 ---

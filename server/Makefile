@@ -69,31 +69,31 @@
 # Define your own function in a Makefile
 # https://coderwall.com/p/cezf6g/define-your-own-function-in-a-makefile
 define install_program
-	@if [ $1 ]\
-	&& ! [ -x "$(command -v $1)" ]; then\
-		if [ $2 ]; then\
-			sudo apt-get install -y $2;\
+	@if [ $1 ] \
+	&& ! [ -x "$(command -v $1)" ]; then \
+		if [ $2 ]; then \
+			sudo apt-get install -y $2; \
 		else\
-			sudo apt-get install -y $1;\
-		fi;\
+			sudo apt-get install -y $1; \
+		fi; \
 	fi
 endef
 
 # Buat SSH Key Pair di komputer lokal dan salin SSH Public Key ke server.
 # https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys-on-ubuntu-1804
-initial_setup_server: update_server\
-	gitflow\
-	firewall\
-	timezone_ntp\
-	secure_sharedmemory\
-	harden_network\
-	ddos_protection\
-	fail2ban_setup\
-	docker_install\
-	dockercompose\
-	gitlabrunner\
-	create_superuser\
-	create_deployer\
+initial_setup_server: update_server \
+	gitflow \
+	firewall \
+	timezone_ntp \
+	secure_sharedmemory \
+	harden_network \
+	ddos_protection \
+	fail2ban_setup \
+	docker_install \
+	dockercompose \
+	gitlabrunner \
+	create_superuser \
+	create_deployer \
 	deactivate_root
 	@echo "===================== Initial setup server is finished! ====================="
 	@sudo reboot
@@ -104,17 +104,17 @@ initial_setup_server: update_server\
 # https://www.digitalocean.com/community/questions/warning-remote-host-identification-has-changed
 local_sshkey_to_server:
 	@echo "===================== Authenticate to Ubuntu Server Using SSH Keys ====================="
-	@read -p "Remote host: " remote_host;\
-		read -p "Username: " username;\
-		if [ $$remote_host ] && [ $$username ]; then\
-			ssh-keygen -R $$remote_host;\
-			cat ~/.ssh/id_rsa.pub\
-			| ssh $$username@$$remote_host\
-			"mkdir -p ~/.ssh\
-			&& touch ~/.ssh/authorized_keys\
-			&& chmod -R go= ~/.ssh\
-			&& cat >> ~/.ssh/authorized_keys";\
-			echo "Authenticate is done!";\
+	@read -p "Remote host: " remote_host; \
+		read -p "Username: " username; \
+		if [ $$remote_host ] && [ $$username ]; then \
+			ssh-keygen -R $$remote_host; \
+			cat ~/.ssh/id_rsa.pub \
+			| ssh $$username@$$remote_host \
+			"mkdir -p ~/.ssh \
+			&& touch ~/.ssh/authorized_keys \
+			&& chmod -R go= ~/.ssh \
+			&& cat >> ~/.ssh/authorized_keys"; \
+			echo "Authenticate is done!"; \
 		fi
 
 update_server:
@@ -139,8 +139,8 @@ firewall:
 timezone_ntp:
 	@echo "===================== Pasang zona waktu & NTP ====================="
 	$(call install_program, dbus)
-	@read -p "Server's timezone? [Asia/Jakarta] " timezone;\
-		timezone=$${timezone:-"Asia/Jakarta"};\
+	@read -p "Server's timezone? [Asia/Jakarta] " timezone; \
+		timezone=$${timezone:-"Asia/Jakarta"}; \
 		sudo timedatectl set-timezone $$timezone
 	$(call install_program, ntp)
 	@echo Timezone: $$(cat /etc/timezone)
@@ -211,74 +211,74 @@ gitlabrunner:
 create_user:
 	@echo "===================== Membuat akun reguler server dan pilihan untuk memberikan hak akses superuser ke akun tersebut ====================="
 	$(call install_program, setfacl, acl)
-	@read -p "Username? " username;\
-		read -p "Is superuser? [y/n] " is_superuser;\
-		read -p "Is deployer? [y/n] " is_deployer;\
-		if [ $$username ]; then\
-			sudo adduser $$username;\
-			if [ $${is_superuser:-n} = y ]; then\
-				sudo usermod -aG sudo $$username;\
-				rsync --archive --chown=$$username:$$username ~/.ssh /home/$$username;\
-			else\
-				sudo setfacl -R -m u:$$username:rwx /home/$$username/;\
-			fi;\
-			if [ $${is_deployer:-n} = y ]; then\
-				echo "$$username ALL=(ALL:ALL) NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo;\
-				read -p "Email? " email;\
-				if [ $$email ]; then\
-					echo "===================== Buat SSH Keygen dan kosongkan password SSH saat pembuatan! ====================="\
-					&& su - $$username -c "ssh-keygen -t rsa -C $$email -b 4096"\
-					&& su - $$username -c 'cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys'\
-					&& echo "===================== Salin isi dari private key ke repositori GitLab ====================="\
-					&& echo "===================== bagian Settings > CI/CD > Variables ====================="\
-					&& echo "===================== Beri nama varibale SSH_PRIVATE_KEY, jangan pilih Protected State! ====================="\
-					&& echo "===================== Tambahkan juga variable SSH_HOST dan masukkan Host Server ke dalamnya. ====================="\
-					&& su - $$username -c 'cat ~/.ssh/id_rsa'\
-					&& echo "===================== Salin isi dari public key ke repositori GitLab ====================="\
-					&& echo "===================== bagian Settings > CI/CD > Deploy Keys ====================="\
-					&& echo "===================== Isi title dengan USERNAME_DEPLOYER@SSH_HOST ====================="\
-					&& echo "===================== Langkah ini diperlukan, karena repositori yang dipergunakan mode private. ====================="\
-					&& su - $$username -c 'cat ~/.ssh/id_rsa.pub';\
-				fi;\
-			fi;\
-			echo "Create $$username is done!";\
+	@read -p "Username? " username; \
+		read -p "Is superuser? [y/n] " is_superuser; \
+		read -p "Is deployer? [y/n] " is_deployer; \
+		if [ $$username ]; then \
+			sudo adduser $$username; \
+			if [ $${is_superuser:-n} = y ]; then \
+				sudo usermod -aG sudo $$username; \
+				rsync --archive --chown=$$username:$$username ~/.ssh /home/$$username; \
+			else \
+				sudo setfacl -R -m u:$$username:rwx /home/$$username/; \
+			fi; \
+			if [ $${is_deployer:-n} = y ]; then \
+				echo "$$username ALL=(ALL:ALL) NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo; \
+				read -p "Email? " email; \
+				if [ $$email ]; then \
+					echo "===================== Buat SSH Keygen dan kosongkan password SSH saat pembuatan! =====================" \
+					&& su - $$username -c "ssh-keygen -t rsa -C $$email -b 4096" \
+					&& su - $$username -c 'cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys' \
+					&& echo "===================== Salin isi dari private key ke repositori GitLab =====================" \
+					&& echo "===================== bagian Settings > CI/CD > Variables =====================" \
+					&& echo "===================== Beri nama varibale SSH_PRIVATE_KEY, jangan pilih Protected State! =====================" \
+					&& echo "===================== Tambahkan juga variable SSH_HOST dan masukkan Host Server ke dalamnya. =====================" \
+					&& su - $$username -c 'cat ~/.ssh/id_rsa' \
+					&& echo "===================== Salin isi dari public key ke repositori GitLab =====================" \
+					&& echo "===================== bagian Settings > CI/CD > Deploy Keys =====================" \
+					&& echo "===================== Isi title dengan USERNAME_DEPLOYER@SSH_HOST =====================" \
+					&& echo "===================== Langkah ini diperlukan, karena repositori yang dipergunakan mode private. =====================" \
+					&& su - $$username -c 'cat ~/.ssh/id_rsa.pub'; \
+				fi; \
+			fi; \
+			echo "Create $$username is done!"; \
 		fi
 
 create_superuser:
 	@echo "===================== Membuat akun superuser server ====================="
 	$(call install_program, setfacl, acl)
-	@read -p "Username? " username;\
-		if [ $$username ]; then\
-			sudo adduser $$username;\
-			sudo usermod -aG sudo $$username;\
-			rsync --archive --chown=$$username:$$username ~/.ssh /home/$$username;\
-			echo "Create $$username is done!";\
+	@read -p "Username? " username; \
+		if [ $$username ]; then \
+			sudo adduser $$username; \
+			sudo usermod -aG sudo $$username; \
+			rsync --archive --chown=$$username:$$username ~/.ssh /home/$$username; \
+			echo "Create $$username is done!"; \
 		fi
 
 create_deployer:
 	@echo "===================== Membuat akun deployer server untuk GitLab CI/CD ====================="
 	$(call install_program, setfacl, acl)
-	@read -p "Username? [deployer] " username;\
-		read -p "Email? " email;\
-		username=$${username:-deployer};\
-		sudo adduser $$username;\
-		sudo setfacl -R -m u:$$username:rwx /home/$$username/;\
-		echo "$$username ALL=(ALL:ALL) NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo;\
-		if [ $$email ]; then\
-			echo "===================== Buat SSH Keygen dan kosongkan password SSH saat pembuatan! ====================="\
-			&& su - $$username -c "ssh-keygen -t rsa -C $$email -b 4096"\
-			&& su - $$username -c 'cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys'\
-			&& echo "===================== Salin isi dari private key ke GitLab ====================="\
-			&& echo "===================== bagian Settings > CI/CD > Variables repositori ====================="\
-			&& echo "===================== Beri nama varibale SSH_PRIVATE_KEY, jangan pilih Protected State! ====================="\
-			&& echo "===================== Tambahkan juga variable SSH_HOST dan masukkan Host Server ke dalamnya. ====================="\
-			&& su - $$username -c 'cat ~/.ssh/id_rsa'\
-			&& echo "===================== Salin isi dari public key ke repositori GitLab ====================="\
-			&& echo "===================== bagian Settings > CI/CD > Deploy Keys ====================="\
-			&& echo "===================== Isi title dengan USERNAME_DEPLOYER@SSH_HOST ====================="\
-			&& echo "===================== Langkah ini diperlukan, karena repositori yang dipergunakan mode private. ====================="\
-			&& su - $$username -c 'cat ~/.ssh/id_rsa.pub';\
-		fi;\
+	@read -p "Username? [deployer] " username; \
+		read -p "Email? " email; \
+		username=$${username:-deployer}; \
+		sudo adduser $$username; \
+		sudo setfacl -R -m u:$$username:rwx /home/$$username/; \
+		echo "$$username ALL=(ALL:ALL) NOPASSWD: ALL" | sudo EDITOR='tee -a' visudo; \
+		if [ $$email ]; then \
+			echo "===================== Buat SSH Keygen dan kosongkan password SSH saat pembuatan! =====================" \
+			&& su - $$username -c "ssh-keygen -t rsa -C $$email -b 4096" \
+			&& su - $$username -c 'cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys' \
+			&& echo "===================== Salin isi dari private key ke GitLab =====================" \
+			&& echo "===================== bagian Settings > CI/CD > Variables repositori =====================" \
+			&& echo "===================== Beri nama varibale SSH_PRIVATE_KEY, jangan pilih Protected State! =====================" \
+			&& echo "===================== Tambahkan juga variable SSH_HOST dan masukkan Host Server ke dalamnya. =====================" \
+			&& su - $$username -c 'cat ~/.ssh/id_rsa' \
+			&& echo "===================== Salin isi dari public key ke repositori GitLab =====================" \
+			&& echo "===================== bagian Settings > CI/CD > Deploy Keys =====================" \
+			&& echo "===================== Isi title dengan USERNAME_DEPLOYER@SSH_HOST =====================" \
+			&& echo "===================== Langkah ini diperlukan, karena repositori yang dipergunakan mode private. =====================" \
+			&& su - $$username -c 'cat ~/.ssh/id_rsa.pub'; \
+		fi; \
 		echo "Create $$username is done!"
 
 # How to Set Up SSH Keys on Ubuntu 18.04
@@ -290,22 +290,22 @@ deactivate_root:
 
 linter_test:
 	@echo "===================== Linter Test ====================="
-	@cd ../\
-		&& flake8\
-			--exclude env/\
-			--ignore E203,E231,F821,F999,W503\
+	@cd ../ \
+		&& flake8 \
+			--exclude env/ \
+			--ignore E203,E231,F821,F999,W503 \
 		&& cd server/
 
 # Permission denied when executing docker commands from Gitlab CI/CD pipeline
 # https://stackoverflow.com/questions/51769403/permission-denied-when-executing-docker-commands-from-gitlab-ci-cd-pipeline
 register_runner:
 	@echo "===================== Register Gitlab Runner ====================="
-	@read -p 'Please enter the gitlab-ci coordinator URL: [https://gitlab.com] ' url;\
-		read -p 'Please enter the gitlab-ci description for this runner: [app_runner]: ' description;\
-		read -p 'Please enter the gitlab-ci token for this runner: ' registration_token;\
-		sudo gitlab-runner register -n\
-			--url $${url:-'https://gitlab.com/'}\
-			--registration-token $$registration_token\
-			--executor shell\
-			--description $${description:-app_runner}\
+	@read -p 'Please enter the gitlab-ci coordinator URL: [https://gitlab.com] ' url; \
+		read -p 'Please enter the gitlab-ci description for this runner: [app_runner]: ' description; \
+		read -p 'Please enter the gitlab-ci token for this runner: ' registration_token; \
+		sudo gitlab-runner register -n \
+			--url $${url:-'https://gitlab.com/'} \
+			--registration-token $$registration_token \
+			--executor shell \
+			--description $${description:-app_runner} \
 			--tag-list live

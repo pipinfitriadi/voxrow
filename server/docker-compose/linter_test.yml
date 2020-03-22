@@ -62,8 +62,7 @@ services:
         command: >
             /bin/ash -c '
             apk add git
-            && pip install --upgrade pip
-            && pip install git+https://github.com/pycqa/pyflakes flake8
+            && pip install --upgrade pip git+https://github.com/pycqa/pyflakes flake8
             && flake8 --exclude env/ --ignore E203,E231,F821,F999,W503
             '
 networks:
