@@ -153,18 +153,18 @@ secure_sharedmemory:
 # https://medium.com/@AKcryptoGUY/how-to-secure-vps-hyper-v-9ceee0d1c2a9
 harden_network:
 	@echo "===================== Harden the networking layer ====================="
-	@sudo cp -f sysctl.conf /etc/sysctl.conf
+	@sudo cp -f install/sysctl.conf /etc/sysctl.conf
 
 # DDos Protection.
 # https://medium.com/@AKcryptoGUY/how-to-secure-vps-hyper-v-9ceee0d1c2a9
 ddos_protection:
 	@echo "===================== DDos Protection ====================="
-	@sudo cp -f before.rules /etc/ufw/before.rules
+	@sudo cp -f install/before.rules /etc/ufw/before.rules
 
 fail2ban_setup:
 	@echo "===================== Pasang Fail2ban ====================="
 	$(call install_program, fail2ban)
-	@sudo cp -f jail.local /etc/fail2ban/jail.local
+	@sudo cp -f install/jail.local /etc/fail2ban/jail.local
 	@sudo systemctl restart fail2ban
 
 # Get Docker Engine - Community for Ubuntu
@@ -290,7 +290,7 @@ create_deployer:
 # https://linuxize.com/post/how-to-set-up-ssh-keys-on-ubuntu-1804/
 deactivate_root:
 	@echo "===================== Non-aktifkan login SSH user root dan autentikasi password SSH ====================="
-	@sudo cp -f sshd_config /etc/ssh/sshd_config
+	@sudo cp -f install/sshd_config /etc/ssh/sshd_config
 	@sudo systemctl restart sshd
 
 linter_test:

@@ -70,7 +70,7 @@ Build Docker Image:
   tags:
     - live
   script:
-    - . server/docker_image.sh
+    - . server/ci_cd/docker_image.sh
   after_script:
     - docker logout $CI_REGISTRY
 Linter Test:
@@ -80,4 +80,4 @@ Linter Test:
   tags:
     - live
   script:
-    - . server/linter_test.sh
+    - . server/ci_cd/linter_test.sh
