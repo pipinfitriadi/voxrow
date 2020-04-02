@@ -59,8 +59,8 @@
 stages:
   - Build
   - Test
-  - Release
-  - Deploy
+  # - Release
+  # - Deploy
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
 Build Docker Image:
@@ -70,10 +70,10 @@ Build Docker Image:
   tags:
     - live
   script:
-    - . server/ci_cd/docker_image.sh
+    - . server/ci_cd/build.sh
   after_script:
     - docker logout $CI_REGISTRY
-Linter Test:
+Linter Test VOXROWLib:
   stage: Test
   only:
     - master
