@@ -73,7 +73,7 @@ app = Blueprint(
 def favicon():
     return send_from_directory(
         join('static', 'img'),
-        'favicon.svg',
+        'logo.svg',
         mimetype='image/svg+xml'
     )
 
