@@ -60,59 +60,44 @@ services:
         image: certbot/certbot
         container_name: cert_create_staging
         volumes:
-            - ./../../../templates/:/data/letsencrypt/:ro
+            - ./../../../static/:/data/letsencrypt/
             - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/
             - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/
             - ./../../../../server/letsencrypt/log/:/var/log/letsencrypt/
         env_file: ./../../../../.env
-        command: >
-            /bin/ash -c "
-            certonly --webroot --register-unsafely-without-email --agree-tos --webroot-path=/data/letsencrypt/ --staging -d $$DOMAIN -d www.$$DOMAIN
-            "
+        command: certonly --webroot --register-unsafely-without-email --agree-tos --webroot-path=/data/letsencrypt/ --staging -d $DOMAIN -d www.$DOMAIN
     cert_create_production:
         image: certbot/certbot
         container_name: cert_create_production
         volumes:
-            - ./../../../templates/:/data/letsencrypt/:ro
+            - ./../../../static/:/data/letsencrypt/
             - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/
             - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/
             - ./../../../../server/letsencrypt/log/:/var/log/letsencrypt/
         env_file: ./../../../../.env
-        command: >
-            /bin/ash -c "
-            certonly --webroot --email $$EMAIL --agree-tos --no-eff-email --webroot-path=/data/letsencrypt/ -d $$DOMAIN -d www.$$DOMAIN
-            "
+        command: certonly --webroot --email $EMAIL --agree-tos --no-eff-email --webroot-path=/data/letsencrypt/ -d $DOMAIN -d www.$DOMAIN
     cert_info_staging:
         image: certbot/certbot
         container_name: cert_info_staging
         volumes:
-            - ./../../../templates/:/data/letsencrypt/:ro
-            - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/:ro
-            - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/:ro
-        command: >
-            /bin/ash -c "
-            certificates --staging
-            "
+            - ./../../../static/:/data/letsencrypt/:ro
+            - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/
+            - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/
+        command: certificates --staging
     cert_info_production:
         image: certbot/certbot
         container_name: cert_info_production
         volumes:
-            - ./../../../templates/:/data/letsencrypt/:ro
-            - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/:ro
-            - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/:ro
-        command: >
-            /bin/ash -c "
-            certificates
-            "
+            - ./../../../static/:/data/letsencrypt/:ro
+            - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/
+            - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/
+        command: certificates
     cert_renew:
         image: certbot/certbot
         container_name: cert_renew
         volumes:
-            - ./../../../templates/:/data/letsencrypt/:ro
+            - ./../../../static/:/data/letsencrypt/
             - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/
             - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/
             - ./../../../../server/letsencrypt/log/:/var/log/letsencrypt/
-        command: >
-            /bin/ash -c "
-            renew --webroot --webroot-path=/data/letsencrypt/ --quiet
-            "
+        command: renew --webroot --webroot-path=/data/letsencrypt/ --quiet
