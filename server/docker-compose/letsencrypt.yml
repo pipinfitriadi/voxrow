@@ -60,7 +60,7 @@ services:
         image: certbot/certbot
         container_name: cert_create_staging
         volumes:
-            - ./../../../templates/:/data/letsencrypt/:ro
+            - ./../../../static/:/data/letsencrypt/
             - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/
             - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/
             - ./../../../../server/letsencrypt/log/:/var/log/letsencrypt/
@@ -73,7 +73,7 @@ services:
         image: certbot/certbot
         container_name: cert_create_production
         volumes:
-            - ./../../../templates/:/data/letsencrypt/:ro
+            - ./../../../static/:/data/letsencrypt/
             - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/
             - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/
             - ./../../../../server/letsencrypt/log/:/var/log/letsencrypt/
@@ -86,7 +86,7 @@ services:
         image: certbot/certbot
         container_name: cert_info_staging
         volumes:
-            - ./../../../templates/:/data/letsencrypt/:ro
+            - ./../../../static/:/data/letsencrypt/:ro
             - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/:ro
             - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/:ro
         command: >
@@ -97,7 +97,7 @@ services:
         image: certbot/certbot
         container_name: cert_info_production
         volumes:
-            - ./../../../templates/:/data/letsencrypt/:ro
+            - ./../../../static/:/data/letsencrypt/:ro
             - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/:ro
             - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/:ro
         command: >
@@ -108,7 +108,7 @@ services:
         image: certbot/certbot
         container_name: cert_renew
         volumes:
-            - ./../../../templates/:/data/letsencrypt/:ro
+            - ./../../../static/:/data/letsencrypt/
             - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/
             - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/
             - ./../../../../server/letsencrypt/log/:/var/log/letsencrypt/
