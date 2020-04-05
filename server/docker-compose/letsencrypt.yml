@@ -81,16 +81,16 @@ services:
         container_name: cert_info_staging
         volumes:
             - ./../../../static/:/data/letsencrypt/:ro
-            - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/:ro
-            - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/:ro
+            - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/
+            - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/
         command: certificates --staging
     cert_info_production:
         image: certbot/certbot
         container_name: cert_info_production
         volumes:
             - ./../../../static/:/data/letsencrypt/:ro
-            - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/:ro
-            - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/:ro
+            - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/
+            - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/
         command: certificates
     cert_renew:
         image: certbot/certbot
