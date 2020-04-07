@@ -69,7 +69,7 @@ from sqlalchemy.types import (
     String
 )
 
-from ..modify.flask_sqlalchemy import SCHEMA
+from ..modify.flask_sqlalchemy import DB_SCHEMA
 from ..modify.flask_sqlalchemy import SQLAlchemy
 from ..modify.flask_sqlalchemy.types import Password, Username
 
@@ -92,7 +92,7 @@ class User(Model):
         ),
         # Table Configuration
         # https://docs.sqlalchemy.org/en/13/orm/extensions/declarative/table_config.html
-        {'schema': SCHEMA}
+        {'schema': DB_SCHEMA}
     )
 
     id = Column(Integer, primary_key=True)
@@ -158,7 +158,7 @@ class User(Model):
 
 
 class Token(Model):
-    __table_args__ = {'schema': SCHEMA}
+    __table_args__ = {'schema': DB_SCHEMA}
 
     # Blacklist with a database
     # https://github.com/vimalloc/flask-jwt-extended/tree/master/examples/database_blacklist
@@ -167,7 +167,7 @@ class Token(Model):
         Integer,
         # specifying schema name in model gives error
         # https://github.com/pallets/flask-sqlalchemy/issues/172
-        ForeignKey(f'{ SCHEMA }.user.id'),
+        ForeignKey(f'{ DB_SCHEMA }.user.id'),
         nullable=False
     )
     jti = Column(String(36), nullable=False)

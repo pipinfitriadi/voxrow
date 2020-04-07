@@ -64,15 +64,16 @@ from flask import (
     stream_with_context,
     url_for
 )
+from jinja2.exceptions import TemplateNotFound
 from werkzeug.datastructures import Headers
 from werkzeug.exceptions import default_exceptions
 from werkzeug.http import HTTP_STATUS_CODES
-from werkzeug.routing import RequestRedirect
+from werkzeug.routing import BuildError, RequestRedirect
 
 try:
-    from ...config import TITLE
+    from ...config import WEB_TITLE
 except Exception:
-    TITLE = 'VOXROW'
+    WEB_TITLE = 'VOXROW'
 
 
 class Flask(_Flask):
@@ -161,16 +162,23 @@ class Flask(_Flask):
                     name = HTTP_STATUS_CODES[status]
                     parameter = {}
 
+                message = str(message) if message else ''
+
+                try:
+                    message = (
+                        f'{ message } '
+                        f'To make { WEB_TITLE } works, please see the'
+                        ' Doc in here:'
+                        f' { url_for("doc.show", _external=True) }'
+                    )
+                except BuildError:
+                    pass
+
                 data = {
                     'data': None,
                     'error': {
                         'code': status,
-                        'message': (
-                            f"{ f'{ str(message) } ' if message else '' }"
-                            f'To make { TITLE } works, please see the'
-                            ' Doc in here:'
-                            f' { url_for("doc.show", _external=True) }'
-                        ),
+                        'message': message,
                         'name': name,
                         'parameter': parameter if parameter else {}
                     }
@@ -194,7 +202,10 @@ class Flask(_Flask):
                 (endpoint := request.endpoint) != self.exclude_endpoint
                 or (
                     endpoint == self.exclude_endpoint
-                    and url_for(endpoint) != request.path
+                    and (
+                        endpoint is None
+                        or url_for(endpoint) != request.path
+                    )
                 )
             ):
                 if (
@@ -217,10 +228,13 @@ class Flask(_Flask):
                     template
                     and request.accept_mimetypes.best == template_mimetype
                 ):
-                    rv = render_template(
-                        template,
-                        data=data
-                    )
+                    try:
+                        rv = render_template(
+                            template,
+                            data=data
+                        )
+                    except TemplateNotFound:
+                        rv = jsonify(data)
                 else:
                     rv = jsonify(data)
 
