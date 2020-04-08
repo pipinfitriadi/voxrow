@@ -62,6 +62,7 @@ last_commit_hash=$(git log -n 1 --pretty=format:%H)
 file_last_commit_hash=$(git log -n 1 --pretty=format:%H -- *.py)
 
 if [ $last_commit_hash == $file_last_commit_hash ]; then
+    echo "======== Linter test for python code ========"
     COMPOSE_FILE='server/docker-compose/build_and_test.yml'
     docker-compose \
         -f $COMPOSE_FILE \
