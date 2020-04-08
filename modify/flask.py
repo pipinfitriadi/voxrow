@@ -69,6 +69,7 @@ from werkzeug.datastructures import Headers
 from werkzeug.exceptions import default_exceptions
 from werkzeug.http import HTTP_STATUS_CODES
 from werkzeug.routing import BuildError, RequestRedirect
+from werkzeug.wrappers import Response as ResponseBase
 
 try:
     from ...config import WEB_TITLE
@@ -107,6 +108,9 @@ class Flask(_Flask):
         Tipe data:
         - template: str = None
         - template_mimetype: str = 'text/html'
+        - template_mimetype: bool = True
+            Apabila nilainya bool True, maka tidak akan dilakukan pengecekan
+            Header Accept Request.
         '''
 
         status = headers = template = None
@@ -148,6 +152,7 @@ class Flask(_Flask):
 
         if (
             not isinstance(rv, self.response_class)
+            and not isinstance(rv, ResponseBase)
             and not isinstance(rv, RequestRedirect)
         ):
             if status and status >= 400:
@@ -226,7 +231,10 @@ class Flask(_Flask):
                     )
                 elif (
                     template
-                    and request.accept_mimetypes.best == template_mimetype
+                    and (
+                        template_mimetype is True
+                        or request.accept_mimetypes.best == template_mimetype
+                    )
                 ):
                     try:
                         rv = render_template(
