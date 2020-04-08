@@ -73,9 +73,9 @@ from .model import Model
 from ... import to_json
 
 try:
-    from ....config import SCHEMA
+    from ....config import DB_SCHEMA
 except Exception:
-    SCHEMA = 'VOXROW'
+    DB_SCHEMA = 'VOXROW'
 
 
 class SQLAlchemy(_SQLAlchemy):

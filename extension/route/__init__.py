@@ -61,10 +61,8 @@ from flask import (
     send_from_directory
 )
 
-from ... import blueprint_name
-
 app = Blueprint(
-    blueprint_name(__file__),
+    'voxrowlib_route',
     __name__,
 )
 
