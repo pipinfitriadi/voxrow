@@ -59,7 +59,7 @@ set -e
 # How do I find the most recent git commit that modified a file?
 # https://stackoverflow.com/questions/4784575/how-do-i-find-the-most-recent-git-commit-that-modified-a-file
 last_commit_hash=$(git log -n 1 --pretty=format:%H)
-file_last_commit_hash=$(git log -n 1 --pretty=format:%H -- *.py)
+file_last_commit_hash=$(git log -n 1 --pretty=format:%H -- */*.py)
 
 if [ $last_commit_hash == $file_last_commit_hash ]; then
     echo "======== Linter test for python code ========"
