@@ -245,6 +245,20 @@ class Flask(_Flask):
                         rv = jsonify(data)
                 else:
                     rv = jsonify(data)
+        elif (
+            isinstance(rv, ResponseBase)
+            and (
+                '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n'
+                "<title>Redirecting...</title>\n"
+                "<h1>Redirecting...</h1>\n"
+                "<p>You should be redirected automatically to target URL: "
+                '<a href="'
+            ) in rv.data.decode('utf-8')
+        ):
+            try:
+                rv = render_template('redirecting.html')
+            except TemplateNotFound:
+                pass
 
         return super().make_response(
             (rv, status, headers)
