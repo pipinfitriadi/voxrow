@@ -198,7 +198,7 @@ def query(engine, string, **kwargs):
         3. debug_mode: bool
             - Use debug_mode=False if you don't want to see error
             information.
-        4. row_size: int
+        4. fetch_size: int
             - Use for set how many rows use on every fetch.
             - Default value is 100,000.
     '''
@@ -219,7 +219,7 @@ def query(engine, string, **kwargs):
             2. debug_mode: bool
                 - Use debug_mode=False if you don't want to see error
                 information.
-            3. row_size: int
+            3. fetch_size: int
                 - Use for set how many rows use on every fetch.
                 - Default value is 100,000.
         '''
@@ -232,7 +232,7 @@ def query(engine, string, **kwargs):
                     lambda kwarg: kwarg[0] not in [
                         'json_mode',
                         'debug_mode',
-                        'row_size'
+                        'fetch_size'
                     ],
                     kwargs.items()
                 )
@@ -285,7 +285,7 @@ def query(engine, string, **kwargs):
 
             while True:
                 batch = query_result.fetchmany(
-                    kwargs.get('row_size', 100_000)
+                    kwargs.get('fetch_size', 100_000)
                 )
 
                 if not batch:
