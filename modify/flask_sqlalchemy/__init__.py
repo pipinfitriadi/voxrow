@@ -53,24 +53,11 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-from datetime import date, datetime
-
 from flask import current_app
 from flask_sqlalchemy import BaseQuery, SQLAlchemy as _SQLAlchemy
-from sqlalchemy import bindparam
-from sqlalchemy.sql import text
-from sqlalchemy.types import (
-    Boolean,
-    Date,
-    DateTime,
-    Integer,
-    Float,
-    JSON,
-    String
-)
 
 from .model import Model
-from ... import to_json
+from ... import query as voxrowlib_query
 
 try:
     from ....config import DB_SCHEMA
@@ -100,143 +87,24 @@ class SQLAlchemy(_SQLAlchemy):
         )
         self.Model.db = self
 
-    def __query(self, string, **kwargs):
-        '''
-        Optional kwargs can be use for best query result.
-        1. bind_key: str
-           - Use it if we have more than one database in one system.
-        2. json_mode: bool
-           - Use json_mode=True if we want result as string dumps json.
-        '''
-
-        args = []
-
-        for key in (
-            _kwargs := dict(
-                filter(
-                    lambda kwarg: kwarg[0] not in [
-                        'bind_key',
-                        'json_mode'
-                    ],
-                    kwargs.items()
-                )
-            )
-        ):
-            for parameter_type, database_column_type in [
-                [int, Integer],
-                [float, Float],
-                [datetime, DateTime],
-                [date, Date],
-                [dict, JSON],
-                [bool, Boolean],
-                [type(None), None]
-            ]:
-                if isinstance(_kwargs[key], parameter_type):
-                    parameter = bindparam(
-                        key=key,
-                        type_=database_column_type
-                    )
-                    break
-            else:
-                parameter = bindparam(
-                    key=key,
-                    type_=String
-                )
-
-            args.append(parameter)
-
-        bind_key = kwargs.get('bind_key')
-        session = self.create_session({
-            'bind': self.get_engine(
+    def query(self, string, **kwargs):
+        bind_key = kwargs.pop('bind_key', None)
+        return voxrowlib_query(
+            self.get_engine(
                 *(
                     (current_app, bind_key)
                     if isinstance(bind_key, str)
                     else (current_app,)
                 )
-            ).execution_options(stream_results=True)
-        })()
+            ),
+            string,
+            **kwargs
+        )
 
-        try:
-            query_result = session.execute(
-                text(string).bindparams(*args, **_kwargs)
-            )
 
-            # memory-efficient built-in SqlAlchemy iterator /
-            # generator:
-            # https://stackoverflow.com/questions/7389759/memory-efficient-built-in-sqlalchemy-iterator-generator
-            # Python: Using Flask to stream chunked dynamic content to end
-            # users
-            # https://fabianlee.org/2019/11/18/python-using-flask-to-stream-chunked-dynamic-content-to-end-users/
-            # Streaming Contents
-            # https://flask.palletsprojects.com/en/1.1.x/patterns/streaming/#basic-usage
-            # Streaming JSON with Flask
-            # https://blog.al4.co.nz/2016/01/streaming-json-with-flask/
-            if (json_mode := kwargs.get('json_mode') is True):
-                yield '['
-
-            while True:
-                batch = query_result.fetchmany(100_000)
-
-                if not batch:
-                    break
-
-                rows = batch.__iter__()
-
-                try:
-                    prev_row = next(rows)
-
-                    def to_result(row, json_mode=False):
-                        data = dict(
-                            column for column in row.items()
-                        )
-                        return (
-                            to_json(data)
-                            if json_mode else data
-                        )
-
-                    for row in rows:
-                        result = to_result(prev_row, json_mode)
-                        prev_row = row
-                        yield result + ', ' if json_mode else result
-
-                    yield to_result(prev_row, json_mode)
-                except StopIteration:
-                    pass
-
-            if json_mode:
-                yield ']'
-
-            query_result.close()
-            session.commit()
-        except Exception:
-            session.rollback()
-
-            if current_app.debug:
-                raise
-        finally:
-            session.close()
-
-    def query(self, string, **kwargs):
-        '''
-        Optional kwargs can be use for best query result.
-        1. bind_key: str
-           - Use it if we have more than one database in one system.
-        2. json_mode: bool
-           - Use json_mode=True if we want result as string dumps json.
-        3. generator_mode: bool
-           - Use generator_mode=True if we want result as generator.
-        '''
-
-        # Issue with a python function returning a generator or a normal object
-        # https://stackoverflow.com/questions/25313283/issue-with-a-python-function-returning-a-generator-or-a-normal-object
-        generator_mode = kwargs.pop('generator_mode', None)
-        result = self.__query(string, **kwargs)
-
-        if not generator_mode:
-            result = (
-                ''.join(result)
-                if kwargs.get('json_mode') is True
-                else list(result)
-            )
-
-        return result
+SQLAlchemy.query.__doc__ = (
+    voxrowlib_query.__doc__
+    + '''    4. bind_key: str
+            - Use it if we have more than one database in one system.
+    '''
+)

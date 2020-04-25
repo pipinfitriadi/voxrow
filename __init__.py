@@ -59,6 +59,18 @@ from os import getenv
 from pathlib import Path
 
 from sshtunnel import SSHTunnelForwarder
+from sqlalchemy import bindparam
+from sqlalchemy.orm.session import sessionmaker
+from sqlalchemy.sql import text
+from sqlalchemy.types import (
+    Boolean,
+    Date,
+    DateTime,
+    Integer,
+    Float,
+    JSON,
+    String
+)
 
 STRING_DATE_FORMAT = '%Y-%m-%d'
 STRING_DATETIME_FORMAT = f'{ STRING_DATE_FORMAT }T%H:%M:%S'
@@ -170,3 +182,149 @@ def database_uri_from_env(
         getenv(ssh_username_env),
         getenv(ssh_password_env)
     )
+
+
+def query(engine, string, **kwargs):
+    '''
+    engine: obj
+    - SQLAlchemy's engine instance.
+
+    kwargs: dict
+    - Optional kwargs can be use for best query result.
+        1. generator_mode: bool
+            - Use generator_mode=True if we want result as generator.
+        2. json_mode: bool
+            - Use json_mode=True if we want result as string dumps json.
+        3. debug_mode: bool
+            - Use debug_mode=False if you don't want to see error
+            information.
+    '''
+
+    # Issue with a python function returning a generator or a normal object
+    # https://stackoverflow.com/questions/25313283/issue-with-a-python-function-returning-a-generator-or-a-normal-object
+    generator_mode = kwargs.pop('generator_mode', None)
+
+    def __query(engine, string, **kwargs):
+        '''
+        engine: obj
+        - SQLAlchemy's engine instance.
+
+        kwargs: dict
+        - Optional kwargs can be use for best query result.
+            1. json_mode: bool
+                - Use json_mode=True if we want result as string dumps json.
+            2. debug_mode: bool
+                - Use debug_mode=False if you don't want to see error
+                information.
+        '''
+
+        args = []
+
+        for key in (
+            _kwargs := dict(
+                filter(
+                    lambda kwarg: kwarg[0] not in [
+                        'json_mode',
+                        'debug_mode'
+                    ],
+                    kwargs.items()
+                )
+            )
+        ):
+            for parameter_type, database_column_type in [
+                [int, Integer],
+                [float, Float],
+                [datetime, DateTime],
+                [date, Date],
+                [dict, JSON],
+                [bool, Boolean],
+                [type(None), None]
+            ]:
+                if isinstance(_kwargs[key], parameter_type):
+                    parameter = bindparam(
+                        key=key,
+                        type_=database_column_type
+                    )
+                    break
+            else:
+                parameter = bindparam(
+                    key=key,
+                    type_=String
+                )
+
+            args.append(parameter)
+
+        session = sessionmaker(
+            bind=engine.execution_options(stream_results=True)
+        )()
+
+        try:
+            query_result = session.execute(
+                text(string).bindparams(*args, **_kwargs)
+            )
+
+            # memory-efficient built-in SqlAlchemy iterator /
+            # generator:
+            # https://stackoverflow.com/questions/7389759/memory-efficient-built-in-sqlalchemy-iterator-generator
+            # Python: Using Flask to stream chunked dynamic content to end
+            # users
+            # https://fabianlee.org/2019/11/18/python-using-flask-to-stream-chunked-dynamic-content-to-end-users/
+            # Streaming Contents
+            # https://flask.palletsprojects.com/en/1.1.x/patterns/streaming/#basic-usage
+            # Streaming JSON with Flask
+            # https://blog.al4.co.nz/2016/01/streaming-json-with-flask/
+            if (json_mode := kwargs.get('json_mode') is True):
+                yield '['
+
+            while True:
+                batch = query_result.fetchmany(100_000)
+
+                if not batch:
+                    break
+
+                rows = batch.__iter__()
+
+                try:
+                    prev_row = next(rows)
+
+                    def to_result(row, json_mode=False):
+                        data = dict(
+                            column for column in row.items()
+                        )
+                        return (
+                            to_json(data)
+                            if json_mode else data
+                        )
+
+                    for row in rows:
+                        result = to_result(prev_row, json_mode)
+                        prev_row = row
+                        yield result + ', ' if json_mode else result
+
+                    yield to_result(prev_row, json_mode)
+                except StopIteration:
+                    pass
+
+            if json_mode:
+                yield ']'
+
+            query_result.close()
+            session.commit()
+        except Exception:
+            session.rollback()
+
+            if kwargs.get('debug_mode') in [None, True]:
+                raise
+        finally:
+            session.close()
+
+    result = __query(engine, string, **kwargs)
+
+    if not generator_mode:
+        result = (
+            ''.join(result)
+            if kwargs.get('json_mode') is True
+            else list(result)
+        )
+
+    return result
