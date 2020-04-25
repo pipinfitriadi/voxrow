@@ -88,6 +88,9 @@ class SQLAlchemy(_SQLAlchemy):
         self.Model.db = self
 
     def query(self, string, **kwargs):
+        if kwargs.get('debug_mode') is None:
+            kwargs['debug_mode'] = current_app.debug
+
         bind_key = kwargs.pop('bind_key', None)
         return voxrowlib_query(
             self.get_engine(
