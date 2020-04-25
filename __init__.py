@@ -198,6 +198,9 @@ def query(engine, string, **kwargs):
         3. debug_mode: bool
             - Use debug_mode=False if you don't want to see error
             information.
+        4. row_size: int
+            - Use for set how many rows use on every fetch.
+            - Default value is 100,000.
     '''
 
     # Issue with a python function returning a generator or a normal object
@@ -216,6 +219,9 @@ def query(engine, string, **kwargs):
             2. debug_mode: bool
                 - Use debug_mode=False if you don't want to see error
                 information.
+            3. row_size: int
+                - Use for set how many rows use on every fetch.
+                - Default value is 100,000.
         '''
 
         args = []
@@ -225,7 +231,8 @@ def query(engine, string, **kwargs):
                 filter(
                     lambda kwarg: kwarg[0] not in [
                         'json_mode',
-                        'debug_mode'
+                        'debug_mode',
+                        'row_size'
                     ],
                     kwargs.items()
                 )
@@ -277,7 +284,9 @@ def query(engine, string, **kwargs):
                 yield '['
 
             while True:
-                batch = query_result.fetchmany(100_000)
+                batch = query_result.fetchmany(
+                    kwargs.get('row_size', 100_000)
+                )
 
                 if not batch:
                     break

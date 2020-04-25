@@ -85,6 +85,8 @@ class SQLAlchemy(_SQLAlchemy):
             model_class=model_class,
             engine_options=engine_options
         )
+
+        # Variable ini dipergunakan di voxrowlib.modify.flask_sqlalchemy.model
         self.Model.db = self
 
     def query(self, string, **kwargs):
@@ -107,7 +109,7 @@ class SQLAlchemy(_SQLAlchemy):
 
 SQLAlchemy.query.__doc__ = (
     voxrowlib_query.__doc__
-    + '''    4. bind_key: str
+    + '''    5. bind_key: str
             - Use it if we have more than one database in one system.
     '''
 )
