@@ -109,7 +109,7 @@ class SQLAlchemy(_SQLAlchemy):
 
 SQLAlchemy.query.__doc__ = (
     voxrowlib_query.__doc__
-    + '''    5. bind_key: str
+    + '''    6. bind_key: str
             - Use it if we have more than one database in one system.
     '''
 )

@@ -201,6 +201,8 @@ def query(engine, string, **kwargs):
         4. fetch_size: int
             - Use for set how many rows use on every fetch.
             - Default value is 100,000.
+        5. stream_results: bool
+            - Use stream_results=False for update/insert/delete query.
     '''
 
     # Issue with a python function returning a generator or a normal object
@@ -222,6 +224,8 @@ def query(engine, string, **kwargs):
             3. fetch_size: int
                 - Use for set how many rows use on every fetch.
                 - Default value is 100,000.
+            4. stream_results: bool
+                - Use stream_results=False for update/insert/delete query.
         '''
 
         args = []
@@ -232,7 +236,8 @@ def query(engine, string, **kwargs):
                     lambda kwarg: kwarg[0] not in [
                         'json_mode',
                         'debug_mode',
-                        'fetch_size'
+                        'fetch_size',
+                        'stream_results'
                     ],
                     kwargs.items()
                 )
@@ -262,7 +267,9 @@ def query(engine, string, **kwargs):
             args.append(parameter)
 
         session = sessionmaker(
-            bind=engine.execution_options(stream_results=True)
+            bind=engine.execution_options(
+                stream_results=kwargs.get('stream_results', True)
+            )
         )()
 
         try:
