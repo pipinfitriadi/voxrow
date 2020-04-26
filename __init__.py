@@ -60,6 +60,7 @@ from pathlib import Path
 
 from sshtunnel import SSHTunnelForwarder
 from sqlalchemy import bindparam
+from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm.session import sessionmaker
 from sqlalchemy.sql import text
 from sqlalchemy.types import (
@@ -189,6 +190,9 @@ def query(engine, string, **kwargs):
     engine: obj
     - SQLAlchemy's engine instance.
 
+    string: str
+    - Use for put raw query sql.
+
     kwargs: dict
     - Optional kwargs can be use for best query result.
         1. generator_mode: bool
@@ -213,6 +217,9 @@ def query(engine, string, **kwargs):
         '''
         engine: obj
         - SQLAlchemy's engine instance.
+
+        string: str
+        - Use for put raw query sql.
 
         kwargs: dict
         - Optional kwargs can be use for best query result.
@@ -266,9 +273,21 @@ def query(engine, string, **kwargs):
 
             args.append(parameter)
 
-        session = sessionmaker(
-            bind=engine.execution_options(
-                stream_results=kwargs.get('stream_results', True)
+        if (
+            stream_results := kwargs.get('stream_results')
+        ) is None:
+            for action_query in ['insert', 'update', 'delete']:
+                if action_query in string.lower():
+                    stream_results = False
+                    break
+            else:
+                stream_results = True
+
+        # scoped_session(sessionmaker()) or plain sessionmaker() in sqlalchemy?
+        # https://stackoverflow.com/questions/6519546/scoped-sessionsessionmaker-or-plain-sessionmaker-in-sqlalchemy
+        session = scoped_session(
+            sessionmaker(
+                bind=engine.execution_options(stream_results=stream_results)
             )
         )()
 
