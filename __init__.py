@@ -275,7 +275,7 @@ def query(engine, string, **kwargs):
                         if len(value) > 0:
                             for param_type, db_col_type in mapping_type:
                                 if isinstance(
-                                    value[0],
+                                    list(value)[0],
                                     param_type
                                 ):
                                     child_type = db_col_type
