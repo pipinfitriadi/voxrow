@@ -296,28 +296,17 @@ def query(engine, string, **kwargs):
                                     ):
                                         temp_type.add(db_col_type)
 
-                                if (
-                                    len_temp_type := len(temp_type)
-                                ) == 1:
+                                if len(temp_type) == 1:
                                     child_type = temp_type.pop()
-                                elif (
-                                    (
-                                        len_temp_type > 1
-                                        and not temp_type.intersection({
-                                            DateTime,
-                                            Date,
-                                            JSON,
-                                            ARRAY
-                                        })
-                                    )
-                                    or len_temp_type == 0
-                                ):
-                                    child_type = String
 
                                 break
 
                         database_column_type = ARRAY(
-                            child_type if child_type is not ARRAY
+                            child_type if child_type not in [
+                                DateTime,
+                                Date,
+                                ARRAY
+                            ]
                             else JSON
                         )
 
