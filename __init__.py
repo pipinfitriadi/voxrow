@@ -259,7 +259,7 @@ def query(engine, string, **kwargs):
                 [date, Date],
                 [dict, JSON],
                 [bool, Boolean],
-                [Iterable, ARRAY]
+                [Iterable, ARRAY],
                 [type(None), None]
             ]:
                 if isinstance(_kwargs[key], parameter_type):
