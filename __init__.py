@@ -289,7 +289,7 @@ def query(engine, string, **kwargs):
                                         value[
                                             randint(
                                                 0,
-                                                len_value
+                                                len_value - 1
                                             )
                                         ],
                                         param_type
