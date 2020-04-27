@@ -58,6 +58,7 @@ from datetime import date, datetime
 from json import dumps
 from os import getenv
 from pathlib import Path
+from random import randint
 
 from sshtunnel import SSHTunnelForwarder
 from sqlalchemy import bindparam
@@ -260,9 +261,10 @@ def query(engine, string, **kwargs):
                     [date, Date],
                     [dict, JSON],
                     [bool, Boolean],
+                    [Iterable, ARRAY],
                     [type(None), None]
                 ]
-            ) + [[Iterable, ARRAY]]:
+            ):
                 if isinstance(
                     (
                         value := _kwargs[key]
@@ -270,20 +272,54 @@ def query(engine, string, **kwargs):
                     parameter_type
                 ):
                     if database_column_type is ARRAY:
-                        child_type = String
+                        child_type = JSON
 
-                        if len(
-                            value := list(value)
+                        if (
+                            len_value := len(
+                                value := list(value)
+                            )
                         ) > 0:
-                            for param_type, db_col_type in mapping_type[:-1]:
-                                if isinstance(
-                                    value[0],
-                                    param_type
-                                ):
-                                    child_type = db_col_type
-                                    break
+                            for param_type, db_col_type in (
+                                mapping_type[:-1] + [[str, String]]
+                            ):
+                                temp_type = set()
 
-                        database_column_type = ARRAY(child_type)
+                                for i in range(3):
+                                    if isinstance(
+                                        value[
+                                            randint(
+                                                0,
+                                                len_value
+                                            )
+                                        ],
+                                        param_type
+                                    ):
+                                        temp_type.add(db_col_type)
+
+                                if (
+                                    len_temp_type := len(temp_type)
+                                ) == 1:
+                                    child_type = temp_type.pop()
+                                elif (
+                                    (
+                                        len_temp_type > 1
+                                        and not temp_type.intersection({
+                                            DateTime,
+                                            Date,
+                                            JSON,
+                                            ARRAY
+                                        })
+                                    )
+                                    or len_temp_type == 0
+                                ):
+                                    child_type = String
+
+                                break
+
+                        database_column_type = ARRAY(
+                            child_type if child_type is not ARRAY
+                            else JSON
+                        )
 
                     parameter = bindparam(
                         key=key,
