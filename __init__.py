@@ -272,10 +272,12 @@ def query(engine, string, **kwargs):
                     if database_column_type is ARRAY:
                         child_type = String
 
-                        if len(value) > 0:
-                            for param_type, db_col_type in mapping_type:
+                        if len(
+                            value := list(value)
+                        ) > 0:
+                            for param_type, db_col_type in mapping_type[:-1]:
                                 if isinstance(
-                                    list(value)[0],
+                                    value[0],
                                     param_type
                                 ):
                                     child_type = db_col_type
