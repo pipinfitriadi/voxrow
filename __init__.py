@@ -53,6 +53,7 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
+from collections.abc import Iterable
 from datetime import date, datetime
 from json import dumps
 from os import getenv
@@ -64,6 +65,7 @@ from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm.session import sessionmaker
 from sqlalchemy.sql import text
 from sqlalchemy.types import (
+    ARRAY,
     Boolean,
     Date,
     DateTime,
@@ -257,12 +259,17 @@ def query(engine, string, **kwargs):
                 [date, Date],
                 [dict, JSON],
                 [bool, Boolean],
+                [Iterable, ARRAY]
                 [type(None), None]
             ]:
                 if isinstance(_kwargs[key], parameter_type):
                     parameter = bindparam(
                         key=key,
-                        type_=database_column_type
+                        type_=(
+                            database_column_type
+                            if database_column_type is not ARRAY
+                            else ARRAY(String)
+                        )
                     )
                     break
             else:
