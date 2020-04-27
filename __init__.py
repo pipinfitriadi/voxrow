@@ -252,24 +252,40 @@ def query(engine, string, **kwargs):
                 )
             )
         ):
-            for parameter_type, database_column_type in [
-                [int, Integer],
-                [float, Float],
-                [datetime, DateTime],
-                [date, Date],
-                [dict, JSON],
-                [bool, Boolean],
-                [Iterable, ARRAY],
-                [type(None), None]
-            ]:
-                if isinstance(_kwargs[key], parameter_type):
+            for parameter_type, database_column_type in (
+                mapping_type := [
+                    [int, Integer],
+                    [float, Float],
+                    [datetime, DateTime],
+                    [date, Date],
+                    [dict, JSON],
+                    [bool, Boolean],
+                    [type(None), None]
+                ]
+            ) + [[Iterable, ARRAY]]:
+                if isinstance(
+                    (
+                        value := _kwargs[key]
+                    ),
+                    parameter_type
+                ):
+                    if database_column_type is ARRAY:
+                        child_type = String
+
+                        if len(value) > 0:
+                            for param_type, db_col_type in mapping_type:
+                                if isinstance(
+                                    value[0],
+                                    param_type
+                                ):
+                                    child_type = db_col_type
+                                    break
+
+                        database_column_type = ARRAY(child_type)
+
                     parameter = bindparam(
                         key=key,
-                        type_=(
-                            database_column_type
-                            if database_column_type is not ARRAY
-                            else ARRAY(String)
-                        )
+                        type_=database_column_type
                     )
                     break
             else:
