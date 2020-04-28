@@ -55,13 +55,15 @@
 
 from collections.abc import Iterable
 from datetime import date, datetime
-from json import dumps
+from json import dumps, JSONDecoder as _JSONDecoder, loads
+from json.decoder import JSONDecodeError, WHITESPACE
 from os import getenv
 from pathlib import Path
 from random import randint
+import re
 
 from sshtunnel import SSHTunnelForwarder
-from sqlalchemy import bindparam
+from sqlalchemy import bindparam, create_engine
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm.session import sessionmaker
 from sqlalchemy.sql import text
@@ -93,6 +95,67 @@ def blueprint_name(file):
     return name
 
 
+# How to convert string int JSON into real int with json.loads
+# https://stackoverflow.com/questions/45068797/how-to-convert-string-int-json-into-real-int-with-json-loads
+# How to convert to a Python datetime object with JSON.loads?
+# https://stackoverflow.com/questions/8793448/how-to-convert-to-a-python-datetime-object-with-json-loads
+def deserialize(object):
+    '''
+    >>> deserialize('2020-04-28'), deserialize('2020-04-28T15:00:46')
+    '''
+
+    if isinstance(object, str):
+        try:
+            object = loads(object)
+        except JSONDecodeError:
+            pass
+
+        if isinstance(object, str):
+            for regex, str_time_format in [
+                [
+                    r'^\d{4}-\d{2}-\d{2}$',
+                    STRING_DATE_FORMAT
+                ],
+                [
+                    r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$',
+                    STRING_DATETIME_FORMAT
+                ]
+            ]:
+                if re.match(regex, object):
+                    is_time = False
+
+                    try:
+                        object = datetime.strptime(object, str_time_format)
+
+                        is_time = True
+                    except Exception:
+                        pass
+
+                    if is_time:
+                        break
+        else:
+            object = deserialize(object)
+    elif isinstance(object, dict):
+        object = {
+            key: deserialize(value)
+            for key, value in object.items()
+        }
+    elif isinstance(object, list):
+        object = [
+            deserialize(value)
+            for value in object
+        ]
+
+    return object
+
+
+class JSONDecoder(_JSONDecoder):
+    def decode(self, s, _w=WHITESPACE.match):
+        return deserialize(
+            super().decode(s, _w)
+        )
+
+
 def serialize(object):
     '''
     >>> from json import dumps
@@ -105,12 +168,18 @@ def serialize(object):
         object = object.strftime(STRING_DATETIME_FORMAT)
     elif isinstance(object, date):
         object = object.strftime(STRING_DATE_FORMAT)
+    elif isinstance(object, set):
+        object = list(object)
 
     return object
 
 
-def to_json(object):
+def json_serializer(object):
     return dumps(object, default=serialize)
+
+
+def json_deserializer(object):
+    return loads(object, cls=JSONDecoder)
 
 
 def database_uri(
@@ -255,12 +324,12 @@ def query(engine, string, **kwargs):
         ):
             for parameter_type, database_column_type in (
                 mapping_type := [
-                    [int, Integer],
                     [float, Float],
-                    [datetime, DateTime],
-                    [date, Date],
-                    [dict, JSON],
+                    [int, Integer],
                     [bool, Boolean],
+                    [date, Date],
+                    [datetime, DateTime],
+                    [dict, JSON],
                     [Iterable, ARRAY],
                     [type(None), None]
                 ]
@@ -272,19 +341,20 @@ def query(engine, string, **kwargs):
                     parameter_type
                 ):
                     if database_column_type is ARRAY:
-                        child_type = JSON
+                        child_type = String
 
                         if (
                             len_value := len(
                                 value := list(value)
                             )
                         ) > 0:
-                            for param_type, db_col_type in (
-                                mapping_type[:-1] + [[str, String]]
-                            ):
-                                temp_type = set()
+                            temp_type = set()
 
-                                for i in range(3):
+                            # Try to sample chacking type of array's child.
+                            for i in range(10):
+                                for param_type, db_col_type in (
+                                    mapping_type[:-1]
+                                ):
                                     if isinstance(
                                         value[
                                             randint(
@@ -295,19 +365,28 @@ def query(engine, string, **kwargs):
                                         param_type
                                     ):
                                         temp_type.add(db_col_type)
+                                        break
 
-                                if len(temp_type) == 1:
-                                    child_type = temp_type.pop()
+                            if (
+                                len_temp_type := len(temp_type)
+                            ) == 1:
+                                child_type = temp_type.pop()
+                            elif (
+                                len_temp_type == 2
+                                and temp_type == {Date, DateTime}
+                            ):
+                                child_type = String
+                            elif len_temp_type > 1:
+                                child_type = JSON
 
-                                break
-
+                        # PostgreSQL multidimensional arrays in SQLAlchemy,
+                        # not sure of syntax
+                        # https://stackoverflow.com/questions/13888537/postgresql-multidimensional-arrays-in-sqlalchemy-not-sure-of-syntax
                         database_column_type = ARRAY(
-                            child_type if child_type not in [
-                                DateTime,
-                                Date,
-                                ARRAY
-                            ]
-                            else JSON
+                            child_type
+                            if child_type is not ARRAY
+                            else JSON,
+                            dimensions=1
                         )
 
                     parameter = bindparam(
@@ -337,7 +416,10 @@ def query(engine, string, **kwargs):
         # https://stackoverflow.com/questions/6519546/scoped-sessionsessionmaker-or-plain-sessionmaker-in-sqlalchemy
         session = scoped_session(
             sessionmaker(
-                bind=engine.execution_options(stream_results=stream_results)
+                bind=create_engine(
+                    engine.url,
+                    json_serializer=json_serializer
+                ).execution_options(stream_results=stream_results)
             )
         )()
 
@@ -377,8 +459,8 @@ def query(engine, string, **kwargs):
                             column for column in row.items()
                         )
                         return (
-                            to_json(data)
-                            if json_mode else data
+                            json_serializer(data)
+                            if json_mode else deserialize(data)
                         )
 
                     for row in rows:
