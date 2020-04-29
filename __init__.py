@@ -339,11 +339,14 @@ def query(engine, string, **kwargs):
                     [type(None), None]
                 ]
             ):
-                if isinstance(
-                    (
-                        value := _kwargs[key]
-                    ),
-                    parameter_type
+                if (
+                    isinstance(
+                        (
+                            value := _kwargs[key]
+                        ),
+                        parameter_type
+                    )
+                    and not isinstance(value, str)
                 ):
                     if database_column_type is ARRAY:
                         child_type = String
@@ -382,11 +385,12 @@ def query(engine, string, **kwargs):
                             ) == 1:
                                 child_type = temp_type.pop()
                             elif (
-                                len_temp_type == 2
-                                and temp_type == {Date, DateTime}
+                                len_temp_type > 2
+                                or (
+                                    len_temp_type == 2
+                                    and temp_type != {Date, DateTime}
+                                )
                             ):
-                                child_type = String
-                            elif len_temp_type > 1:
                                 child_type = JSON
 
                         # PostgreSQL multidimensional arrays in SQLAlchemy,
