@@ -322,6 +322,11 @@ def query(engine, string, **kwargs):
                 )
             )
         ):
+            param_kwargs = {
+                'key': key,
+                'type_': String
+            }
+
             for parameter_type, database_column_type in (
                 mapping_type := [
                     [float, Float],
@@ -355,14 +360,19 @@ def query(engine, string, **kwargs):
                                 for param_type, db_col_type in (
                                     mapping_type[:-1]
                                 ):
-                                    if isinstance(
-                                        value[
-                                            randint(
-                                                0,
-                                                len_value - 1
-                                            )
-                                        ],
-                                        param_type
+                                    if (
+                                        isinstance(
+                                            (
+                                                child_value := value[
+                                                    randint(
+                                                        0,
+                                                        len_value - 1
+                                                    )
+                                                ]
+                                            ),
+                                            param_type
+                                        )
+                                        and not isinstance(child_value, str)
                                     ):
                                         temp_type.add(db_col_type)
                                         break
@@ -389,18 +399,12 @@ def query(engine, string, **kwargs):
                             dimensions=1
                         )
 
-                    parameter = bindparam(
-                        key=key,
-                        type_=database_column_type
-                    )
+                    param_kwargs['type_'] = database_column_type
                     break
-            else:
-                parameter = bindparam(
-                    key=key,
-                    type_=String
-                )
 
-            args.append(parameter)
+            args.append(
+                bindparam(**param_kwargs)
+            )
 
         if (
             stream_results := kwargs.get('stream_results')
