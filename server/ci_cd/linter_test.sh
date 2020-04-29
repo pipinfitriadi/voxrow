@@ -59,11 +59,27 @@ set -e
 # How do I find the most recent git commit that modified a file?
 # https://stackoverflow.com/questions/4784575/how-do-i-find-the-most-recent-git-commit-that-modified-a-file
 last_commit_hash=$(git log -n 1 --pretty=format:%H)
-file_last_commit_hash=$(git log -n 1 --pretty=format:%H -- */*.py)
+# Git: How do I ignore matching directories in a sub directory?
+# https://stackoverflow.com/questions/1087917/git-how-do-i-ignore-matching-directories-in-a-sub-directory
+file_last_commit_hash=$(git log -n 1 --pretty=format:%H -- *\*.py)
 
 if [ $last_commit_hash == $file_last_commit_hash ]; then
-    echo "======== Linter test for python code ========"
+    # Docker Registry login and docker CI template
+    # https://gitlab.com/gitlab-org/gitlab-runner/issues/2861
+    echo "======== Login docker ========"
+    echo $CI_REGISTRY_PASSWORD \
+        | docker login \
+            -u $CI_REGISTRY_USER \
+            $CI_REGISTRY \
+            --password-stdin
+
+    echo "======== Get latest docker image for website ========"
     COMPOSE_FILE='server/docker-compose/build_and_test.yml'
+    docker-compose \
+        -f $COMPOSE_FILE \
+        pull linter_test \
+        || true
+    echo "======== Linter test for python code ========"
     docker-compose \
         -f $COMPOSE_FILE \
         run --rm linter_test
