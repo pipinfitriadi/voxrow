@@ -56,7 +56,7 @@
 # Better way for multiline ssh command
 # https://forum.gitlab.com/t/better-way-for-multiline-ssh-command/23420
 set -e
-filename='server/docker-compose/Dockerfile'
+filename='Dockerfile'
 
 # How do I find the most recent git commit that modified a file?
 # https://stackoverflow.com/questions/4784575/how-do-i-find-the-most-recent-git-commit-that-modified-a-file
@@ -73,18 +73,18 @@ if [ $last_commit_hash == $file_last_commit_hash ]; then
             $CI_REGISTRY \
             --password-stdin
 
-    echo "======== Get latest docker image ========"
+    echo "======== Get latest voxrowlib ========"
     COMPOSE_FILE='server/docker-compose/build_and_test.yml'
     docker-compose \
         -f $COMPOSE_FILE \
-        pull docker_image \
+        pull voxrowlib \
         || true
-    echo "======== Build docker image ========"
+    echo "======== Build voxrowlib ========"
     docker-compose \
         -f $COMPOSE_FILE \
-        build
-    echo "======== Push docker image ========"
+        build voxrowlib
+    echo "======== Push voxrowlib ========"
     docker-compose \
         -f $COMPOSE_FILE \
-        push docker_image 
+        push voxrowlib 
 fi

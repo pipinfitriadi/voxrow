@@ -59,8 +59,14 @@ services:
             cache_from:
                 - registry.gitlab.com/voxrow/voxrowlib/docker:latest
         image: registry.gitlab.com/voxrow/voxrowlib/docker:latest
+    voxrowlib:
+        build:
+            context: ../../
+            cache_from:
+                - registry.gitlab.com/voxrow/voxrowlib:latest
+        image: registry.gitlab.com/voxrow/voxrowlib:latest
     linter_test:
-        image: python:3.8-alpine
+        image: registry.gitlab.com/voxrow/voxrowlib:latest
         container_name: linter_test
         volumes:
             - ./../../:/home/:ro
@@ -70,7 +76,5 @@ services:
             - IGNORE=E203,E231,F821,F999,W503
         command: >
             /bin/ash -c "
-            apk add git
-            && pip install --upgrade pip git+https://github.com/pycqa/pyflakes flake8
-            && flake8 --exclude $$EXCLUDE --ignore $$IGNORE
+            flake8 --exclude $$EXCLUDE --ignore $$IGNORE
             "
