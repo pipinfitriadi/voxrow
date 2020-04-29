@@ -91,5 +91,3 @@ Linter Test VOXROWLib:
     - live
   script:
     - . server/ci_cd/linter_test.sh
-  after_script:
-    - docker logout $CI_REGISTRY
