@@ -53,13 +53,13 @@ the implied warranties of merchantability, fitness for a particular purpose
 and non-infringement.
 -->
 
-# VOXROWLib
+# VOXROW
 
 Daftar isi:
 
 <!-- TOC -->
 
-- [VOXROWLib](#voxrowlib)
+- [VOXROW](#voxrow)
     - [Server](#server)
     - [Source-code](#source-code)
         - [Editor](#editor)
@@ -77,13 +77,13 @@ Daftar isi:
 Disarankan untuk menggunakan [Ubuntu 18.04 x64](https://ubuntu.com/download/desktop)
 (_CPU_ minimal 1 vCore, _RAM_ minimal 512 MB, _Storage_ minimal 10 GB SSD, dan _Bandwidth_
 minimal 500 GB), supaya memudahkan pengelolaan _server_ dengan mengunakan _script_
-VOXROWLib. Adapun langkah yang harus dipersiapkan adalah sebagai berikut:
+VOXROW. Adapun langkah yang harus dipersiapkan adalah sebagai berikut:
 
-1. Pastikan telah ada _source-code_ VOXROWLib di komputer lokal dan _server_. Dapat
+1. Pastikan telah ada _source-code_ VOXROW di komputer lokal dan _server_. Dapat
 dipergunakan perintah [Git](https://git-scm.com/) berikut ini:
 
     ```shell
-    $ git clone --recurse-submodules -j8 https://gitlab.com/voxrow/voxrowlib.git
+    $ git clone --recurse-submodules -j8 https://gitlab.com/voxrow/voxrow.git
     ```
 
     > Jangan jalankan perintah ini di _folder_ `root/` milik _server_!
@@ -91,7 +91,7 @@ dipergunakan perintah [Git](https://git-scm.com/) berikut ini:
 2. Masuk ke _folder_ `server/`:
 
     ```shell
-    $ cd voxrowlib/server/
+    $ cd voxrow/server/
     ```
 
 3. Pastikan [GNU Make](https://www.gnu.org/software/make/) sudah ada, dengan
@@ -147,11 +147,11 @@ menjalankan perintah ini:
         ```
 
         Setelah seluruh proses selesai dijalankan, maka hapuslah _source-code_
-        VOXROWLib dari _server_, karena sudah tidak diperlukan lagi. Perintahnya
+        VOXROW dari _server_, karena sudah tidak diperlukan lagi. Perintahnya
         adalah sebagai berikut:
 
         ```shell
-        $ sudo rm -rf voxrowlib/
+        $ sudo rm -rf voxrow/
         ```
 
 ---

@@ -73,18 +73,18 @@ if [ $last_commit_hash == $file_last_commit_hash ]; then
             $CI_REGISTRY \
             --password-stdin
 
-    echo "======== Get latest voxrowlib ========"
+    echo "======== Get latest voxrow ========"
     COMPOSE_FILE='server/docker-compose/build_and_test.yml'
     docker-compose \
         -f $COMPOSE_FILE \
-        pull voxrowlib \
+        pull voxrow \
         || true
-    echo "======== Build voxrowlib ========"
+    echo "======== Build voxrow ========"
     docker-compose \
         -f $COMPOSE_FILE \
-        build voxrowlib
-    echo "======== Push voxrowlib ========"
+        build voxrow
+    echo "======== Push voxrow ========"
     docker-compose \
         -f $COMPOSE_FILE \
-        push voxrowlib 
+        push voxrow 
 fi
