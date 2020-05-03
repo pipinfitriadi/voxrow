@@ -62,7 +62,7 @@ from flask import (
 )
 
 app = Blueprint(
-    'voxrowlib_route',
+    'voxrow_route',
     __name__,
 )
 

@@ -73,17 +73,17 @@ Build Docker Image:
     - . server/ci_cd/build_docker.sh
   after_script:
     - docker logout $CI_REGISTRY
-Build VOXROWLib:
+Build VOXROW:
   stage: Build
   only:
     - master
   tags:
     - live
   script:
-    - . server/ci_cd/build_voxrowlib.sh
+    - . server/ci_cd/build_voxrow.sh
   after_script:
     - docker logout $CI_REGISTRY
-Linter Test VOXROWLib:
+Linter Test VOXROW:
   stage: Test
   only:
     - master
