@@ -56,7 +56,7 @@
 # Better way for multiline ssh command
 # https://forum.gitlab.com/t/better-way-for-multiline-ssh-command/23420
 set -e
-filename='Dockerfile'
+filename='Dockerfile requirements.txt'
 
 # How do I find the most recent git commit that modified a file?
 # https://stackoverflow.com/questions/4784575/how-do-i-find-the-most-recent-git-commit-that-modified-a-file
