@@ -62,10 +62,12 @@ from pathlib import Path
 from random import randint
 import re
 
+from paramiko import RSAKey
 from sshtunnel import SSHTunnelForwarder
 from sqlalchemy import bindparam, create_engine
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm.session import sessionmaker
+from sqlalchemy.pool import NullPool
 from sqlalchemy.sql import text
 from sqlalchemy.types import (
     ARRAY,
@@ -192,21 +194,38 @@ def database_uri(
     ssh_host=None,
     ssh_port=22,
     ssh_username=None,
-    ssh_password=None
+    ssh_password=None,
+    ssh_private_key_file=None
 ):
+    if not db_port:
+        if db_driver == 'postgresql':
+            db_port = 5432
+        elif db_driver == 'mysql':
+            db_port = 3306
+
     if all((
         ssh_host,
         ssh_port,
         ssh_username,
-        ssh_password
+        ssh_password or ssh_private_key_file
     )):
+        ssh_tunnel_param = {
+            'ssh_username': ssh_username,
+            'remote_bind_address': (db_host, db_port)
+        }
+
+        if ssh_private_key_file:
+            ssh_tunnel_param['ssh_pkey'] = RSAKey.from_private_key_file(
+                ssh_private_key_file
+            )
+        else:
+            ssh_tunnel_param['ssh_password'] = ssh_password
+
         # Setup a SSH Tunnel With the Sshtunnel Module in Python
         # https://blog.ruanbekker.com/blog/2018/04/23/setup-a-ssh-tunnel-with-the-sshtunnel-module-in-python/
         server = SSHTunnelForwarder(
             (ssh_host, ssh_port),
-            ssh_username=ssh_username,
-            ssh_password=ssh_password,
-            remote_bind_address=(db_host, db_port)
+            **ssh_tunnel_param
         )
 
         # SSHTunnelForwarder.daemon_forward_servers is not respected:
@@ -220,10 +239,10 @@ def database_uri(
 
     return (
         (
-            f'postgresql://{ db_user }:{ db_pass }@'
+            f'{ db_driver }://{ db_user }:{ db_pass }@'
             f'{ db_host }:{ db_port }/{ db_name }'
         )
-        if db_driver == 'postgresql' else None
+        if db_driver else None
     )
 
 
@@ -237,7 +256,8 @@ def database_uri_from_env(
     ssh_host_env='SSH_HOST',
     ssh_port_env='SSH_PORT',
     ssh_username_env='SSH_USERNAME',
-    ssh_password_env='SSH_PASSWORD'
+    ssh_password_env='SSH_PASSWORD',
+    ssh_private_key_file_env='SSH_PRIVATE_KEY_FILE'
 ):
     return database_uri(
         getenv(db_driver_env, 'postgresql'),
@@ -253,7 +273,8 @@ def database_uri_from_env(
             getenv(ssh_port_env, '22')
         ),
         getenv(ssh_username_env),
-        getenv(ssh_password_env)
+        getenv(ssh_password_env),
+        getenv(ssh_private_key_file_env)
     )
 
 
@@ -422,10 +443,13 @@ def query(engine, string, **kwargs):
 
         # scoped_session(sessionmaker()) or plain sessionmaker() in sqlalchemy?
         # https://stackoverflow.com/questions/6519546/scoped-sessionsessionmaker-or-plain-sessionmaker-in-sqlalchemy
+        # NullPool or QueuePool for remote Postgres SQLalchemy connections?
+        # https://stackoverflow.com/questions/48364837/nullpool-or-queuepool-for-remote-postgres-sqlalchemy-connections
         session = scoped_session(
             sessionmaker(
                 bind=create_engine(
                     engine.url,
+                    poolclass=NullPool,
                     json_serializer=json_serializer
                 ).execution_options(stream_results=stream_results)
             )
@@ -492,6 +516,7 @@ def query(engine, string, **kwargs):
                 raise
         finally:
             session.close()
+            engine.dispose()
 
     result = __query(engine, string, **kwargs)
 
