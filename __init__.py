@@ -237,13 +237,15 @@ def database_uri(
         db_host = server.local_bind_host
         db_port = server.local_bind_port
 
-    return (
+    uri = (
         (
             f'{ db_driver }://{ db_user }:{ db_pass }@'
             f'{ db_host }:{ db_port }/{ db_name }'
         )
         if db_driver else None
     )
+
+    return uri + '?charset=utf8' if db_driver == 'mysql' else uri
 
 
 def database_uri_from_env(
