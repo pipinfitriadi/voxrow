@@ -245,6 +245,10 @@ def database_uri(
         if db_driver else None
     )
 
+    # flask sqlalchemy mysql encoding problems
+    # https://stackoverflow.com/questions/26577334/flask-sqlalchemy-mysql-encoding-problems
+    # SQLAlchemy + MySQL + UTF-8 support - how?
+    # https://groups.google.com/forum/#!topic/pylons-discuss/ol2m46kiSYA
     return uri + '?charset=utf8' if db_driver == 'mysql' else uri
 
 
