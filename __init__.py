@@ -66,6 +66,7 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 from paramiko import RSAKey
 from sshtunnel import SSHTunnelForwarder
 from sqlalchemy import bindparam, create_engine
+from sqlalchemy.engine.base import Engine
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm.session import sessionmaker
 from sqlalchemy.pool import NullPool
@@ -287,8 +288,10 @@ def database_uri_from_env(
 
 def query(engine, string, **kwargs):
     '''
-    engine: obj
-    - SQLAlchemy's engine instance.
+    engine:
+    - obj: SQLAlchemy's engine instance.
+    - str: Build SQLAlchemy's engine from string database uri.
+    - dict: Build SQLAlchemy's engine from database_uri's func kwargs.
 
     string: str
     - Use for put raw query sql.
@@ -315,8 +318,10 @@ def query(engine, string, **kwargs):
 
     def __query(engine, string, **kwargs):
         '''
-        engine: obj
-        - SQLAlchemy's engine instance.
+        engine:
+        - obj: SQLAlchemy's engine instance.
+        - str: Build SQLAlchemy's engine from string database uri.
+        - dict: Build SQLAlchemy's engine from database_uri's func kwargs.
 
         string: str
         - Use for put raw query sql.
@@ -448,11 +453,14 @@ def query(engine, string, **kwargs):
             else:
                 stream_results = True
 
+        if isinstance(engine, dict):
+            url = database_uri(**engine)
+        elif isinstance(engine, Engine):
+            url = str(engine.url)
+
         # "set character set" in sqlalchemy?
         # https://groups.google.com/forum/#!topic/sqlalchemy/3kiPusCy8FM
-        if (
-            url := str(engine.url)
-        ).startswith('mysql'):
+        if url.startswith('mysql') and 'charset=utf8' in url:
             # Add params to given URL in Python
             # https://stackoverflow.com/questions/2506379/add-params-to-given-url-in-python
             url = list(
