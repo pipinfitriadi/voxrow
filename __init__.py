@@ -61,6 +61,7 @@ from os import getenv
 from pathlib import Path
 from random import randint
 import re
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from paramiko import RSAKey
 from sshtunnel import SSHTunnelForwarder
@@ -447,6 +448,25 @@ def query(engine, string, **kwargs):
             else:
                 stream_results = True
 
+        # "set character set" in sqlalchemy?
+        # https://groups.google.com/forum/#!topic/sqlalchemy/3kiPusCy8FM
+        if (
+            url := str(engine.url)
+        ).startswith('mysql'):
+            # Add params to given URL in Python
+            # https://stackoverflow.com/questions/2506379/add-params-to-given-url-in-python
+            url = list(
+                urlparse(url)
+            )
+            query = dict(
+                parse_qsl(url[4])
+            )
+            query.update({
+                'charset': 'utf8'
+            })
+            url[4] = urlencode(query)
+            url = urlunparse(url)
+
         # scoped_session(sessionmaker()) or plain sessionmaker() in sqlalchemy?
         # https://stackoverflow.com/questions/6519546/scoped-sessionsessionmaker-or-plain-sessionmaker-in-sqlalchemy
         # NullPool or QueuePool for remote Postgres SQLalchemy connections?
@@ -454,7 +474,7 @@ def query(engine, string, **kwargs):
         session = scoped_session(
             sessionmaker(
                 bind=create_engine(
-                    engine.url,
+                    url,
                     poolclass=NullPool,
                     json_serializer=json_serializer
                 ).execution_options(stream_results=stream_results)
