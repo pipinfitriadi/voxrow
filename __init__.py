@@ -481,10 +481,12 @@ def query(engine, string, **kwargs):
         # https://stackoverflow.com/questions/48364837/nullpool-or-queuepool-for-remote-postgres-sqlalchemy-connections
         session = scoped_session(
             sessionmaker(
-                bind=create_engine(
-                    url,
-                    poolclass=NullPool,
-                    json_serializer=json_serializer
+                bind=(
+                    engine := create_engine(
+                        url,
+                        poolclass=NullPool,
+                        json_serializer=json_serializer
+                    )
                 ).execution_options(stream_results=stream_results)
             )
         )()
