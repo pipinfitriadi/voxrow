@@ -197,7 +197,8 @@ def database_uri(
     ssh_port=22,
     ssh_username=None,
     ssh_password=None,
-    ssh_private_key_file=None
+    ssh_private_key_file=None,
+    use_charset_utf8=False
 ):
     if not db_port:
         if db_driver == 'postgresql':
@@ -251,7 +252,12 @@ def database_uri(
     # https://stackoverflow.com/questions/26577334/flask-sqlalchemy-mysql-encoding-problems
     # SQLAlchemy + MySQL + UTF-8 support - how?
     # https://groups.google.com/forum/#!topic/pylons-discuss/ol2m46kiSYA
-    return uri + '?charset=utf8' if db_driver == 'mysql' else uri
+    return (
+        uri + '?charset=utf8'
+        if db_driver == 'mysql'
+        and use_charset_utf8
+        else uri
+    )
 
 
 def database_uri_from_env(
@@ -265,7 +271,8 @@ def database_uri_from_env(
     ssh_port_env='SSH_PORT',
     ssh_username_env='SSH_USERNAME',
     ssh_password_env='SSH_PASSWORD',
-    ssh_private_key_file_env='SSH_PRIVATE_KEY_FILE'
+    ssh_private_key_file_env='SSH_PRIVATE_KEY_FILE',
+    use_charset_utf8=False
 ):
     return database_uri(
         getenv(db_driver_env, 'postgresql'),
@@ -282,7 +289,8 @@ def database_uri_from_env(
         ),
         getenv(ssh_username_env),
         getenv(ssh_password_env),
-        getenv(ssh_private_key_file_env)
+        getenv(ssh_private_key_file_env),
+        use_charset_utf8
     )
 
 
@@ -310,6 +318,8 @@ def query(engine, string, **kwargs):
             - Default value is 100,000.
         5. stream_results: bool
             - Use stream_results=False for update/insert/delete query.
+        6. use_charset_utf8: bool
+            - Use use_charset_utf8=True for mysql driver if needed.
     '''
 
     # Issue with a python function returning a generator or a normal object
@@ -338,6 +348,8 @@ def query(engine, string, **kwargs):
                 - Default value is 100,000.
             4. stream_results: bool
                 - Use stream_results=False for update/insert/delete query.
+            5. use_charset_utf8: bool
+                - Use use_charset_utf8=True for mysql driver if needed.
         '''
 
         args = []
@@ -349,7 +361,8 @@ def query(engine, string, **kwargs):
                         'json_mode',
                         'debug_mode',
                         'fetch_size',
-                        'stream_results'
+                        'stream_results',
+                        'use_charset_utf8'
                     ],
                     kwargs.items()
                 )
@@ -460,7 +473,11 @@ def query(engine, string, **kwargs):
 
         # "set character set" in sqlalchemy?
         # https://groups.google.com/forum/#!topic/sqlalchemy/3kiPusCy8FM
-        if url.startswith('mysql') and 'charset=utf8' in url:
+        if (
+            url.startswith('mysql')
+            and 'charset=utf8' not in url
+            and kwargs.get('use_charset_utf8')
+        ):
             # Add params to given URL in Python
             # https://stackoverflow.com/questions/2506379/add-params-to-given-url-in-python
             url = list(
@@ -512,7 +529,7 @@ def query(engine, string, **kwargs):
             while True:
                 batch = query_result.fetchmany(
                     kwargs.get('fetch_size', 100_000)
-                )
+                ) if query_result.returns_rows else None
 
                 if not batch:
                     break
