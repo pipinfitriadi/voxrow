@@ -556,13 +556,25 @@ def query(engine, string, **kwargs):
                     yield to_result(prev_row, json_mode)
                 except StopIteration:
                     pass
+                # KeyboardInterrupt and SystemExit should not be wrapped by
+                # sqlalchemy #689
+                # https://github.com/sqlalchemy/sqlalchemy/issues/689
+                # Avoiding accidentally catching KeyboardInterrupt and
+                # SystemExit in Python 2.4
+                # https://stackoverflow.com/questions/2669750/avoiding-accidentally-catching-keyboardinterrupt-and-systemexit-in-python-2-4
+                # Except block handles 'BaseException'
+                # https://lgtm.com/rules/6780080/
+                # Catch multiple exceptions in one line (except block)
+                # https://stackoverflow.com/questions/6470428/catch-multiple-exceptions-in-one-line-except-block
+                except (KeyboardInterrupt, SystemExit, Exception):
+                    break
 
             if json_mode:
                 yield ']'
 
             query_result.close()
             session.commit()
-        except Exception:
+        except (KeyboardInterrupt, SystemExit, Exception):
             session.rollback()
 
             if kwargs.get('debug_mode') in [None, True]:
