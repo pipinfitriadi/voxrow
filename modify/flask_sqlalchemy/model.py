@@ -102,6 +102,11 @@ class Model(_Model):
         # https://lgtm.com/rules/6780080/
         # Catch multiple exceptions in one line (except block)
         # https://stackoverflow.com/questions/6470428/catch-multiple-exceptions-in-one-line-except-block
+        # How to get the process ID to kill a nohup process?
+        # https://stackoverflow.com/questions/17385794/how-to-get-the-process-id-to-kill-a-nohup-process
+        # Fixing “Lock wait timeout exceeded; try restarting
+        # transaction” for a 'stuck" Mysql table?
+        # https://stackoverflow.com/questions/2766785/fixing-lock-wait-timeout-exceeded-try-restarting-transaction-for-a-stuck-my/10315184
         except (KeyboardInterrupt, SystemExit, Exception):
             session.rollback()
             raise
