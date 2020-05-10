@@ -352,6 +352,32 @@ def query(engine, string, **kwargs):
                 - Use use_charset_utf8=True for mysql driver if needed.
         '''
 
+        if isinstance(engine, dict):
+            url = database_uri(**engine)
+        elif isinstance(engine, Engine):
+            url = str(engine.url)
+
+        # "set character set" in sqlalchemy?
+        # https://groups.google.com/forum/#!topic/sqlalchemy/3kiPusCy8FM
+        if (
+            url.startswith('mysql')
+            and 'charset=utf8' not in url
+            and kwargs.get('use_charset_utf8')
+        ):
+            # Add params to given URL in Python
+            # https://stackoverflow.com/questions/2506379/add-params-to-given-url-in-python
+            url = list(
+                urlparse(url)
+            )
+            query = dict(
+                parse_qsl(url[4])
+            )
+            query.update({
+                'charset': 'utf8'
+            })
+            url[4] = urlencode(query)
+            url = urlunparse(url)
+
         args = []
 
         for key in (
@@ -395,59 +421,65 @@ def query(engine, string, **kwargs):
                     and not isinstance(value, str)
                 ):
                     if database_column_type is ARRAY:
-                        child_type = String
-
-                        if (
-                            len_value := len(
-                                value := list(value)
-                            )
-                        ) > 0:
-                            temp_type = set()
-
-                            # Try to sample chacking type of array's child.
-                            for i in range(10):
-                                for param_type, db_col_type in (
-                                    mapping_type[:-1]
-                                ):
-                                    if (
-                                        isinstance(
-                                            (
-                                                child_value := value[
-                                                    randint(
-                                                        0,
-                                                        len_value - 1
-                                                    )
-                                                ]
-                                            ),
-                                            param_type
-                                        )
-                                        and not isinstance(child_value, str)
-                                    ):
-                                        temp_type.add(db_col_type)
-                                        break
+                        if url.startswith('postgresql'):
+                            child_type = String
 
                             if (
-                                len_temp_type := len(temp_type)
-                            ) == 1:
-                                child_type = temp_type.pop()
-                            elif (
-                                len_temp_type > 2
-                                or (
-                                    len_temp_type == 2
-                                    and temp_type != {Date, DateTime}
+                                len_value := len(
+                                    value := list(value)
                                 )
-                            ):
-                                child_type = JSON
+                            ) > 0:
+                                temp_type = set()
 
-                        # PostgreSQL multidimensional arrays in SQLAlchemy,
-                        # not sure of syntax
-                        # https://stackoverflow.com/questions/13888537/postgresql-multidimensional-arrays-in-sqlalchemy-not-sure-of-syntax
-                        database_column_type = ARRAY(
-                            child_type
-                            if child_type is not ARRAY
-                            else JSON,
-                            dimensions=1
-                        )
+                                # Try to sample chacking type of array's child.
+                                for i in range(10):
+                                    for param_type, db_col_type in (
+                                        mapping_type[:-1]
+                                    ):
+                                        if (
+                                            isinstance(
+                                                (
+                                                    child_value := value[
+                                                        randint(
+                                                            0,
+                                                            len_value - 1
+                                                        )
+                                                    ]
+                                                ),
+                                                param_type
+                                            )
+                                            and not isinstance(
+                                                child_value,
+                                                str
+                                            )
+                                        ):
+                                            temp_type.add(db_col_type)
+                                            break
+
+                                if (
+                                    len_temp_type := len(temp_type)
+                                ) == 1:
+                                    child_type = temp_type.pop()
+                                elif (
+                                    len_temp_type > 2
+                                    or (
+                                        len_temp_type == 2
+                                        and temp_type != {Date, DateTime}
+                                    )
+                                ):
+                                    child_type = JSON
+
+                            # PostgreSQL multidimensional arrays in SQLAlchemy,
+                            # not sure of syntax
+                            # https://stackoverflow.com/questions/13888537/postgresql-multidimensional-arrays-in-sqlalchemy-not-sure-of-syntax
+                            database_column_type = ARRAY(
+                                child_type
+                                if child_type is not ARRAY
+                                else JSON,
+                                dimensions=1
+                            )
+                        else:
+                            database_column_type = JSON
 
                     param_kwargs['type_'] = database_column_type
                     break
@@ -465,32 +497,6 @@ def query(engine, string, **kwargs):
                     break
             else:
                 stream_results = True
-
-        if isinstance(engine, dict):
-            url = database_uri(**engine)
-        elif isinstance(engine, Engine):
-            url = str(engine.url)
-
-        # "set character set" in sqlalchemy?
-        # https://groups.google.com/forum/#!topic/sqlalchemy/3kiPusCy8FM
-        if (
-            url.startswith('mysql')
-            and 'charset=utf8' not in url
-            and kwargs.get('use_charset_utf8')
-        ):
-            # Add params to given URL in Python
-            # https://stackoverflow.com/questions/2506379/add-params-to-given-url-in-python
-            url = list(
-                urlparse(url)
-            )
-            query = dict(
-                parse_qsl(url[4])
-            )
-            query.update({
-                'charset': 'utf8'
-            })
-            url[4] = urlencode(query)
-            url = urlunparse(url)
 
         # scoped_session(sessionmaker()) or plain sessionmaker() in sqlalchemy?
         # https://stackoverflow.com/questions/6519546/scoped-sessionsessionmaker-or-plain-sessionmaker-in-sqlalchemy
