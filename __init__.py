@@ -302,12 +302,7 @@ def query(engine, string, **kwargs):
         # tunnel.daemon_transport = True
         # tunnel.start()
         # tunnel.stop()
-        if {
-            'ssh_address_or_host',
-            'ssh_config_file',
-            'ssh_password',
-            'ssh_pkey'
-        }.intersection(ssh_param):
+        if ssh_param:
             while True:
                 with SSHTunnelForwarder(**ssh_param) as tunnel:
                     try:
