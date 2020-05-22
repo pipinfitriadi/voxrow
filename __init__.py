@@ -63,10 +63,10 @@ from random import randint
 import re
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
-from paramiko import RSAKey
 from sshtunnel import SSHTunnelForwarder
 from sqlalchemy import bindparam, create_engine
 from sqlalchemy.engine.base import Engine
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm.session import sessionmaker
 from sqlalchemy.pool import NullPool
@@ -193,59 +193,17 @@ def database_uri(
     db_name='postgres',
     db_user='',
     db_pass='',
-    ssh_host=None,
-    ssh_port=22,
-    ssh_username=None,
-    ssh_password=None,
-    ssh_private_key_file=None,
     use_charset_utf8=False
 ):
-    if not db_port:
-        if db_driver == 'postgresql':
-            db_port = 5432
-        elif db_driver == 'mysql':
-            db_port = 3306
-
-    if all((
-        ssh_host,
-        ssh_port,
-        ssh_username,
-        ssh_password or ssh_private_key_file
-    )):
-        ssh_tunnel_param = {
-            'ssh_username': ssh_username,
-            'remote_bind_address': (db_host, db_port)
-        }
-
-        if ssh_private_key_file:
-            ssh_tunnel_param['ssh_pkey'] = RSAKey.from_private_key_file(
-                ssh_private_key_file
-            )
-        else:
-            ssh_tunnel_param['ssh_password'] = ssh_password
-
-        # Setup a SSH Tunnel With the Sshtunnel Module in Python
-        # https://blog.ruanbekker.com/blog/2018/04/23/setup-a-ssh-tunnel-with-the-sshtunnel-module-in-python/
-        server = SSHTunnelForwarder(
-            (ssh_host, ssh_port),
-            **ssh_tunnel_param
-        )
-
-        # SSHTunnelForwarder.daemon_forward_servers is not respected:
-        # https://github.com/pahaz/sshtunnel/issues/102
-        server.daemon_forward_servers = True
-        server.daemon_transport = True
-
-        server.start()
-        db_host = server.local_bind_host
-        db_port = server.local_bind_port
+    if db_driver == 'mysql' and db_port == 5432:
+        db_port = 3306
 
     uri = (
         (
             f'{ db_driver }://{ db_user }:{ db_pass }@'
             f'{ db_host }:{ db_port }/{ db_name }'
         )
-        if db_driver else None
+        if db_driver else ''
     )
 
     # flask sqlalchemy mysql encoding problems
@@ -267,12 +225,7 @@ def database_uri_from_env(
     db_name_env='DB_NAME',
     db_user_env='DB_USER',
     db_pass_env='DB_PASS',
-    ssh_host_env='SSH_HOST',
-    ssh_port_env='SSH_PORT',
-    ssh_username_env='SSH_USERNAME',
-    ssh_password_env='SSH_PASSWORD',
-    ssh_private_key_file_env='SSH_PRIVATE_KEY_FILE',
-    use_charset_utf8=False
+    use_charset_utf8_env='USE_CHARSET_UTF8',
 ):
     return database_uri(
         getenv(db_driver_env, 'postgresql'),
@@ -283,14 +236,7 @@ def database_uri_from_env(
         getenv(db_name_env, 'postgres'),
         getenv(db_user_env, ''),
         getenv(db_pass_env, ''),
-        getenv(ssh_host_env),
-        int(
-            getenv(ssh_port_env, '22')
-        ),
-        getenv(ssh_username_env),
-        getenv(ssh_password_env),
-        getenv(ssh_private_key_file_env),
-        use_charset_utf8
+        getenv(use_charset_utf8_env, 'FALSE').upper() in ['TRUE', '1']
     )
 
 
@@ -299,7 +245,8 @@ def query(engine, string, **kwargs):
     engine:
     - obj: SQLAlchemy's engine instance.
     - str: Build SQLAlchemy's engine from string database uri.
-    - dict: Build SQLAlchemy's engine from database_uri's func kwargs.
+    - dict: Build SQLAlchemy's engine from database_uri's func kwargs and
+    SSHTunnelForwarder's func kwarg.
 
     string: str
     - Use for put raw query sql.
@@ -321,6 +268,67 @@ def query(engine, string, **kwargs):
         6. use_charset_utf8: bool
             - Use use_charset_utf8=True for mysql driver if needed.
     '''
+
+    if isinstance(engine, dict):
+        database_uri_param = [
+            'db_driver',
+            'db_host',
+            'db_port',
+            'db_name',
+            'db_user',
+            'db_pass',
+            'use_charset_utf8'
+        ]
+        ssh_param = {
+            key: value
+            for key, value in engine.items()
+            if key not in database_uri_param
+        }
+        engine = {
+            key: value
+            for key, value in engine.items()
+            if key in database_uri_param
+        }
+
+        # Menjalankan query dengan mode SSH
+        # SSHTunnelForwarder's func kwargs
+        # https://sshtunnel.readthedocs.io/en/latest/#api
+        # Setup a SSH Tunnel With the Sshtunnel Module in Python
+        # https://blog.ruanbekker.com/blog/2018/04/23/setup-a-ssh-tunnel-with-the-sshtunnel-module-in-python/
+        # SSHTunnelForwarder.daemon_forward_servers is not respected:
+        # https://github.com/pahaz/sshtunnel/issues/102
+        # tunnel without clause:
+        # tunnel.daemon_forward_servers = True
+        # tunnel.daemon_transport = True
+        # tunnel.start()
+        # tunnel.stop()
+        if {
+            'ssh_address_or_host',
+            'ssh_config_file',
+            'ssh_password',
+            'ssh_pkey'
+        }.intersection(ssh_param):
+            while True:
+                with SSHTunnelForwarder(**ssh_param) as tunnel:
+                    try:
+                        engine.update({
+                            'db_host': tunnel.local_bind_host,
+                            'db_port': tunnel.local_bind_port
+                        })
+                        result = query(
+                            engine,
+                            string,
+                            **kwargs
+                        )
+                        break
+                    except OperationalError:
+                        continue
+                    except (KeyboardInterrupt, SystemExit):
+                        break
+                    except Exception:
+                        raise
+
+            return result
 
     # Issue with a python function returning a generator or a normal object
     # https://stackoverflow.com/questions/25313283/issue-with-a-python-function-returning-a-generator-or-a-normal-object
