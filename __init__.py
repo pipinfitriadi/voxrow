@@ -540,22 +540,37 @@ def query(engine, string, **kwargs):
                     kwargs.get('fetch_size', 100_000)
                 ) if query_result.returns_rows else None
 
+                def to_result(row, json_mode=False):
+                    data = dict(
+                        column for column in row.items()
+                    )
+                    return (
+                        json_serializer(data)
+                        if json_mode else deserialize(data)
+                    )
+
                 if not batch:
+                    if not query_result.returns_rows:
+                        yield to_result(
+                            {
+                                'updated_row': query_result.rowcount,
+                                'query': (
+                                    query_result.context.unicode_statement
+                                ),
+                                'parameters': (
+                                    query_result.context.parameters[0]
+                                ),
+                                'finish_time': datetime.now()
+                            },
+                            json_mode
+                        )
+
                     break
 
                 rows = batch.__iter__()
 
                 try:
                     prev_row = next(rows)
-
-                    def to_result(row, json_mode=False):
-                        data = dict(
-                            column for column in row.items()
-                        )
-                        return (
-                            json_serializer(data)
-                            if json_mode else deserialize(data)
-                        )
 
                     for row in rows:
                         result = to_result(prev_row, json_mode)
