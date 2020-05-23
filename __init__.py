@@ -553,7 +553,7 @@ def query(engine, string, **kwargs):
                     if not query_result.returns_rows:
                         yield to_result(
                             {
-                                'updated_row': query_result.rowcount,
+                                'affected_row': query_result.rowcount,
                                 'query': (
                                     query_result.context.unicode_statement
                                 ),
