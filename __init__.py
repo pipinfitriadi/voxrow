@@ -322,8 +322,14 @@ def query(engine, string, **kwargs):
                         )
                         break
                     except OperationalError as e:
-                        # Error MySQL: Lost Connection
-                        if e.orig and e.orig.args and e.orig.args[0] == 2013:
+                        if (
+                            e.orig
+                            and e.orig.args
+                            and (
+                                # Error MySQL: Lost Connection
+                                e.orig.args[0] == 2013
+                            )
+                        ):
                             continue
                         else:
                             raise
