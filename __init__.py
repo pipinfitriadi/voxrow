@@ -326,7 +326,6 @@ def query(engine, string, **kwargs):
                         if e.orig and e.orig.args and e.orig.args[0] == 2013:
                             continue
                         else:
-                            print(f'OperationalError: { e.orig }')
                             raise
                     except (KeyboardInterrupt, SystemExit):
                         break
