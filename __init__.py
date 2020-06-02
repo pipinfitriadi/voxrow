@@ -61,6 +61,7 @@ from os import getenv
 from pathlib import Path
 from random import randint
 import re
+from time import sleep
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from sshtunnel import SSHTunnelForwarder
@@ -310,6 +311,10 @@ def query(engine, string, **kwargs):
                             'db_host': tunnel.local_bind_host,
                             'db_port': tunnel.local_bind_port
                         })
+                        # Python SSHTunnel w/ Paramiko - CLI works, but not in
+                        # script
+                        # https://stackoverflow.com/questions/39945269/python-sshtunnel-w-paramiko-cli-works-but-not-in-script
+                        sleep(1)
                         result = query(
                             engine,
                             string,
