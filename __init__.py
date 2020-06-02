@@ -321,8 +321,12 @@ def query(engine, string, **kwargs):
                             **kwargs
                         )
                         break
-                    except OperationalError:
-                        continue
+                    except OperationalError as e:
+                        # Error MySQL: Unknown column
+                        if e.orig and e.orig.args and e.orig.args[0] == 1054:
+                            raise
+                        else:
+                            continue
                     except (KeyboardInterrupt, SystemExit):
                         break
                     except Exception:
