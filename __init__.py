@@ -326,6 +326,7 @@ def query(engine, string, **kwargs):
                         if e.orig and e.orig.args and e.orig.args[0] == 1054:
                             raise
                         else:
+                            print(f'OperationalError: { e.orig }')
                             continue
                     except (KeyboardInterrupt, SystemExit):
                         break
