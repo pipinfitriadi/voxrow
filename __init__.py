@@ -322,12 +322,12 @@ def query(engine, string, **kwargs):
                         )
                         break
                     except OperationalError as e:
-                        # Error MySQL: Unknown column
-                        if e.orig and e.orig.args and e.orig.args[0] == 1054:
-                            raise
+                        # Error MySQL: Lost Connection
+                        if e.orig and e.orig.args and e.orig.args[0] == 2013:
+                            continue
                         else:
                             print(f'OperationalError: { e.orig }')
-                            continue
+                            raise
                     except (KeyboardInterrupt, SystemExit):
                         break
                     except Exception:
