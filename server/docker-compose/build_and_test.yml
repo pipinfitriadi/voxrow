@@ -73,7 +73,7 @@ services:
         working_dir: /home/
         environment:
             - EXCLUDE=env/
-            - IGNORE=E203,E231,F821,F999,W503
+            - IGNORE=E203,E231,F541,F821,F999,W503
         command: >
             /bin/ash -c "
             flake8 --exclude $$EXCLUDE --ignore $$IGNORE

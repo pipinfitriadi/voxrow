@@ -323,11 +323,13 @@ def query(engine, string, **kwargs):
                         break
                     except OperationalError as e:
                         if (
-                            e.orig
+                            e.args
+                            and e.orig
                             and e.orig.args
                             and (
                                 # Error MySQL: Lost Connection
-                                e.orig.args[0] == 2013
+                                'mysql' in e.args[0].lower()
+                                and e.orig.args[0] == 2013
                             )
                         ):
                             continue
