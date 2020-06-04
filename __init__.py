@@ -61,6 +61,7 @@ from os import getenv
 from pathlib import Path
 from random import randint
 import re
+from statistics import mean
 from time import sleep
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
@@ -85,6 +86,33 @@ from sqlalchemy.types import (
 
 STRING_DATE_FORMAT = '%Y-%m-%d'
 STRING_DATETIME_FORMAT = f'{ STRING_DATE_FORMAT }T%H:%M:%S'
+TIME_STATS = {
+    'last_time': datetime.now(),
+    'process_time': []
+}
+
+
+def log_print(*data):
+    TIME_STATS['process_time'].append(
+        (
+            (
+                last_time := datetime.now()
+            ) - TIME_STATS['last_time']
+        ).seconds
+    )
+    TIME_STATS['last_time'] = last_time
+    average_time = round(
+        mean(
+            TIME_STATS['process_time']
+        ),
+        1
+    )
+    print(
+        last_time,
+        f'Average time to process: { average_time } seconds',
+        *data,
+        sep=' | '
+    )
 
 
 def blueprint_name(file):
