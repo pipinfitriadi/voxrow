@@ -53,6 +53,7 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
+import __main__ as main
 from collections.abc import Iterable
 from datetime import date, datetime
 from json import dumps, JSONDecoder as _JSONDecoder, loads
@@ -93,6 +94,17 @@ TIME_STATS = {
 
 
 def log_print(*data):
+    if (
+        is_not_interactive_mode := hasattr(main, '__file__')
+    ):
+        # Get name of current script in Python
+        # https://stackoverflow.com/questions/4152963/get-name-of-current-script-in-python
+        file_name = f'{ blueprint_name(main.__file__) }.log'
+
+    if is_not_interactive_mode and not TIME_STATS['process_time']:
+        with open(file_name, 'w'):
+            pass
+
     TIME_STATS['process_time'].append(
         (
             (
@@ -108,11 +120,16 @@ def log_print(*data):
         1
     )
     print(
-        last_time,
-        f'Average time to process: { average_time } seconds',
-        *data,
-        sep=' | '
+        str_to_print := ' | '.join([
+            str(last_time),
+            f'Average time to process: { average_time } seconds',
+            *[str(d) for d in data]
+        ])
     )
+
+    if is_not_interactive_mode:
+        with open(file_name, 'a') as log_file:
+            log_file.write(f'{ str_to_print }\n')
 
 
 def blueprint_name(file):

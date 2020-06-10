@@ -60,6 +60,7 @@ env/
 htmlcov/
 instance/
 
+*.log
 *.pyc
 .coverage
 .env
