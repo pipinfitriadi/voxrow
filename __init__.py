@@ -87,49 +87,95 @@ from sqlalchemy.types import (
 
 STRING_DATE_FORMAT = '%Y-%m-%d'
 STRING_DATETIME_FORMAT = f'{ STRING_DATE_FORMAT }T%H:%M:%S'
-TIME_STATS = {
-    'last_time': datetime.now(),
-    'process_time': []
-}
 
 
-def log_print(*data):
-    if (
-        is_not_interactive_mode := hasattr(main, '__file__')
-    ):
-        # Get name of current script in Python
-        # https://stackoverflow.com/questions/4152963/get-name-of-current-script-in-python
-        file_name = f'{ blueprint_name(main.__file__) }.log'
+def display_time(seconds, granularity=2, sort_name=False):
+    # Python function to convert seconds into minutes, hours, and days
+    # https://stackoverflow.com/questions/4048651/python-function-to-convert-seconds-into-minutes-hours-and-days
+    def result(seconds):
+        check_granularity = 0
 
-    if is_not_interactive_mode and not TIME_STATS['process_time']:
-        with open(file_name, 'w'):
-            pass
-
-    TIME_STATS['process_time'].append(
-        (
+        for name, count in [
             (
-                last_time := datetime.now()
-            ) - TIME_STATS['last_time']
-        ).seconds
-    )
-    TIME_STATS['last_time'] = last_time
-    average_time = round(
-        mean(
-            TIME_STATS['process_time']
-        ),
-        1
-    )
-    print(
-        str_to_print := ' | '.join([
-            str(last_time),
-            f'Average time to process: { average_time } seconds',
-            *[str(d) for d in data]
-        ])
+                'weeks',
+                (
+                    DAY := (
+                        HOUR := (
+                            MINUTE := (SECOND := 1) * 60
+                        ) * 60
+                    ) * 24
+                ) * 7
+            ),
+            ('days', DAY),
+            ('hours', HOUR),
+            ('minutes', MINUTE),
+            ('seconds', SECOND),
+        ]:
+            if (value := seconds // count):
+                if sort_name:
+                    name = name[0]
+                elif value == 1:
+                    name = name.rstrip('s')
+
+                yield f"{ value }{ '' if sort_name else ' ' }{ name }"
+                check_granularity += 1
+
+                if check_granularity >= granularity:
+                    break
+                else:
+                    seconds -= value * count
+        else:
+            if not check_granularity:
+                yield '0s' if sort_name else '0 seconds'
+
+    return (' ' if sort_name else ', ').join(
+        list(
+            result(seconds)
+        )
     )
 
-    if is_not_interactive_mode:
-        with open(file_name, 'a') as log_file:
-            log_file.write(f'{ str_to_print }\n')
+
+class Log:
+    def __init__(self, file_name=None):
+        self.__PROCESS_TIME = []
+        self.__START_TIME = datetime.now()
+        self.__LAST_TIME = self.__START_TIME
+        self.__FILE_NAME = file_name
+
+        if not self.__FILE_NAME and hasattr(main, '__file__'):
+            # Get name of current script in Python
+            # https://stackoverflow.com/questions/4152963/get-name-of-current-script-in-python
+            self.__FILE_NAME = f'{ blueprint_name(main.__file__) }.log'
+
+        if self.__FILE_NAME:
+            with open(self.__FILE_NAME, 'w'):
+                pass
+
+    def print(self, *data):
+        self.__PROCESS_TIME.append(
+            (
+                (
+                    last_time := datetime.now()
+                ) - self.__LAST_TIME
+            ).seconds
+        )
+        self.__LAST_TIME = last_time
+        total_time = (self.__LAST_TIME - self.__START_TIME).seconds
+        average_time = int(
+            round(mean(self.__PROCESS_TIME), 0)
+        )
+        print(
+            str_to_print := ' | '.join([
+                self.__LAST_TIME.strftime(STRING_DATETIME_FORMAT),
+                f'TOTAL: { display_time(total_time, sort_name=True) }',
+                f'AVG: { display_time(average_time, sort_name=True) }',
+                *[str(d) for d in data]
+            ])
+        )
+
+        if self.__FILE_NAME:
+            with open(self.__FILE_NAME, 'a') as log_file:
+                log_file.write(f'{ str_to_print }\n')
 
 
 def blueprint_name(file):
