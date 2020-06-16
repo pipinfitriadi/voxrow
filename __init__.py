@@ -90,6 +90,14 @@ STRING_DATETIME_FORMAT = f'{ STRING_DATE_FORMAT }T%H:%M:%S'
 
 
 def display_time(seconds, granularity=2, sort_name=False):
+    def text_result(value, name, sort_name):
+        if sort_name:
+            name = name[0]
+        elif value in range(2):
+            name = name.rstrip('s')
+
+        return f"{ value }{ '' if sort_name else ' ' }{ name }"
+
     # Python function to convert seconds into minutes, hours, and days
     # https://stackoverflow.com/questions/4048651/python-function-to-convert-seconds-into-minutes-hours-and-days
     def result(seconds):
@@ -112,12 +120,7 @@ def display_time(seconds, granularity=2, sort_name=False):
             ('seconds', SECOND),
         ]:
             if (value := seconds // count):
-                if sort_name:
-                    name = name[0]
-                elif value == 1:
-                    name = name.rstrip('s')
-
-                yield f"{ value }{ '' if sort_name else ' ' }{ name }"
+                yield text_result(value, name, sort_name)
                 check_granularity += 1
 
                 if check_granularity >= granularity:
@@ -126,7 +129,7 @@ def display_time(seconds, granularity=2, sort_name=False):
                     seconds -= value * count
         else:
             if not check_granularity:
-                yield '0s' if sort_name else '0 seconds'
+                yield text_result(value, name, sort_name)
 
     return (' ' if sort_name else ', ').join(
         list(
@@ -167,8 +170,8 @@ class Log:
         print(
             str_to_print := ' | '.join([
                 self.__LAST_TIME.strftime(STRING_DATETIME_FORMAT),
-                f'TOTAL: { display_time(total_time, sort_name=True) }',
-                f'AVG: { display_time(average_time, sort_name=True) }',
+                f'TOTAL: { display_time(total_time, 3, True) }',
+                f'AVG: { display_time(average_time, 3, True) }',
                 *[str(d) for d in data]
             ])
         )
