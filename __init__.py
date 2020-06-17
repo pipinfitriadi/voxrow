@@ -164,8 +164,8 @@ class Log:
         )
         self.__LAST_TIME = last_time
         total_time = (self.__LAST_TIME - self.__START_TIME).seconds
-        average_time = int(
-            round(mean(self.__PROCESS_TIME), 0)
+        average_time = round(
+            mean(self.__PROCESS_TIME)
         )
         print(
             str_to_print := ' | '.join([
