@@ -58,12 +58,14 @@ from collections.abc import Iterable
 from datetime import date, datetime
 from json import dumps, JSONDecoder as _JSONDecoder, loads
 from json.decoder import JSONDecodeError, WHITESPACE
-from os import getenv, SEEK_END
+from os import getenv
 from pathlib import Path
 from random import randint
 import re
 from statistics import mean
+from sys import exc_info
 from time import sleep
+from traceback import print_exception
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from sshtunnel import SSHTunnelForwarder
@@ -167,15 +169,28 @@ class Log:
         average_time = round(
             mean(self.__PROCESS_TIME)
         )
-        print(
-            str_to_print := sep.join([
-                self.__LAST_TIME.strftime(STRING_DATETIME_FORMAT),
-                f'TOTAL: { display_time(total_time, 3, True) }',
-                f'AVG: { display_time(average_time, 3, True) }',
-                *[str(d) for d in data]
-            ]),
-            end=end
-        )
+
+        for d in data:
+            if isinstance(d, Exception):
+                is_error = True
+                error = d
+                break
+        else:
+            is_error = False
+
+        if not is_error:
+            print(
+                *(
+                    data := [
+                        self.__LAST_TIME.strftime(STRING_DATETIME_FORMAT),
+                        f'TOTAL: { display_time(total_time, 3, True) }',
+                        f'AVG: { display_time(average_time, 3, True) }',
+                        *data
+                    ]
+                ),
+                sep=sep,
+                end=end
+            )
 
         if self.__FILE_NAME:
             # Convert bytes to a string
@@ -184,13 +199,21 @@ class Log:
             # https://stackoverflow.com/questions/4388201/how-to-seek-and-append-to-a-binary-file-in-python
             # Remove very last character in file
             # https://stackoverflow.com/questions/18857352/remove-very-last-character-in-file
-            with open(self.__FILE_NAME, 'rb+') as log_file:
-                log_file.seek(log_file.tell(), SEEK_END)
-                log_file.write(
-                    bytearray(
-                        str.encode(f'{ str_to_print }{ end }')
-                    )
-                )
+            # Writing to a File with Python's print() Function
+            # https://stackabuse.com/writing-to-a-file-with-pythons-print-function/
+            with open(self.__FILE_NAME, 'a') as log_file:
+                if is_error:
+                    # Python: How to write error in the console in txt file?
+                    # https://stackoverflow.com/questions/55169364/python-how-to-write-error-in-the-console-in-txt-file
+                    # How to print the full traceback without halting the
+                    # program
+                    # https://stackoverflow.com/questions/3702675/how-to-print-the-full-traceback-without-halting-the-program
+                    print_exception(*exc_info(), file=log_file)
+                else:
+                    print(*data, sep=sep, end=end, file=log_file)
+
+        if is_error:
+            raise error
 
 
 def blueprint_name(file):
