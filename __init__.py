@@ -58,7 +58,7 @@ from collections.abc import Iterable
 from datetime import date, datetime
 from json import dumps, JSONDecoder as _JSONDecoder, loads
 from json.decoder import JSONDecodeError, WHITESPACE
-from os import getenv
+from os import getenv, SEEK_END
 from pathlib import Path
 from random import randint
 import re
@@ -154,7 +154,7 @@ class Log:
             with open(self.__FILE_NAME, 'w'):
                 pass
 
-    def print(self, *data):
+    def print(self, *data, sep=' | ', end='\n'):
         self.__PROCESS_TIME.append(
             (
                 (
@@ -168,17 +168,29 @@ class Log:
             mean(self.__PROCESS_TIME)
         )
         print(
-            str_to_print := ' | '.join([
+            str_to_print := sep.join([
                 self.__LAST_TIME.strftime(STRING_DATETIME_FORMAT),
                 f'TOTAL: { display_time(total_time, 3, True) }',
                 f'AVG: { display_time(average_time, 3, True) }',
                 *[str(d) for d in data]
-            ])
+            ]),
+            end=end
         )
 
         if self.__FILE_NAME:
-            with open(self.__FILE_NAME, 'a') as log_file:
-                log_file.write(f'{ str_to_print }\n')
+            # Convert bytes to a string
+            # https://stackoverflow.com/questions/606191/convert-bytes-to-a-string
+            # How to seek and append to a binary file in python
+            # https://stackoverflow.com/questions/4388201/how-to-seek-and-append-to-a-binary-file-in-python
+            # Remove very last character in file
+            # https://stackoverflow.com/questions/18857352/remove-very-last-character-in-file
+            with open(self.__FILE_NAME, 'rb+') as log_file:
+                log_file.seek(log_file.tell(), SEEK_END)
+                log_file.write(
+                    bytearray(
+                        str.encode(f'{ str_to_print }{ end }')
+                    )
+                )
 
 
 def blueprint_name(file):
