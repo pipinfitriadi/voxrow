@@ -59,6 +59,7 @@ from datetime import date, datetime
 from json import dumps, JSONDecoder as _JSONDecoder, loads
 from json.decoder import JSONDecodeError, WHITESPACE
 from os import getenv
+from os.path import isfile
 from pathlib import Path
 from random import randint
 import re
@@ -379,7 +380,7 @@ def query(engine, string, **kwargs):
     SSHTunnelForwarder's func kwarg.
 
     string: str
-    - Use for put raw query sql.
+    - Use for put raw query sql or sql file path.
 
     kwargs: dict
     - Optional kwargs can be use for best query result.
@@ -483,7 +484,7 @@ def query(engine, string, **kwargs):
         - dict: Build SQLAlchemy's engine from database_uri's func kwargs.
 
         string: str
-        - Use for put raw query sql.
+        - Use for put raw query sql or sql file path.
 
         kwargs: dict
         - Optional kwargs can be use for best query result.
@@ -500,6 +501,10 @@ def query(engine, string, **kwargs):
             5. use_charset_utf8: bool
                 - Use use_charset_utf8=True for mysql driver if needed.
         '''
+
+        if isfile(string):
+            with open(string) as sql_file:
+                string = sql_file.read()
 
         if isinstance(engine, dict):
             url = database_uri(**engine)
