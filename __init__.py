@@ -69,6 +69,7 @@ from time import sleep
 from traceback import print_exception
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
+from jinja2 import Template
 from sshtunnel import SSHTunnelForwarder
 from sqlalchemy import bindparam, create_engine
 from sqlalchemy.engine.base import Engine
@@ -380,7 +381,8 @@ def query(engine, string, **kwargs):
     SSHTunnelForwarder's func kwarg.
 
     string: str
-    - Use for put raw query sql or sql file path.
+    - Use for put raw query sql or sql file path. Sql file support jinja2
+    templating.
 
     kwargs: dict
     - Optional kwargs can be use for best query result.
@@ -484,7 +486,8 @@ def query(engine, string, **kwargs):
         - dict: Build SQLAlchemy's engine from database_uri's func kwargs.
 
         string: str
-        - Use for put raw query sql or sql file path.
+        - Use for put raw query sql or sql file path. Sql file support jinja2
+        templating.
 
         kwargs: dict
         - Optional kwargs can be use for best query result.
@@ -502,9 +505,86 @@ def query(engine, string, **kwargs):
                 - Use use_charset_utf8=True for mysql driver if needed.
         '''
 
-        if isfile(string):
-            with open(string) as sql_file:
-                string = sql_file.read()
+        if isinstance(string, str):
+            if isfile(string):
+                with open(string) as sql_file:
+                    string = sql_file.read()
+
+            regex_sql_string = r"'[^']*'"
+
+            if jinja_keys := [
+                key[1] for key in re.findall(
+                    r'{({|%)([^{%}]+)(%|})}',
+                    string,
+                    flags=re.DOTALL
+                )
+            ]:
+                string = Template(string).render(**kwargs)
+
+                for key in (
+                    {
+                        key
+                        for keys in jinja_keys
+                        for key in re.findall(
+                            r'\w+',
+                            re.sub(regex_sql_string, '', keys)
+                        )
+                    }.intersection(
+                        kwargs.keys()
+                    ) - set(
+                        re.findall(
+                            r':\w+',
+                            string
+                        )
+                    )
+                ):
+                    kwargs.pop(key, None)
+
+            if (
+                stream_results := kwargs.get('stream_results')
+            ) is None:
+                for s in re.findall(
+                    regex_sql_string,
+                    _string := '\n'.join([
+                        s
+                        for s in re.sub(
+                            r'--.*', '', string
+                        ).split('\n')
+                        if s
+                    ]),
+                    flags=re.DOTALL
+                ):
+                    _string = re.sub(s, "''", _string, 1)
+
+                # Chapter 13 SQL Statements
+                # https://dev.mysql.com/doc/refman/5.6/en/sql-statements.html
+                for regex in [
+                    r'INSERT\s+.*',
+                    r'UPDATE\s+.*\s+SET\s+.*',
+                    r'DELETE\s+.*\s+FROM\s+.*',
+                    r'MERGE\s+.*\s+INTO\s+.*\s+USING\s+.*',
+                    r'CREATE\s+.*',
+                    r'ALTER\s+.*',
+                    r'DROP\s+.*',
+                    r'RENAME\s+.*\s+TABLE\s+.*',
+                    r'TRUNCATE\s+.*\s+TABLE\s+.*',
+                    r'SHOW\s+.*',
+                    r'DESCRIBE\s+.*',
+                    r'CALL\s+.*',
+                    r'DO\s+.*',
+                    r'HANDLER\s+.*',
+                    r'LOAD\s+.*',
+                    r'REPLACE\s+.*',
+                ]:
+                    if re.findall(
+                        regex,
+                        _string,
+                        flags=re.DOTALL + re.IGNORECASE
+                    ):
+                        stream_results = False
+                        break
+                else:
+                    stream_results = True
 
         if isinstance(engine, dict):
             url = database_uri(**engine)
@@ -641,16 +721,6 @@ def query(engine, string, **kwargs):
             args.append(
                 bindparam(**param_kwargs)
             )
-
-        if (
-            stream_results := kwargs.get('stream_results')
-        ) is None:
-            for action_query in ['insert', 'update', 'delete']:
-                if action_query in string.lower():
-                    stream_results = False
-                    break
-            else:
-                stream_results = True
 
         # scoped_session(sessionmaker()) or plain sessionmaker() in sqlalchemy?
         # https://stackoverflow.com/questions/6519546/scoped-sessionsessionmaker-or-plain-sessionmaker-in-sqlalchemy
