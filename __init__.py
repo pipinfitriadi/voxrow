@@ -504,6 +504,7 @@ def query(engine, string, **kwargs):
             5. use_charset_utf8: bool
                 - Use use_charset_utf8=True for mysql driver if needed.
         '''
+        stream_results = kwargs.get('stream_results')
 
         if isinstance(string, str):
             if isfile(string):
@@ -540,9 +541,7 @@ def query(engine, string, **kwargs):
                 ):
                     kwargs.pop(key, None)
 
-            if (
-                stream_results := kwargs.get('stream_results')
-            ) is None:
+            if stream_results is None:
                 for s in re.findall(
                     regex_sql_string,
                     _string := '\n'.join([
@@ -585,6 +584,8 @@ def query(engine, string, **kwargs):
                         break
                 else:
                     stream_results = True
+        elif stream_results is None:
+            stream_results = False
 
         if isinstance(engine, dict):
             url = database_uri(**engine)
