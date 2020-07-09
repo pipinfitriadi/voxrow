@@ -555,28 +555,32 @@ def query(engine, string, **kwargs):
                 ):
                     _string = re.sub(s, "''", _string, 1)
 
+                regex_sql_space = r'\s+.*\s+'
+
                 # Chapter 13 SQL Statements
                 # https://dev.mysql.com/doc/refman/5.6/en/sql-statements.html
                 for regex in [
-                    r'INSERT\s+.*',
-                    r'UPDATE\s+.*\s+SET\s+.*',
-                    r'DELETE\s+.*\s+FROM\s+.*',
-                    r'MERGE\s+.*\s+INTO\s+.*\s+USING\s+.*',
-                    r'CREATE\s+.*',
-                    r'ALTER\s+.*',
-                    r'DROP\s+.*',
-                    r'RENAME\s+.*\s+TABLE\s+.*',
-                    r'TRUNCATE\s+.*\s+TABLE\s+.*',
-                    r'SHOW\s+.*',
-                    r'DESCRIBE\s+.*',
-                    r'CALL\s+.*',
-                    r'DO\s+.*',
-                    r'HANDLER\s+.*',
-                    r'LOAD\s+.*',
-                    r'REPLACE\s+.*',
+                    'EXPLAIN',
+                    'INSERT',
+                    'SET',
+                    regex_sql_space.join(['DELETE', 'FROM']),
+                    regex_sql_space.join(['MERGE', 'INTO', 'USING']),
+                    'CREATE',
+                    'ALTER',
+                    'DROP',
+                    regex_sql_space.join(['RENAME', 'TABLE']),
+                    regex_sql_space.join(['TRUNCATE', 'TABLE']),
+                    'SHOW',
+                    'DESCRIBE',
+                    'CALL',
+                    'DO',
+                    'HANDLER',
+                    'LOAD',
+                    'REPLACE',
+                    'KILL'
                 ]:
                     if re.findall(
-                        regex,
+                        fr'\s*{ regex }\s+.*',
                         _string,
                         flags=re.DOTALL + re.IGNORECASE
                     ):
