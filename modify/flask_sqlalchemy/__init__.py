@@ -57,7 +57,7 @@ from flask import current_app
 from flask_sqlalchemy import BaseQuery, SQLAlchemy as _SQLAlchemy
 
 from .model import Model
-from ... import query as voxrow_query
+from ... import Query as VoxrowQuery
 
 try:
     from ....config import DB_SCHEMA
@@ -94,22 +94,20 @@ class SQLAlchemy(_SQLAlchemy):
             kwargs['debug_mode'] = current_app.debug
 
         bind_key = kwargs.pop('bind_key', None)
-        return voxrow_query(
+        return VoxrowQuery(
             self.get_engine(
                 *(
                     (current_app, bind_key)
                     if isinstance(bind_key, str)
                     else (current_app,)
                 )
-            ),
-            string,
-            **kwargs
-        )
+            )
+        )(string, **kwargs)
 
 
 SQLAlchemy.query.__doc__ = (
-    voxrow_query.__doc__
-    + '''    8. bind_key: str
-            - Use it if we have more than one database in one system.
+    VoxrowQuery.__call__.__doc__
+    + '''    6. bind_key: str
+                - Use it if we have more than one database in one system.
     '''
 )

@@ -372,90 +372,112 @@ def database_uri_from_env(
     )
 
 
-def query(engine, string, **kwargs):
-    '''
-    engine:
-    - obj: SQLAlchemy's engine instance.
-    - str: Build SQLAlchemy's engine from string database uri.
-    - dict: Build SQLAlchemy's engine from database_uri's func kwargs and
-    SSHTunnelForwarder's func kwarg.
+class Query:
+    def __init__(self, engine, use_charset_utf8=False, template_dir=None):
+        '''
+        engine:
+        - obj: SQLAlchemy's engine instance.
+        - str: Build SQLAlchemy's engine from string database uri.
+        - dict: Build SQLAlchemy's engine from database_uri's func kwargs and
+        SSHTunnelForwarder's func kwarg.
 
-    string: str
-    - Use for put raw query sql or sql file path. Sql file support jinja2
-    templating.
+        use_charset_utf8: bool
+        - Use use_charset_utf8=True for mysql driver if needed.
 
-    kwargs: dict
-    - Optional kwargs can be use for best query result.
-        1. generator_mode: bool
-            - Use generator_mode=True if we want result as generator.
-        2. json_mode: bool
-            - Use json_mode=True if we want result as string dumps json.
-        3. debug_mode: bool
-            - Use debug_mode=False if you don't want to see error
-            information.
-        4. fetch_size: int
-            - Use for set how many rows use on every fetch.
-            - Default value is 100,000.
-        5. stream_results: bool
-            - Use stream_results=False for update/insert/delete query.
-        6. use_charset_utf8: bool
-            - Use use_charset_utf8=True for mysql driver if needed.
-        7. template_dir: str
-            - Use for set specify jinja2 template directory, os.getcwd()
-            value is used as default
-    '''
+        template_dir: str
+        - Use for set specify jinja2 template directory, os.getcwd()
+        value is used as default.
+        '''
 
-    if isinstance(engine, dict):
-        database_uri_param = [
-            'db_driver',
-            'db_host',
-            'db_port',
-            'db_name',
-            'db_user',
-            'db_pass',
-            'use_charset_utf8'
-        ]
-        ssh_param = {
-            key: value
-            for key, value in engine.items()
-            if key not in database_uri_param
-        }
-        engine = {
-            key: value
-            for key, value in engine.items()
-            if key in database_uri_param
-        }
+        self.__template_dir = template_dir if template_dir else getcwd()
+        self.__env = Environment(
+            loader=FileSystemLoader(self.__template_dir)
+        )
+        self.__ssh_param = {}
+        self.__engine = engine
+        self.__use_charset_utf8 = use_charset_utf8
 
-        # Menjalankan query dengan mode SSH
-        # SSHTunnelForwarder's func kwargs
-        # https://sshtunnel.readthedocs.io/en/latest/#api
-        # Setup a SSH Tunnel With the Sshtunnel Module in Python
-        # https://blog.ruanbekker.com/blog/2018/04/23/setup-a-ssh-tunnel-with-the-sshtunnel-module-in-python/
-        # SSHTunnelForwarder.daemon_forward_servers is not respected:
-        # https://github.com/pahaz/sshtunnel/issues/102
-        # tunnel without clause:
-        # tunnel.daemon_forward_servers = True
-        # tunnel.daemon_transport = True
-        # tunnel.start()
-        # tunnel.stop()
-        if ssh_param:
+        if isinstance(self.__engine, dict):
+            self.__db_host = None
+            self.__db_port = None
+            self.__ssh_param = {
+                key: value
+                for key, value in self.__engine.items()
+                if key not in (
+                    database_uri_param := [
+                        'db_driver',
+                        'db_host',
+                        'db_port',
+                        'db_name',
+                        'db_user',
+                        'db_pass',
+                        'use_charset_utf8'
+                    ]
+                )
+            }
+            self.__engine = {
+                key: value
+                for key, value in self.__engine.items()
+                if key in database_uri_param
+            }
+
+            if self.__use_charset_utf8:
+                self.__engine['use_charset_utf8'] = self.__use_charset_utf8
+
+    def __call__(self, string, **kwargs):
+        '''
+        string: str
+        - Use for put raw query sql or sql file path. It is support jinja2
+        templating.
+
+        kwargs: dict
+        - Optional kwargs can be use for best query result.
+            1. generator_mode: bool
+                - Use generator_mode=True if we want result as generator.
+            2. json_mode: bool
+                - Use json_mode=True if we want result as string dumps json.
+            3. debug_mode: bool
+                - Use debug_mode=False if you don't want to see error
+                information.
+            4. fetch_size: int
+                - Use for set how many rows use on every fetch.
+                - Default value is 100,000.
+            5. stream_results: bool
+                - Use stream_results=False for update/insert/delete query.
+        '''
+
+        if self.__ssh_param:
+            ssh_param = self.__ssh_param
+            self.__ssh_param = {}
+
             while True:
+                self.__db_host = None
+                self.__db_port = None
+
                 with SSHTunnelForwarder(**ssh_param) as tunnel:
+                    # Python SSHTunnel w/ Paramiko - CLI works, but
+                    # not in script
+                    # https://stackoverflow.com/questions/39945269/python-sshtunnel-w-paramiko-cli-works-but-not-in-script
+                    # Menjalankan query dengan mode SSH
+                    # SSHTunnelForwarder's func kwargs
+                    # https://sshtunnel.readthedocs.io/en/latest/#api
+                    # Setup a SSH Tunnel With the Sshtunnel Module in Python
+                    # https://blog.ruanbekker.com/blog/2018/04/23/setup-a-ssh-tunnel-with-the-sshtunnel-module-in-python/
+                    # SSHTunnelForwarder.daemon_forward_servers is not
+                    # respected:
+                    # https://github.com/pahaz/sshtunnel/issues/102
+                    # tunnel without clause:
+                    # tunnel.daemon_forward_servers = True
+                    # tunnel.daemon_transport = True
+                    # tunnel.start()
+                    # tunnel.stop()
+                    sleep(1)
+
+                    self.__db_host = tunnel.local_bind_host
+                    self.__db_port = tunnel.local_bind_port
+
                     try:
-                        engine.update({
-                            'db_host': tunnel.local_bind_host,
-                            'db_port': tunnel.local_bind_port
-                        })
-                        # Python SSHTunnel w/ Paramiko - CLI works, but not in
-                        # script
-                        # https://stackoverflow.com/questions/39945269/python-sshtunnel-w-paramiko-cli-works-but-not-in-script
-                        sleep(1)
-                        result = query(
-                            engine,
-                            string,
-                            **kwargs
-                        )
-                        break
+                        result = self.__call__(string, **kwargs)
                     except OperationalError as e:
                         if (
                             e.args
@@ -475,21 +497,78 @@ def query(engine, string, **kwargs):
                     except Exception:
                         raise
 
-            return result
+                break
 
-    # Issue with a python function returning a generator or a normal object
-    # https://stackoverflow.com/questions/25313283/issue-with-a-python-function-returning-a-generator-or-a-normal-object
-    generator_mode = kwargs.pop('generator_mode', None)
+            self.__ssh_param = ssh_param
+        else:
+            # Issue with a python function returning a generator or a normal
+            # object
+            # https://stackoverflow.com/questions/25313283/issue-with-a-python-function-returning-a-generator-or-a-normal-object
+            generator_mode = kwargs.pop('generator_mode', None)
 
-    def __query(engine, string, **kwargs):
+            result = self.__query(string, **kwargs)
+
+            if not generator_mode:
+                result = (
+                    ''.join(result)
+                    if kwargs.get('json_mode') is True
+                    else list(result)
+                )
+
+        return result
+
+    def __url(self):
         '''
-        engine:
-        - obj: SQLAlchemy's engine instance.
-        - str: Build SQLAlchemy's engine from string database uri.
-        - dict: Build SQLAlchemy's engine from database_uri's func kwargs.
+        Function for returning string database uri.
+        '''
 
+        if isinstance(self.__engine, dict):
+            engine = self.__engine
+
+            if all([
+                self.__db_host,
+                self.__db_port
+            ]):
+                engine.update({
+                    'db_host': self.__db_host,
+                    'db_port': self.__db_port
+                })
+
+            url = database_uri(**engine)
+        elif isinstance(self.__engine, Engine):
+            url = str(self.__engine.url)
+        else:
+            url = self.__engine
+
+        # "set character set" in sqlalchemy?
+        # https://groups.google.com/forum/#!topic/sqlalchemy/3kiPusCy8FM
+        if (
+            url.startswith('mysql')
+            and 'charset=utf8' not in url
+            and self.__use_charset_utf8
+        ):
+            # Add params to given URL in Python
+            # https://stackoverflow.com/questions/2506379/add-params-to-given-url-in-python
+            (
+                query := dict(
+                    parse_qsl(
+                        (
+                            url := list(
+                                urlparse(url)
+                            )
+                        )[4]
+                    )
+                )
+            ).update({'charset': 'utf8'})
+            url[4] = urlencode(query)
+            url = urlunparse(url)
+
+        return url
+
+    def __query(self, string, **kwargs):
+        '''
         string: str
-        - Use for put raw query sql or sql file path. Sql file support jinja2
+        - Use for put raw query sql or sql file path. It is file support jinja2
         templating.
 
         kwargs: dict
@@ -504,14 +583,9 @@ def query(engine, string, **kwargs):
                 - Default value is 100,000.
             4. stream_results: bool
                 - Use stream_results=False for update/insert/delete query.
-            5. use_charset_utf8: bool
-                - Use use_charset_utf8=True for mysql driver if needed.
-            6. template_dir: str
-                - Use for set specify jinja2 template directory, os.getcwd()
-                value is used as default
         '''
 
-        def jinja2_keys(env, template_source):
+        def jinja2_keys(template_source):
             # Jinja2 load templates from separate location than working
             # directory
             # https://stackoverflow.com/questions/37968787/jinja2-load-templates-from-separate-location-than-working-directory
@@ -523,7 +597,7 @@ def query(engine, string, **kwargs):
             # https://jinja.palletsprojects.com/en/2.11.x/api/
             (
                 keys := meta.find_undeclared_variables(
-                    parsed_content := env.parse(template_source)
+                    parsed_content := self.__env.parse(template_source)
                 )
             ).update({
                 key
@@ -531,40 +605,32 @@ def query(engine, string, **kwargs):
                     parsed_content
                 )
                 for key in jinja2_keys(
-                    env,
-                    env.loader.get_source(
-                        env, ref_template
+                    self.__env.loader.get_source(
+                        self.__env, ref_template
                     )[0]
                 )
             })
             return keys
 
+        url = self.__url()
         stream_results = kwargs.get('stream_results')
 
         if isinstance(string, str):
-            env = Environment(
-                loader=FileSystemLoader(
-                    template_dir := kwargs.get(
-                        'template_dir', getcwd()
-                    )
-                )
-            )
-
             if isfile(
-                path_join(template_dir, string)
+                path_join(self.__template_dir , string)
             ):
-                template = env.get_template(string)
-                template_source = env.loader.get_source(env, string)[0]
+                template = self.__env.get_template(string)
+                template_source = self.__env.loader.get_source(
+                    self.__env, string
+                )[0]
             else:
-                template = env.from_string(string)
+                template = self.__env.from_string(string)
                 template_source = string
 
             string = template.render(**kwargs)
 
             for key in (
-                jinja2_keys(
-                    env, template_source
-                ).intersection(
+                jinja2_keys(template_source).intersection(
                     kwargs.keys()
                 ) - set(
                     re.findall(
@@ -625,32 +691,6 @@ def query(engine, string, **kwargs):
         elif stream_results is None:
             stream_results = False
 
-        if isinstance(engine, dict):
-            url = database_uri(**engine)
-        elif isinstance(engine, Engine):
-            url = str(engine.url)
-
-        # "set character set" in sqlalchemy?
-        # https://groups.google.com/forum/#!topic/sqlalchemy/3kiPusCy8FM
-        if (
-            url.startswith('mysql')
-            and 'charset=utf8' not in url
-            and kwargs.get('use_charset_utf8')
-        ):
-            # Add params to given URL in Python
-            # https://stackoverflow.com/questions/2506379/add-params-to-given-url-in-python
-            url = list(
-                urlparse(url)
-            )
-            query = dict(
-                parse_qsl(url[4])
-            )
-            query.update({
-                'charset': 'utf8'
-            })
-            url[4] = urlencode(query)
-            url = urlunparse(url)
-
         args = []
 
         for key in (
@@ -660,9 +700,7 @@ def query(engine, string, **kwargs):
                         'json_mode',
                         'debug_mode',
                         'fetch_size',
-                        'stream_results',
-                        'use_charset_utf8',
-                        'template_dir'
+                        'stream_results'
                     ],
                     kwargs.items()
                 )
@@ -872,14 +910,3 @@ def query(engine, string, **kwargs):
         finally:
             session.close()
             engine.dispose()
-
-    result = __query(engine, string, **kwargs)
-
-    if not generator_mode:
-        result = (
-            ''.join(result)
-            if kwargs.get('json_mode') is True
-            else list(result)
-        )
-
-    return result
