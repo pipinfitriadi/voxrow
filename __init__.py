@@ -453,9 +453,6 @@ class Query:
             self.__ssh_param = {}
 
             while True:
-                self.__db_host = None
-                self.__db_port = None
-
                 with SSHTunnelForwarder(**ssh_param) as tunnel:
                     # Python SSHTunnel w/ Paramiko - CLI works, but
                     # not in script
@@ -480,6 +477,7 @@ class Query:
 
                     try:
                         result = self.__call__(string, **kwargs)
+                        break
                     except OperationalError as e:
                         if (
                             e.args
@@ -498,8 +496,9 @@ class Query:
                         break
                     except Exception:
                         raise
-
-                break
+                    finally:
+                        self.__db_host = None
+                        self.__db_port = None
 
             self.__ssh_param = ssh_param
         else:
