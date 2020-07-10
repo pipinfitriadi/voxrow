@@ -158,7 +158,7 @@ class Log:
             with open(self.__FILE_NAME, 'w'):
                 pass
 
-    def print(self, *data, sep=' | ', end='\n'):
+    def __call__(self, *data, sep=' | ', end='\n'):
         self.__PROCESS_TIME.append(
             (
                 (
