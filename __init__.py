@@ -423,6 +423,8 @@ class Query:
 
             if self.__use_charset_utf8:
                 self.__engine['use_charset_utf8'] = self.__use_charset_utf8
+            elif use_charset_utf8 := self.__engine.get('use_charset_utf8'):
+                self.__use_charset_utf8 = use_charset_utf8
 
     def __call__(self, string, **kwargs):
         '''
