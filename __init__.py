@@ -58,8 +58,8 @@ from collections.abc import Iterable
 from datetime import date, datetime
 from json import dumps, JSONDecoder as _JSONDecoder, loads
 from json.decoder import JSONDecodeError, WHITESPACE
-from os import getenv
-from os.path import isfile
+from os import getenv, getcwd
+from os.path import isfile, join as path_join
 from pathlib import Path
 from random import randint
 import re
@@ -69,7 +69,7 @@ from time import sleep
 from traceback import print_exception
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
-from jinja2 import Template
+from jinja2 import Environment, FileSystemLoader, meta
 from sshtunnel import SSHTunnelForwarder
 from sqlalchemy import bindparam, create_engine
 from sqlalchemy.engine.base import Engine
@@ -400,6 +400,9 @@ def query(engine, string, **kwargs):
             - Use stream_results=False for update/insert/delete query.
         6. use_charset_utf8: bool
             - Use use_charset_utf8=True for mysql driver if needed.
+        7. template_dir: str
+            - Use for set specify jinja2 template directory, os.getcwd()
+            value is used as default
     '''
 
     if isinstance(engine, dict):
@@ -503,47 +506,78 @@ def query(engine, string, **kwargs):
                 - Use stream_results=False for update/insert/delete query.
             5. use_charset_utf8: bool
                 - Use use_charset_utf8=True for mysql driver if needed.
+            6. template_dir: str
+                - Use for set specify jinja2 template directory, os.getcwd()
+                value is used as default
         '''
+
+        def jinja2_keys(env, template_source):
+            # Jinja2 load templates from separate location than working
+            # directory
+            # https://stackoverflow.com/questions/37968787/jinja2-load-templates-from-separate-location-than-working-directory
+            # Template Designer Documentation
+            # https://jinja.palletsprojects.com/en/2.11.x/templates/
+            # How to get list of all variables in jinja 2 templates
+            # https://stackoverflow.com/questions/8260490/how-to-get-list-of-all-variables-in-jinja-2-templates
+            # The Meta API
+            # https://jinja.palletsprojects.com/en/2.11.x/api/
+            (
+                keys := meta.find_undeclared_variables(
+                    parsed_content := env.parse(template_source)
+                )
+            ).update({
+                key
+                for ref_template in meta.find_referenced_templates(
+                    parsed_content
+                )
+                for key in jinja2_keys(
+                    env,
+                    env.loader.get_source(
+                        env, ref_template
+                    )[0]
+                )
+            })
+            return keys
+
         stream_results = kwargs.get('stream_results')
 
         if isinstance(string, str):
-            if isfile(string):
-                with open(string) as sql_file:
-                    string = sql_file.read()
-
-            regex_sql_string = r"'[^']*'"
-
-            if jinja_keys := [
-                key[1] for key in re.findall(
-                    r'{({|%)([^{%}]+)(%|})}',
-                    string,
-                    flags=re.DOTALL
-                )
-            ]:
-                string = Template(string).render(**kwargs)
-
-                for key in (
-                    {
-                        key
-                        for keys in jinja_keys
-                        for key in re.findall(
-                            r'\w+',
-                            re.sub(regex_sql_string, '', keys)
-                        )
-                    }.intersection(
-                        kwargs.keys()
-                    ) - set(
-                        re.findall(
-                            r':\w+',
-                            string
-                        )
+            env = Environment(
+                loader=FileSystemLoader(
+                    template_dir := kwargs.get(
+                        'template_dir', getcwd()
                     )
-                ):
-                    kwargs.pop(key, None)
+                )
+            )
+
+            if isfile(
+                path_join(template_dir, string)
+            ):
+                template = env.get_template(string)
+                template_source = env.loader.get_source(env, string)[0]
+            else:
+                template = env.from_string(string)
+                template_source = string
+
+            string = template.render(**kwargs)
+
+            for key in (
+                jinja2_keys(
+                    env, template_source
+                ).intersection(
+                    kwargs.keys()
+                ) - set(
+                    re.findall(
+                        r':\w+',
+                        string
+                    )
+                )
+            ):
+                kwargs.pop(key, None)
 
             if stream_results is None:
                 for s in re.findall(
-                    regex_sql_string,
+                    r"'[^']*'",
                     _string := '\n'.join([
                         s
                         for s in re.sub(
@@ -627,7 +661,8 @@ def query(engine, string, **kwargs):
                         'debug_mode',
                         'fetch_size',
                         'stream_results',
-                        'use_charset_utf8'
+                        'use_charset_utf8',
+                        'template_dir'
                     ],
                     kwargs.items()
                 )
