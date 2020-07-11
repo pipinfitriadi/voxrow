@@ -51,7 +51,6 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-
 FROM docker:19.03.1
 LABEL maintainer="pipinfitriadi@gmail.com"
 
