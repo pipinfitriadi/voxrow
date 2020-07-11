@@ -60,11 +60,11 @@ Daftar isi:
 <!-- TOC -->
 
 - [VOXROW](#voxrow)
-    - [Server](#server)
-    - [Source-code](#source-code)
-        - [Editor](#editor)
+    - [_Server_](#_server_)
+    - [_Source-code_](#_source-code_)
+        - [_Editor_](#_editor_)
         - [Repositori Git](#repositori-git)
-        - [Tata Cara Penulisan Markdown](#tata-cara-penulisan-markdown)
+        - [Tata Cara Penulisan _Markdown_](#tata-cara-penulisan-_markdown_)
         - [Python](#python)
     - [Lisensi](#lisensi)
 
@@ -173,6 +173,7 @@ antara lain:
 - [_Auto Markdown TOC_](https://marketplace.visualstudio.com/items?itemName=huntertran.auto-markdown-toc)
 - [_Markdownlint_](https://marketplace.visualstudio.com/items?itemName=DavidAnson.vscode-markdownlint)
 - [_Python extension for Visual Studio Code_](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+- [_Better Jinja_](https://marketplace.visualstudio.com/items?itemName=samuelcolvin.jinjahtml)
 
 ### Repositori Git
 
