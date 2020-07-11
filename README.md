@@ -173,7 +173,7 @@ antara lain:
 - [_Auto Markdown TOC_](https://marketplace.visualstudio.com/items?itemName=huntertran.auto-markdown-toc)
 - [_Markdownlint_](https://marketplace.visualstudio.com/items?itemName=DavidAnson.vscode-markdownlint)
 - [_Python extension for Visual Studio Code_](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
-- [_Better Jinja_](https://marketplace.visualstudio.com/items?itemName=samuelcolvin.jinjahtml)
+- [Jinja](https://marketplace.visualstudio.com/items?itemName=wholroyd.jinja)
 
 ### Repositori Git
 
