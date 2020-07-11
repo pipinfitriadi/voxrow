@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-
 FROM python:3.8-alpine
 LABEL maintainer="pipinfitriadi@gmail.com"
 
