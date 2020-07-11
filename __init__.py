@@ -69,7 +69,8 @@ from time import sleep
 from traceback import print_exception
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
-from jinja2 import Environment, FileSystemLoader, meta
+from jinja2 import Environment, FileSystemLoader
+from jinja2.meta import find_referenced_templates, find_undeclared_variables
 from sshtunnel import SSHTunnelForwarder
 from sqlalchemy import bindparam, create_engine
 from sqlalchemy.engine.base import Engine
@@ -566,10 +567,17 @@ class Query:
 
         return url
 
+    def __template_source(self, template_file):
+        '''
+        Function for returning jinja2 template source.
+        '''
+
+        return self.__env.loader.get_source(self.__env, template_file)[0]
+
     def __query(self, string, **kwargs):
         '''
         string: str
-        - Use for put raw query sql or sql file path. It is file support jinja2
+        - Use for put raw query sql or sql file path. It is support jinja2
         templating.
 
         kwargs: dict
@@ -597,18 +605,16 @@ class Query:
             # The Meta API
             # https://jinja.palletsprojects.com/en/2.11.x/api/
             (
-                keys := meta.find_undeclared_variables(
+                keys := find_undeclared_variables(
                     parsed_content := self.__env.parse(template_source)
                 )
             ).update({
                 key
-                for ref_template in meta.find_referenced_templates(
+                for ref_template in find_referenced_templates(
                     parsed_content
                 )
                 for key in jinja2_keys(
-                    self.__env.loader.get_source(
-                        self.__env, ref_template
-                    )[0]
+                    self.__template_source(ref_template)
                 )
             })
             return keys
@@ -621,9 +627,7 @@ class Query:
                 path_join(self.__template_dir , string)
             ):
                 template = self.__env.get_template(string)
-                template_source = self.__env.loader.get_source(
-                    self.__env, string
-                )[0]
+                template_source = self.__template_source(string)
             else:
                 template = self.__env.from_string(string)
                 template_source = string
