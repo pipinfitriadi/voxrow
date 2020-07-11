@@ -79,14 +79,16 @@ from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm.session import sessionmaker
 from sqlalchemy.pool import NullPool
 from sqlalchemy.sql import text
+from sqlalchemy.sql.expression import null
 from sqlalchemy.types import (
     ARRAY,
     Boolean,
     Date,
     DateTime,
-    Integer,
     Float,
+    Integer,
     JSON,
+    NullType,
     String
 )
 
@@ -434,7 +436,8 @@ class Query:
         templating.
 
         kwargs: dict
-        - Optional kwargs can be use for best query result.
+        - Put sql parameter and or jinja2 variable in here.
+        - Optional parameter can be use for best query result:
             1. generator_mode: bool
                 - Use generator_mode=True if we want result as generator.
             2. json_mode: bool
@@ -570,29 +573,58 @@ class Query:
     def __template_source(self, template_file):
         '''
         Function for returning jinja2 template source.
+
+        template_file: str
+        - Template file path.
         '''
 
         return self.__env.loader.get_source(self.__env, template_file)[0]
 
-    def __query(self, string, **kwargs):
+    def __create_engine(self):
         '''
+        Function to get real engine that used in __call__ and render.
+        '''
+
+        return create_engine(
+            self.__url(),
+            poolclass=NullPool,
+            json_serializer=json_serializer
+        )
+
+    def __compile(self, engine, text_clause):
+        '''
+        Function to compile and bind parameter sql.
+
+        engine: SQLAlchemy's engine instance
+
+        text_clause: sqlalchemy.sql.elements.TextClause
+        '''
+
+        return str(
+            text_clause.compile(
+                engine,
+                compile_kwargs={'literal_binds': True}
+            )
+        )
+
+    def render(self, string, literal_binds=True, **kwargs):
+        '''
+        Function for render jinja2 template and bind parameter sql.
+
         string: str
         - Use for put raw query sql or sql file path. It is support jinja2
         templating.
 
+        literal_binds: bool
+        - Use literal_binds=False if not want to see sql bind parameter.
+
         kwargs: dict
-        - Optional kwargs can be use for best query result.
-            1. json_mode: bool
-                - Use json_mode=True if we want result as string dumps json.
-            2. debug_mode: bool
-                - Use debug_mode=False if you don't want to see error
-                information.
-            3. fetch_size: int
-                - Use for set how many rows use on every fetch.
-                - Default value is 100,000.
-            4. stream_results: bool
-                - Use stream_results=False for update/insert/delete query.
+        - Put sql parameter and or jinja2 variable in here.
+        - It is mandatory if string have sql parameter and literal_binds=True.
         '''
+
+        # SQLAlchemy: print the actual query
+        # https://stackoverflow.com/questions/5631078/sqlalchemy-print-the-actual-query
 
         def jinja2_keys(template_source):
             # Jinja2 load templates from separate location than working
@@ -619,8 +651,16 @@ class Query:
             })
             return keys
 
-        url = self.__url()
-        stream_results = kwargs.get('stream_results')
+        kwargs = {
+            key: value
+            for key, value in kwargs.items()
+            if key not in [
+                'json_mode',
+                'debug_mode',
+                'fetch_size',
+                'stream_results'
+            ]
+        }
 
         if isinstance(string, str):
             if isfile(
@@ -639,106 +679,45 @@ class Query:
                     kwargs.keys()
                 ) - set(
                     re.findall(
-                        r':\w+',
+                        r':(\w+)',
                         string
                     )
                 )
             ):
                 kwargs.pop(key, None)
 
-            if stream_results is None:
-                for s in re.findall(
-                    r"'[^']*'",
-                    _string := '\n'.join([
-                        s
-                        for s in re.sub(
-                            r'--.*', '', string
-                        ).split('\n')
-                        if s
-                    ]),
-                    flags=re.DOTALL
-                ):
-                    _string = re.sub(s, "''", _string, 1)
-
-                regex_sql_space = r'\s+.*\s+'
-
-                # Chapter 13 SQL Statements
-                # https://dev.mysql.com/doc/refman/5.6/en/sql-statements.html
-                for regex in [
-                    'EXPLAIN',
-                    'INSERT',
-                    'SET',
-                    regex_sql_space.join(['DELETE', 'FROM']),
-                    regex_sql_space.join(['MERGE', 'INTO', 'USING']),
-                    'CREATE',
-                    'ALTER',
-                    'DROP',
-                    regex_sql_space.join(['RENAME', 'TABLE']),
-                    regex_sql_space.join(['TRUNCATE', 'TABLE']),
-                    'SHOW',
-                    'DESCRIBE',
-                    'CALL',
-                    'DO',
-                    'HANDLER',
-                    'LOAD',
-                    'REPLACE',
-                    'KILL'
-                ]:
-                    if re.findall(
-                        fr'\s*{ regex }\s+.*',
-                        _string,
-                        flags=re.DOTALL + re.IGNORECASE
-                    ):
-                        stream_results = False
-                        break
-                else:
-                    stream_results = True
-        elif stream_results is None:
-            stream_results = False
-
         args = []
 
-        for key in (
-            _kwargs := dict(
-                filter(
-                    lambda kwarg: kwarg[0] not in [
-                        'json_mode',
-                        'debug_mode',
-                        'fetch_size',
-                        'stream_results'
-                    ],
-                    kwargs.items()
-                )
-            )
-        ):
+        for key in kwargs:
             param_kwargs = {
                 'key': key,
                 'type_': String
             }
+            value = kwargs[key]
+
+            if value is None:
+                # How to insert NULL value in SQLAlchemy?
+                # https://stackoverflow.com/questions/32959336/how-to-insert-null-value-in-sqlalchemy
+                kwargs[key] = null()
 
             for parameter_type, database_column_type in (
                 mapping_type := [
+                    [type(None), NullType],
                     [float, Float],
                     [int, Integer],
                     [bool, Boolean],
                     [date, Date],
                     [datetime, DateTime],
                     [dict, JSON],
-                    [Iterable, ARRAY],
-                    [type(None), None]
+                    [Iterable, ARRAY]
                 ]
             ):
                 if (
-                    isinstance(
-                        (
-                            value := _kwargs[key]
-                        ),
-                        parameter_type
-                    )
+                    isinstance(value, parameter_type)
                     and not isinstance(value, str)
                 ):
                     if database_column_type is ARRAY:
-                        if url.startswith('postgresql'):
+                        if self.__url().startswith('postgresql'):
                             child_type = String
 
                             if (
@@ -805,6 +784,92 @@ class Query:
                 bindparam(**param_kwargs)
             )
 
+        string = text(string).bindparams(*args, **kwargs)
+
+        if literal_binds:
+            string = self.__compile(self.__create_engine(), string)
+        elif literal_binds is not None:
+            string = str(string)
+
+        return string
+
+    def __query(self, string, **kwargs):
+        '''
+        Func to get sql query result.
+
+        string: str
+        - Use for put raw query sql or sql file path. It is support jinja2
+        templating.
+
+        kwargs: dict
+        - Put sql parameter and or jinja2 variable in here.
+        - Optional parameter can be use for best query result:
+            1. json_mode: bool
+                - Use json_mode=True if we want result as string dumps json.
+            2. debug_mode: bool
+                - Use debug_mode=False if you don't want to see error
+                information.
+            3. fetch_size: int
+                - Use for set how many rows use on every fetch.
+                - Default value is 100,000.
+            4. stream_results: bool
+                - Use stream_results=False for update/insert/delete query.
+        '''
+
+        string = self.render(string, None, **kwargs)
+
+        if (
+            stream_results := kwargs.get('stream_results')
+        ) is None:
+            for s in re.findall(
+                r"'[^']*'",
+                _string := '\n'.join([
+                    s
+                    for s in re.sub(
+                        r'--.*', '', str(string)
+                    ).split('\n')
+                    if s
+                ]),
+                flags=re.DOTALL
+            ):
+                _string = re.sub(s, "''", _string, 1)
+
+            regex_sql_space = r'\s+.*\s+'
+
+            # Chapter 13 SQL Statements
+            # https://dev.mysql.com/doc/refman/5.6/en/sql-statements.html
+            for regex in [
+                'EXPLAIN',
+                'INSERT',
+                'SET',
+                regex_sql_space.join(['DELETE', 'FROM']),
+                regex_sql_space.join(['MERGE', 'INTO', 'USING']),
+                'CREATE',
+                'ALTER',
+                'DROP',
+                regex_sql_space.join(['RENAME', 'TABLE']),
+                regex_sql_space.join(['TRUNCATE', 'TABLE']),
+                'SHOW',
+                'DESCRIBE',
+                'CALL',
+                'DO',
+                'HANDLER',
+                'LOAD',
+                'REPLACE',
+                'KILL'
+            ]:
+                if re.findall(
+                    fr'\s*{ regex }\s+.*',
+                    _string,
+                    flags=re.DOTALL + re.IGNORECASE
+                ):
+                    stream_results = False
+                    break
+            else:
+                stream_results = True
+        else:
+            stream_results = False
+
         # scoped_session(sessionmaker()) or plain sessionmaker() in sqlalchemy?
         # https://stackoverflow.com/questions/6519546/scoped-sessionsessionmaker-or-plain-sessionmaker-in-sqlalchemy
         # NullPool or QueuePool for remote Postgres SQLalchemy connections?
@@ -812,19 +877,13 @@ class Query:
         session = scoped_session(
             sessionmaker(
                 bind=(
-                    engine := create_engine(
-                        url,
-                        poolclass=NullPool,
-                        json_serializer=json_serializer
-                    )
+                    engine := self.__create_engine()
                 ).execution_options(stream_results=stream_results)
             )
         )()
 
         try:
-            query_result = session.execute(
-                text(string).bindparams(*args, **_kwargs)
-            )
+            query_result = session.execute(string)
 
             # memory-efficient built-in SqlAlchemy iterator /
             # generator:
@@ -858,12 +917,7 @@ class Query:
                         yield to_result(
                             {
                                 'affected_row': query_result.rowcount,
-                                'query': (
-                                    query_result.context.unicode_statement
-                                ),
-                                'parameters': (
-                                    query_result.context.parameters[0]
-                                ),
+                                'query': self.__compile(engine, string),
                                 'finish_time': datetime.now()
                             },
                             json_mode
