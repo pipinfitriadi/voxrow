@@ -104,4 +104,4 @@ def default_error(error):
         'error_message': message,
         'error_name': error.name,
         'error_parameter': parameter
-    }, error.code, '__error__.html'
+    }, error.code, '__error__.html.j2'
