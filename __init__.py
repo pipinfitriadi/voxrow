@@ -664,7 +664,7 @@ class Query:
 
         if isinstance(string, str):
             if isfile(
-                path_join(self.__template_dir , string)
+                path_join(self.__template_dir, string)
             ):
                 template = self.__env.get_template(string)
                 template_source = self.__template_source(string)
