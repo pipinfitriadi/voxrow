@@ -2,7 +2,7 @@
     "markdown-toc.updateOnSave": false,
     "python.analysis.disabled": ["undefined-variable", "unresolved-import"],
     "python.linting.flake8Enabled": true,
-    "python.linting.flake8Args": ["--ignore=F821,W503"],
+    "python.linting.flake8Args": ["--ignore=W503"],
     "python.pythonPath": "env/bin/python",
     "files.exclude": {
         "**/.classpath": true,

@@ -403,20 +403,19 @@ class Query:
         if isinstance(self.__engine, dict):
             self.__db_host = None
             self.__db_port = None
+            database_uri_param = {
+                'db_driver',
+                'db_host',
+                'db_port',
+                'db_name',
+                'db_user',
+                'db_pass',
+                'use_charset_utf8'
+            }
             self.__ssh_param = {
                 key: value
                 for key, value in self.__engine.items()
-                if key not in (
-                    database_uri_param := [
-                        'db_driver',
-                        'db_host',
-                        'db_port',
-                        'db_name',
-                        'db_user',
-                        'db_pass',
-                        'use_charset_utf8'
-                    ]
-                )
+                if key not in database_uri_param
             }
             self.__engine = {
                 key: value
