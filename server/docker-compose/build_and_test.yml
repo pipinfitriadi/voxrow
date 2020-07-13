@@ -73,8 +73,7 @@ services:
         working_dir: /home/
         environment:
             - EXCLUDE=env/
-            - IGNORE=W503
         command: >
             /bin/ash -c "
-            flake8 --exclude $$EXCLUDE --ignore $$IGNORE
+            flake8 --exclude $$EXCLUDE
             "

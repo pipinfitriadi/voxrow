@@ -298,7 +298,6 @@ linter_test:
 	@cd ../ \
 		&& flake8 \
 			--exclude env/ \
-			--ignore W503 \
 		&& cd server/
 
 # Permission denied when executing docker commands from Gitlab CI/CD pipeline

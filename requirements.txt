@@ -51,10 +51,6 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-# Add support for PEP 572 assignment expressions
-# https://github.com/PyCQA/pyflakes/pull/457#issuecomment-549080787
-git+https://github.com/pycqa/pyflakes
-
 flake8
 flask
 flask-jwt-extended

@@ -8,9 +8,7 @@
             "module": "flake8",
             "args": [
                 "--exclude",
-                "env/",
-                "--ignore",
-                "W503"
+                "env/"
             ]
         },
         {
