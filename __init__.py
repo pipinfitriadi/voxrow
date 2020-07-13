@@ -729,7 +729,7 @@ class Query:
                                 # Try to sample chacking type of array's child.
                                 for i in range(10):
                                     for param_type, db_col_type in (
-                                        mapping_type[:-1]
+                                        mapping_type[1:]
                                     ):
                                         if (
                                             isinstance(
@@ -763,6 +763,13 @@ class Query:
                                     )
                                 ):
                                     child_type = JSON
+
+                                kwargs[key] = [
+                                    null()
+                                    if v is None
+                                    else v
+                                    for v in value
+                                ]
 
                             # PostgreSQL multidimensional arrays in SQLAlchemy,
                             # not sure of syntax
