@@ -61,7 +61,6 @@ from json.decoder import JSONDecodeError, WHITESPACE
 from os import getenv, getcwd
 from os.path import isfile, join as path_join
 from pathlib import Path
-from random import randint
 import re
 from statistics import mean
 from sys import exc_info
@@ -74,6 +73,7 @@ from jinja2.meta import find_referenced_templates, find_undeclared_variables
 from sshtunnel import SSHTunnelForwarder
 from sqlalchemy import bindparam, create_engine
 from sqlalchemy.engine.base import Engine
+from sqlalchemy.engine.default import DefaultDialect
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm.session import sessionmaker
@@ -81,7 +81,6 @@ from sqlalchemy.pool import NullPool
 from sqlalchemy.sql import text
 from sqlalchemy.sql.expression import null
 from sqlalchemy.types import (
-    ARRAY,
     Boolean,
     Date,
     DateTime,
@@ -521,87 +520,55 @@ class Query:
 
         return result
 
-    def __url(self):
-        '''
-        Function for returning string database uri.
-        '''
-
-        if isinstance(self.__engine, dict):
-            engine = self.__engine
-
-            if all([
-                self.__db_host,
-                self.__db_port
-            ]):
-                engine.update({
-                    'db_host': self.__db_host,
-                    'db_port': self.__db_port
-                })
-
-            url = database_uri(**engine)
-        elif isinstance(self.__engine, Engine):
-            url = str(self.__engine.url)
-        else:
-            url = self.__engine
-
-        # "set character set" in sqlalchemy?
-        # https://groups.google.com/forum/#!topic/sqlalchemy/3kiPusCy8FM
-        if (
-            url.startswith('mysql')
-            and 'charset=utf8' not in url
-            and self.__use_charset_utf8
-        ):
-            # Add params to given URL in Python
-            # https://stackoverflow.com/questions/2506379/add-params-to-given-url-in-python
-            (
-                query := dict(
-                    parse_qsl(
-                        (
-                            url := list(
-                                urlparse(url)
-                            )
-                        )[4]
-                    )
-                )
-            ).update({'charset': 'utf8'})
-            url[4] = urlencode(query)
-            url = urlunparse(url)
-
-        return url
-
-    def __template_source(self, template_file):
-        '''
-        Function for returning jinja2 template source.
-
-        template_file: str
-        - Template file path.
-        '''
-
-        return self.__env.loader.get_source(self.__env, template_file)[0]
-
-    def __create_engine(self):
-        '''
-        Function to get real engine that used in __call__ and render.
-        '''
-
-        return create_engine(
-            self.__url(),
-            poolclass=NullPool,
-            json_serializer=json_serializer
-        )
-
-    def __compile(self, engine, text_clause):
+    def __compile(self, text_clause):
         '''
         Function to compile and bind parameter sql.
-
-        engine: SQLAlchemy's engine instance
 
         text_clause: sqlalchemy.sql.elements.TextClause
         '''
 
+        # SQLAlchemy: print the actual query
+        # https://stackoverflow.com/questions/5631078/sqlalchemy-print-the-actual-query
+        class StringLiteral(String):
+            '''
+            Teach SA how to literalize various things.
+            '''
+
+            def literal_processor(self, dialect):
+                super_processor = super(
+                    StringLiteral, self
+                ).literal_processor(dialect)
+
+                def process(value):
+                    if (
+                        isinstance(
+                            value := serialize(value),
+                            Iterable
+                        )
+                        and not isinstance(value, str)
+                    ):
+                        value = dumps(value)
+
+                    if isinstance(
+                        result := super_processor(value),
+                        bytes
+                    ):
+                        result = result.decode(dialect.encoding)
+
+                    return result
+
+                return process
+
+        class LiteralDialect(DefaultDialect):
+            colspecs = {
+                DateTime: StringLiteral,
+                Date: StringLiteral,
+                JSON: StringLiteral
+            }
+
         return str(
             text_clause.compile(
-                engine,
+                dialect=LiteralDialect(),
                 compile_kwargs={'literal_binds': True}
             )
         )
@@ -625,6 +592,16 @@ class Query:
         # SQLAlchemy: print the actual query
         # https://stackoverflow.com/questions/5631078/sqlalchemy-print-the-actual-query
 
+        def __template_source(template_file):
+            '''
+            Function for returning jinja2 template source.
+
+            template_file: str
+            - Template file path.
+            '''
+
+            return self.__env.loader.get_source(self.__env, template_file)[0]
+
         def jinja2_keys(template_source):
             # Jinja2 load templates from separate location than working
             # directory
@@ -645,7 +622,7 @@ class Query:
                     parsed_content
                 )
                 for key in jinja2_keys(
-                    self.__template_source(ref_template)
+                    __template_source(ref_template)
                 )
             })
             return keys
@@ -666,7 +643,7 @@ class Query:
                 path_join(self.__template_dir, string)
             ):
                 template = self.__env.get_template(string)
-                template_source = self.__template_source(string)
+                template_source = __template_source(string)
             else:
                 template = self.__env.from_string(string)
                 template_source = string
@@ -692,97 +669,28 @@ class Query:
                 'key': key,
                 'type_': String
             }
-            value = kwargs[key]
 
-            if value is None:
+            if (
+                value := kwargs[key]
+            ) is None:
                 # How to insert NULL value in SQLAlchemy?
                 # https://stackoverflow.com/questions/32959336/how-to-insert-null-value-in-sqlalchemy
                 kwargs[key] = null()
 
-            for parameter_type, database_column_type in (
-                mapping_type := [
-                    [type(None), NullType],
-                    [float, Float],
-                    [int, Integer],
-                    [bool, Boolean],
-                    [date, Date],
-                    [datetime, DateTime],
-                    [dict, JSON],
-                    [Iterable, ARRAY]
-                ]
-            ):
+            for parameter_type, database_column_type in [
+                [type(None), NullType],
+                [float, Float],
+                [int, Integer],
+                [bool, Boolean],
+                [date, Date],
+                [datetime, DateTime],
+                [dict, JSON],
+                [Iterable, JSON]
+            ]:
                 if (
                     isinstance(value, parameter_type)
                     and not isinstance(value, str)
                 ):
-                    if database_column_type is ARRAY:
-                        if self.__url().startswith('postgresql'):
-                            child_type = String
-
-                            if (
-                                len_value := len(
-                                    value := list(value)
-                                )
-                            ) > 0:
-                                temp_type = set()
-
-                                # Try to sample chacking type of array's child.
-                                for i in range(10):
-                                    for param_type, db_col_type in (
-                                        mapping_type[1:]
-                                    ):
-                                        if (
-                                            isinstance(
-                                                (
-                                                    child_value := value[
-                                                        randint(
-                                                            0,
-                                                            len_value - 1
-                                                        )
-                                                    ]
-                                                ),
-                                                param_type
-                                            )
-                                            and not isinstance(
-                                                child_value,
-                                                str
-                                            )
-                                        ):
-                                            temp_type.add(db_col_type)
-                                            break
-
-                                if (
-                                    len_temp_type := len(temp_type)
-                                ) == 1:
-                                    child_type = temp_type.pop()
-                                elif (
-                                    len_temp_type > 2
-                                    or (
-                                        len_temp_type == 2
-                                        and temp_type != {Date, DateTime}
-                                    )
-                                ):
-                                    child_type = JSON
-
-                                kwargs[key] = [
-                                    null()
-                                    if v is None
-                                    else v
-                                    for v in value
-                                ]
-
-                            # PostgreSQL multidimensional arrays in SQLAlchemy,
-                            # not sure of syntax
-                            # https://stackoverflow.com/questions/13888537/postgresql-multidimensional-arrays-in-sqlalchemy-not-sure-of-syntax
-                            database_column_type = ARRAY(
-                                child_type
-                                if child_type is not ARRAY
-                                else JSON,
-                                dimensions=1
-                            )
-                        else:
-                            database_column_type = JSON
-
                     param_kwargs['type_'] = database_column_type
                     break
 
@@ -793,7 +701,7 @@ class Query:
         string = text(string).bindparams(*args, **kwargs)
 
         if literal_binds:
-            string = self.__compile(self.__create_engine(), string)
+            string = self.__compile(string)
         elif literal_binds is not None:
             string = str(string)
 
@@ -876,6 +784,48 @@ class Query:
         else:
             stream_results = False
 
+        # Process to returning string database uri.
+        if isinstance(self.__engine, dict):
+            engine = self.__engine
+
+            if all([
+                self.__db_host,
+                self.__db_port
+            ]):
+                engine.update({
+                    'db_host': self.__db_host,
+                    'db_port': self.__db_port
+                })
+
+            url = database_uri(**engine)
+        elif isinstance(self.__engine, Engine):
+            url = str(self.__engine.url)
+        else:
+            url = self.__engine
+
+        # "set character set" in sqlalchemy?
+        # https://groups.google.com/forum/#!topic/sqlalchemy/3kiPusCy8FM
+        if (
+            url.startswith('mysql')
+            and 'charset=utf8' not in url
+            and self.__use_charset_utf8
+        ):
+            # Add params to given URL in Python
+            # https://stackoverflow.com/questions/2506379/add-params-to-given-url-in-python
+            (
+                query := dict(
+                    parse_qsl(
+                        (
+                            url := list(
+                                urlparse(url)
+                            )
+                        )[4]
+                    )
+                )
+            ).update({'charset': 'utf8'})
+            url[4] = urlencode(query)
+            url = urlunparse(url)
+
         # scoped_session(sessionmaker()) or plain sessionmaker() in sqlalchemy?
         # https://stackoverflow.com/questions/6519546/scoped-sessionsessionmaker-or-plain-sessionmaker-in-sqlalchemy
         # NullPool or QueuePool for remote Postgres SQLalchemy connections?
@@ -883,7 +833,11 @@ class Query:
         session = scoped_session(
             sessionmaker(
                 bind=(
-                    engine := self.__create_engine()
+                    engine := create_engine(
+                        url,
+                        poolclass=NullPool,
+                        json_serializer=json_serializer
+                    )
                 ).execution_options(stream_results=stream_results)
             )
         )()
@@ -923,7 +877,7 @@ class Query:
                         yield to_result(
                             {
                                 'affected_row': query_result.rowcount,
-                                'query': self.__compile(engine, string),
+                                'query': self.__compile(string),
                                 'finish_time': datetime.now()
                             },
                             json_mode
