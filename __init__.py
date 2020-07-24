@@ -56,7 +56,12 @@
 import __main__ as main
 from collections.abc import Iterable
 from datetime import date, datetime
-from json import dumps, JSONDecoder as _JSONDecoder, loads
+from json import (
+    dumps,
+    JSONDecoder as _JSONDecoder,
+    JSONEncoder as _JSONEncoder,
+    loads
+)
 from json.decoder import JSONDecodeError, WHITESPACE
 from os import getenv, getcwd
 from os.path import isfile, join as path_join
@@ -294,6 +299,24 @@ class JSONDecoder(_JSONDecoder):
         )
 
 
+class JSONEncoder(_JSONEncoder):
+    '''
+    >>> from json import dumps
+    >>> dumps(object, cls=JSONEncoder)
+    '''
+
+    # Custom JSON encoder for Flask
+    # https://gist.github.com/claraj/3b2b95a62c5ba6860c03b5c737c214ab
+    # Pass user built json encoder into Flask's jsonify
+    # https://stackoverflow.com/questions/44146087/pass-user-built-json-encoder-into-flasks-jsonify/44158611
+    def default(self, obj):
+        return (
+            super().default(obj)
+            if isinstance(obj, str)
+            else serialize(obj)
+        )
+
+
 def serialize(object):
     '''
     >>> from json import dumps
@@ -313,7 +336,7 @@ def serialize(object):
 
 
 def json_serializer(object):
-    return dumps(object, default=serialize)
+    return dumps(object, default=JSONEncoder)
 
 
 def json_deserializer(object):
