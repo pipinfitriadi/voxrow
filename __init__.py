@@ -336,7 +336,7 @@ def serialize(object):
 
 
 def json_serializer(object):
-    return dumps(object, default=JSONEncoder)
+    return dumps(object, cls=JSONEncoder)
 
 
 def json_deserializer(object):
