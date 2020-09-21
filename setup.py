@@ -58,12 +58,33 @@
 # Including files in source distributions with MANIFEST.in
 # https://packaging.python.org/guides/using-manifest-in/
 
-from setuptools import find_packages, setup
+from setuptools import setup
 
 setup(
-    name='voxrow',
-    packages=find_packages(),
-    version='0.9.4',
+    name='VOXROW',
+    packages=[
+        'voxrow',
+        'voxrow.modify',
+        'voxrow.extension.route',
+        'voxrow.extension',
+        'voxrow.modify.flask_sqlalchemy'
+    ],
+    package_dir={
+        'voxrow': '',
+        'voxrow.extension': 'extension',
+        'voxrow.extension.route': 'extension/route',
+        'voxrow.modify': 'modify',
+        'voxrow.modify.flask_sqlalchemy': 'modify/flask_sqlalchemy'
+    },
+    package_data={
+        'voxrow': [
+            'server/Makefile',
+            'server/docker-compose/letsencrypt.yml',
+            'server/install/*',
+            'server/nginx/*'
+        ]
+    },
+    version='0.9.5',
     description=(description := "Voxrow's library"),
     long_description=description,
     author='Pipin Fitriadi',
@@ -82,9 +103,7 @@ setup(
         'https://gitlab.com/voxrow/voxrow/-/archive/master/'
         'voxrow-master.tar.gz'
     ),
-    keywords=['voxrow', 'library'],
+    keywords=['voxrow', 'library', 'raw sql query'],
     python_requires='>=3.8.0',
-    platforms='any',
-    setup_requires=['setuptools_git'],
-    include_package_data=True
+    platforms='any'
 )
