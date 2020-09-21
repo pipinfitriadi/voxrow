@@ -63,7 +63,7 @@ from setuptools import find_packages, setup
 setup(
     name='voxrow',
     packages=find_packages(),
-    version='0.9.3',
+    version='0.9.4',
     description=(description := "Voxrow's library"),
     long_description=description,
     author='Pipin Fitriadi',

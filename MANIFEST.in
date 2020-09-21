@@ -51,7 +51,8 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-exclude server/docker-compose/build_and_test.yml .gitignore .gitlab-ci.yml .markdownlint.json MANIFEST.in requirements.txt setup.py
+exclude server/docker-compose/build_and_test.yml .gitignore .gitlab-ci.yml .markdownlint.json MANIFEST.in requirements.txt
 global-exclude Dockerfile
 prune .vscode
 prune server/ci_cd
+prune *.egg-info
