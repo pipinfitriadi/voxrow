@@ -51,17 +51,7 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-.eggs/
-*.egg-info/
-__pycache__/
-.pytest_cache/
-builds/
-dist/
-env/
-htmlcov/
-instance/
-
-*.log
-*.pyc
-.coverage
-.env
+exclude server/docker-compose/build_and_test.yml .gitignore .gitlab-ci.yml .markdownlint.json MANIFEST.in requirements.txt setup.py
+global-exclude Dockerfile
+prune .vscode
+prune server/ci_cd

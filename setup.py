@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Copyright 2020 Pipin Fitriadi <pipinfitriadi@gmail.com>
 
 # Licensed under the Microsoft Reference Source License (MS-RSL)
@@ -51,17 +53,38 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-.eggs/
-*.egg-info/
-__pycache__/
-.pytest_cache/
-builds/
-dist/
-env/
-htmlcov/
-instance/
+# Packing and deploying a project to Pip
+# https://medium.com/@ssbothwell/packing-and-deploying-a-project-to-pip-bcd628d02f6f
+# Including files in source distributions with MANIFEST.in
+# https://packaging.python.org/guides/using-manifest-in/
 
-*.log
-*.pyc
-.coverage
-.env
+from setuptools import find_packages, setup
+
+setup(
+    name='voxrow',
+    packages=find_packages(),
+    version='0.9.3',
+    description=(description := "Voxrow's library"),
+    long_description=description,
+    author='Pipin Fitriadi',
+    author_email='pipinfitriadi@gmail.com',
+    license='MS-RSL',
+    url='https://gitlab.com/voxrow/voxrow',
+    install_requires=[
+        'flake8',
+        'flask',
+        'flask-jwt-extended',
+        'Flask-SQLAlchemy',
+        'Flask-WTF',
+        'sshtunnel'
+    ],
+    download_url=(
+        'https://gitlab.com/voxrow/voxrow/-/archive/master/'
+        'voxrow-master.tar.gz'
+    ),
+    keywords=['voxrow', 'library'],
+    python_requires='>=3.8.0',
+    platforms='any',
+    setup_requires=['setuptools_git'],
+    include_package_data=True
+)
