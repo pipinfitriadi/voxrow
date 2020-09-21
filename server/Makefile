@@ -320,6 +320,6 @@ deploy_pip:
 	@env/bin/twine upload --skip-existing dist/*
 
 deploy_pip_test:
-	@echo "===================== Deploy package to pip ====================="
+	@echo "===================== Deploy test package to pip ====================="
 	@env/bin/python setup.py sdist
 	@env/bin/twine upload --skip-existing --repository testpypi dist/*
