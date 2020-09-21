@@ -61,7 +61,7 @@
 from setuptools import setup
 
 setup(
-    name='VOXROW',
+    name='voxrow',
     packages=[
         'voxrow',
         'voxrow.modify',
@@ -84,7 +84,7 @@ setup(
             'server/nginx/*'
         ]
     },
-    version='0.9.7',
+    version='0.9.8',
     description=(description := "VOXROW's library"),
     long_description=description,
     author='Pipin Fitriadi',
