@@ -313,3 +313,13 @@ register_runner:
 			--executor shell \
 			--description $${description:-app_runner} \
 			--tag-list live
+
+deploy_pip:
+	@echo "===================== Deploy package to pip ====================="
+	@env/bin/python setup.py sdist
+	@env/bin/twine upload --skip-existing dist/*
+
+deploy_pip_test:
+	@echo "===================== Deploy test package to pip ====================="
+	@env/bin/python setup.py sdist
+	@env/bin/twine upload --skip-existing --repository testpypi dist/*
