@@ -769,7 +769,12 @@ class Query:
                 ]),
                 flags=re.DOTALL
             ):
-                _string = re.sub(s, "''", _string, 1)
+                _string = re.sub(
+                    s.replace('[', r'\[').replace(']', r'\]'),
+                    "''",
+                    _string,
+                    1
+                )
 
             regex_sql_space = r'\s+.*\s+'
 
