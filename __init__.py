@@ -56,6 +56,7 @@
 import __main__ as main
 from collections.abc import Iterable
 from datetime import date, datetime
+import logging
 from json import (
     dumps,
     JSONDecoder as _JSONDecoder,
@@ -79,10 +80,10 @@ from sshtunnel import SSHTunnelForwarder
 from sqlalchemy import bindparam, create_engine
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.engine.default import DefaultDialect
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError, StatementError
 from sqlalchemy.orm import scoped_session
+from sqlalchemy.orm.query import Query as _Query
 from sqlalchemy.orm.session import sessionmaker
-from sqlalchemy.pool import NullPool
 from sqlalchemy.sql import text
 from sqlalchemy.sql.expression import null
 from sqlalchemy.types import (
@@ -395,6 +396,47 @@ def database_uri_from_env(
         getenv(db_pass_env, ''),
         getenv(use_charset_utf8_env, 'FALSE').upper() in ['TRUE', '1']
     )
+
+
+# Retry failed sqlalchemy queries
+# https://stackoverflow.com/questions/53287215/retry-failed-sqlalchemy-queries/60614707#60614707
+class RetryingQuery(_Query):
+    __max_retry_count__ = 3
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def __iter__(self):
+        attempts = 0
+
+        while True:
+            attempts += 1
+
+            try:
+                return super().__iter__()
+            except OperationalError as ex:
+                if 'server closed the connection unexpectedly' not in str(ex):
+                    raise
+
+                if attempts <= self.__max_retry_count__:
+                    sleep_for = 2 ** (attempts - 1)
+                    logging.error(
+                        ' [!] Database connection error: retrying Strategy => '
+                        f'sleeping for {sleep_for}s and will retry '
+                        f'(attempt #{attempts} of {self.__max_retry_count__})'
+                        f'\nDetailed query impacted: {ex}'
+                    )
+                    sleep(sleep_for)
+                    continue
+                else:
+                    raise
+            except StatementError as ex:
+                if (
+                    'reconnect until invalid transaction is rolled back'
+                    not in str(ex)
+                ):
+                    raise
+                self.session.rollback()
 
 
 class Query:
@@ -856,17 +898,23 @@ class Query:
 
         # scoped_session(sessionmaker()) or plain sessionmaker() in sqlalchemy?
         # https://stackoverflow.com/questions/6519546/scoped-sessionsessionmaker-or-plain-sessionmaker-in-sqlalchemy
-        # NullPool or QueuePool for remote Postgres SQLalchemy connections?
-        # https://stackoverflow.com/questions/48364837/nullpool-or-queuepool-for-remote-postgres-sqlalchemy-connections
+        # how to fix “OperationalError: (psycopg2.OperationalError) server
+        # closed the connection unexpectedly”
+        # https://stackoverflow.com/questions/55457069/how-to-fix-operationalerror-psycopg2-operationalerror-server-closed-the-conn
         session = scoped_session(
             sessionmaker(
                 bind=(
                     engine := create_engine(
                         url,
-                        poolclass=NullPool,
-                        json_serializer=json_serializer
+                        json_serializer=json_serializer,
+                        pool_size=10,
+                        max_overflow=2,
+                        pool_recycle=300,
+                        pool_pre_ping=True,
+                        pool_use_lifo=True
                     )
-                ).execution_options(stream_results=stream_results)
+                ).execution_options(stream_results=stream_results),
+                query_cls=RetryingQuery
             )
         )()
 
