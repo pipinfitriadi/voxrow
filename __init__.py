@@ -840,7 +840,8 @@ class Query:
                 'HANDLER',
                 'LOAD',
                 'REPLACE',
-                'KILL'
+                'KILL',
+                'GRANT'
             ]:
                 if re.findall(
                     fr'\s*{ regex }\s+.*',
