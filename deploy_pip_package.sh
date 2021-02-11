@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/bin/bash
 
 # Copyright 2020 Pipin Fitriadi <pipinfitriadi@gmail.com>
 
@@ -53,57 +53,7 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-# Packing and deploying a project to Pip
-# https://medium.com/@ssbothwell/packing-and-deploying-a-project-to-pip-bcd628d02f6f
-# Including files in source distributions with MANIFEST.in
-# https://packaging.python.org/guides/using-manifest-in/
-
-from setuptools import setup
-
-setup(
-    name='voxrow',
-    packages=[
-        'voxrow',
-        'voxrow.modify',
-        'voxrow.extension.route',
-        'voxrow.extension',
-        'voxrow.modify.flask_sqlalchemy'
-    ],
-    package_dir={
-        'voxrow': '',
-        'voxrow.extension': 'extension',
-        'voxrow.extension.route': 'extension/route',
-        'voxrow.modify': 'modify',
-        'voxrow.modify.flask_sqlalchemy': 'modify/flask_sqlalchemy'
-    },
-    package_data={
-        'voxrow': [
-            'server/Makefile',
-            'server/docker-compose/letsencrypt.yml',
-            'server/install/*',
-            'server/nginx/*'
-        ]
-    },
-    version='0.9.13',
-    description=(description := "VOXROW's library"),
-    long_description=description,
-    author='Pipin Fitriadi',
-    author_email='pipinfitriadi@gmail.com',
-    license='MS-RSL',
-    url='https://gitlab.com/voxrow/voxrow',
-    install_requires=[
-        'flake8',
-        'flask',
-        'flask-jwt-extended',
-        'Flask-SQLAlchemy',
-        'Flask-WTF',
-        'sshtunnel'
-    ],
-    download_url=(
-        'https://gitlab.com/voxrow/voxrow/-/archive/master/'
-        'voxrow-master.tar.gz'
-    ),
-    keywords=['voxrow', 'library', 'raw sql query'],
-    python_requires='>=3.8.0',
-    platforms='any'
-)
+. env/bin/activate \
+    && python setup.py sdist \
+    && twine upload dist/* \
+    ; deactivate
