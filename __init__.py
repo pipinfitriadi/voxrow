@@ -818,7 +818,7 @@ class Query:
                     1
                 )
 
-            regex_sql_space = r'\s+.*\s+'
+            regex_sql_space = r'\s+(.*\s+)?'
 
             # Chapter 13 SQL Statements
             # https://dev.mysql.com/doc/refman/5.6/en/sql-statements.html
