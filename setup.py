@@ -84,7 +84,7 @@ setup(
             'server/nginx/*'
         ]
     },
-    version='0.9.13',
+    version='0.9.14',
     description=(description := "VOXROW's library"),
     long_description=description,
     author='Pipin Fitriadi',

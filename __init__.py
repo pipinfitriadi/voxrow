@@ -941,9 +941,7 @@ class Query:
                 ) if query_result.returns_rows else None
 
                 def to_result(row, json_mode=False):
-                    data = dict(
-                        column for column in row.items()
-                    )
+                    data = dict(row)
                     return (
                         json_serializer(data)
                         if json_mode else deserialize(data)
