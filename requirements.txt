@@ -56,5 +56,13 @@ flask
 flask-jwt-extended
 Flask-SQLAlchemy
 Flask-WTF
+# Issue error rust when install SSHTunnel. Because:
+# 1. sshtunnel need paramiko>=2.7.2
+# 2. paramiko need cryptography>=2.5
+# 3. Latest cryptography need rust when install, create error on Alpine or Windows
+# Must fixid cryptography version.
+# Dependency on rust removes support for a number of platforms
+# https://github.com/pyca/cryptography/issues/5771
+cryptography==3.2.1
 sshtunnel
 twine
