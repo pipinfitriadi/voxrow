@@ -84,7 +84,7 @@ setup(
             'server/nginx/*'
         ]
     },
-    version='0.9.14',
+    version='0.9.15',
     description=(description := "VOXROW's library"),
     long_description=description,
     author='Pipin Fitriadi',
@@ -97,6 +97,7 @@ setup(
         'flask-jwt-extended',
         'Flask-SQLAlchemy',
         'Flask-WTF',
+        'cryptography==3.2.1',
         'sshtunnel'
     ],
     download_url=(
