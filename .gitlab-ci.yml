@@ -51,43 +51,11 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-# Referensi:
-# https://docs.gitlab.com/ce/ci/ssh_keys/README.html
-# https://gitlab.com/gitlab-examples/ssh-private-key/-/blob/master/.gitlab-ci.yml
-# https://gitlab.com/voxrow/voxrow/-/tree/205bae29c7b51bb8a785aeb017366fa16b637eda#gitlab-continuous-integration-and-delivery-cicd
-
 stages:
-  - Build
   - Test
-  # - Release
-  # - Deploy
-variables:
-  GIT_SUBMODULE_STRATEGY: recursive
-Build Docker Image:
-  stage: Build
-  only:
-    - docker
-  tags:
-    - live
-  script:
-    - . server/ci_cd/build_docker.sh
-  after_script:
-    - docker logout $CI_REGISTRY
-Build VOXROW:
-  stage: Build
-  only:
-    - master
-  tags:
-    - live
-  script:
-    - . server/ci_cd/build_voxrow.sh
-  after_script:
-    - docker logout $CI_REGISTRY
-Linter Test VOXROW:
+
+Linting:
   stage: Test
-  only:
-    - master
-  tags:
-    - live
+  image: registry.gitlab.com/pipeline-components/flake8:latest
   script:
-    - . server/ci_cd/linter_test.sh
+    - flake8 --verbose .

@@ -293,13 +293,6 @@ deactivate_root:
 	@sudo cp -f install/sshd_config /etc/ssh/sshd_config
 	@sudo systemctl restart sshd
 
-linter_test:
-	@echo "===================== Linter Test ====================="
-	@cd ../ \
-		&& flake8 \
-			--exclude env/ \
-		&& cd server/
-
 # Permission denied when executing docker commands from Gitlab CI/CD pipeline
 # https://stackoverflow.com/questions/51769403/permission-denied-when-executing-docker-commands-from-gitlab-ci-cd-pipeline
 register_runner:

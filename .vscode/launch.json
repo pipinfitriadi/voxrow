@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Linter Test",
+            "name": "Linting",
             "type": "python",
             "request": "launch",
             "module": "flake8",
