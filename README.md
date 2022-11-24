@@ -219,7 +219,7 @@ _environtment_ python dengan langkah berikut ini:
     - Aktivasi:
 
         ```shell
-        $ . env/bin/activate
+        $ . venv/bin/activate
         ```
 
         > Kembangkan _source-code_ dengan kondisi _environtment_ python sedang teraktivasi.

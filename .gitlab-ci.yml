@@ -56,6 +56,6 @@ stages:
 
 Linting:
   stage: Test
-  image: registry.gitlab.com/pipeline-components/flake8:latest
+  image: pipelinecomponents/flake8
   script:
     - flake8 --verbose .

@@ -309,10 +309,10 @@ register_runner:
 
 deploy_pip:
 	@echo "===================== Deploy package to pip ====================="
-	@env/bin/python setup.py sdist
-	@env/bin/twine upload --skip-existing dist/*
+	@venv/bin/python setup.py sdist
+	@venv/bin/twine upload --skip-existing dist/*
 
 deploy_pip_test:
 	@echo "===================== Deploy test package to pip ====================="
-	@env/bin/python setup.py sdist
-	@env/bin/twine upload --skip-existing --repository testpypi dist/*
+	@venv/bin/python setup.py sdist
+	@venv/bin/twine upload --skip-existing --repository testpypi dist/*

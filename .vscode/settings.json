@@ -2,7 +2,7 @@
     "markdown-toc.updateOnSave": false,
     "python.analysis.disabled": ["undefined-variable", "unresolved-import"],
     "python.linting.flake8Enabled": true,
-    "python.pythonPath": "env/bin/python",
+    "python.pythonPath": "venv/bin/python",
     "files.exclude": {
         "**/.classpath": true,
         "**/.project": true,
@@ -18,5 +18,6 @@
     ],
     "python.testing.pytestEnabled": false,
     "python.testing.nosetestsEnabled": false,
-    "python.testing.unittestEnabled": true
+    "python.testing.unittestEnabled": true,
+    "python.linting.enabled": true
 }

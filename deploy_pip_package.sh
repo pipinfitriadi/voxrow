@@ -53,7 +53,7 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-. env/bin/activate \
+. venv/bin/activate \
     && python setup.py sdist \
     && twine upload dist/* \
     ; deactivate
