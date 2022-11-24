@@ -58,4 +58,4 @@ Linting:
   stage: Test
   image: pipelinecomponents/flake8
   script:
-    - flake8 --verbose .
+    - flake8
