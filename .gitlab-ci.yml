@@ -54,8 +54,11 @@
 stages:
   - Test
 
-Linting:
+Lint:
   stage: Test
   image: pipelinecomponents/flake8
+  only:
+    changes:
+      - "**/*.py"
   script:
     - flake8

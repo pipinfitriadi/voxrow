@@ -211,7 +211,7 @@ _environtment_ python dengan langkah berikut ini:
 2. Buat _environtment_ python.
 
     ```shell
-    $ python3 -m venv env
+    $ python3 -m venv venv
     ````
 
     Instruksi terkait _environtment_ python yang dapat dipergunakan antara lain:
@@ -227,13 +227,13 @@ _environtment_ python dengan langkah berikut ini:
     - Deaktivasi:
 
         ```shell
-        (env) $ deactivate
+        (venv) $ deactivate
         ```
 
 3. Pastikan [pustaka pendukung](requirements.txt) terpasang di _environtment_ python.
 
     ```shell
-    (env) $ pip install --upgrade pip && pip install -r requirements.txt
+    (venv) $ pip install --upgrade pip && pip install -r requirements.txt
     ```
 
 ---
