@@ -60,11 +60,11 @@ Daftar isi:
 <!-- TOC -->
 
 - [VOXROW](#voxrow)
-    - [_Server_](#_server_)
-    - [_Source-code_](#_source-code_)
-        - [_Editor_](#_editor_)
+    - [_Server_](#server)
+    - [_Source-code_](#source-code)
+        - [_Editor_](#editor)
         - [Repositori Git](#repositori-git)
-        - [Tata Cara Penulisan _Markdown_](#tata-cara-penulisan-_markdown_)
+        - [Tata Cara Penulisan _Markdown_](#tata-cara-penulisan-markdown)
         - [Python](#python)
     - [Lisensi](#lisensi)
 
