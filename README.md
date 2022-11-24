@@ -60,6 +60,8 @@ Daftar isi:
 <!-- TOC -->
 
 - [VOXROW](#voxrow)
+    - [Instalasi VOXROW](#instalasi-voxrow)
+        - [MacOS Hanya Jika _Error_](#macos-hanya-jika-error)
     - [_Server_](#server)
     - [_Source-code_](#source-code)
         - [_Editor_](#editor)
@@ -71,6 +73,26 @@ Daftar isi:
 <!-- /TOC -->
 
 ---
+
+## Instalasi VOXROW
+
+```shell
+$ pip install voxrow
+```
+
+### MacOS (Hanya Jika _Error_)
+
+Pastikan `clang` sudah terinstal. Jika tidak, maka jalankan perintah berikut ini:
+
+```shell
+$ xcode-select --install
+```
+
+Instal VOXROW dengan perintah berikut ini:
+
+```shell
+$ brew install openssl@3 rust && env LDFLAGS="-L$(brew --prefix openssl@3)/lib" CFLAGS="-I$(brew --prefix openssl@3)/include" pip install voxrow
+```
 
 ## _Server_
 
