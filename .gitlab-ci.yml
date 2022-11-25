@@ -76,6 +76,7 @@ default:
 Lint:
   stage: Test
   image: pipelinecomponents/flake8
+  cache: []
   only:
     changes:
       - "**/*.py"
