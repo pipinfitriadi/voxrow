@@ -84,9 +84,8 @@ setup(
             'server/nginx/*'
         ]
     },
-    version='0.9.15',
-    description=(description := "VOXROW's library"),
-    long_description=description,
+    version='0.9.16',
+    description="VOXROW's library",
     author='Pipin Fitriadi',
     author_email='pipinfitriadi@gmail.com',
     license='MS-RSL',
@@ -100,6 +99,14 @@ setup(
         'cryptography==3.2.1',
         'sshtunnel'
     ],
+    extras_require={
+        'postgres': [
+            "psycopg2; sys_platform != 'darwin' or "
+            "platform_machine != 'arm64'",
+            "psycopg2-binary; sys_platform == 'darwin' "
+            "and platform_machine == 'arm64'"
+        ],
+    },
     download_url=(
         'https://gitlab.com/voxrow/voxrow/-/archive/master/'
         'voxrow-master.tar.gz'
