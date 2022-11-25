@@ -60,17 +60,41 @@ Daftar isi:
 <!-- TOC -->
 
 - [VOXROW](#voxrow)
-    - [_Server_](#_server_)
-    - [_Source-code_](#_source-code_)
-        - [_Editor_](#_editor_)
+    - [Instalasi dan Cara Penggunaan VOXROW](#instalasi-dan-cara-penggunaan-voxrow)
+        - [MacOS Hanya Jika _Error_](#macos-hanya-jika-error)
+    - [_Server_](#server)
+    - [_Source-code_](#source-code)
+        - [_Editor_](#editor)
         - [Repositori Git](#repositori-git)
-        - [Tata Cara Penulisan _Markdown_](#tata-cara-penulisan-_markdown_)
+        - [Tata Cara Penulisan _Markdown_](#tata-cara-penulisan-markdown)
         - [Python](#python)
     - [Lisensi](#lisensi)
 
 <!-- /TOC -->
 
 ---
+
+## Instalasi dan Cara Penggunaan VOXROW
+
+```shell
+$ pip install voxrow
+```
+
+> Contoh cara penggunaan VOXROW dapat dilihat di [`example/query.ipynb`](example/query.ipynb).
+
+### MacOS (Hanya Jika _Error_)
+
+Pastikan `clang` sudah terinstal. Jika tidak, maka jalankan perintah berikut ini:
+
+```shell
+$ xcode-select --install
+```
+
+Instal VOXROW dengan perintah berikut ini:
+
+```shell
+$ brew install openssl@3 rust && env LDFLAGS="-L$(brew --prefix openssl@3)/lib" CFLAGS="-I$(brew --prefix openssl@3)/include" pip install voxrow
+```
 
 ## _Server_
 
@@ -211,7 +235,7 @@ _environtment_ python dengan langkah berikut ini:
 2. Buat _environtment_ python.
 
     ```shell
-    $ python3 -m venv env
+    $ python3 -m venv venv
     ````
 
     Instruksi terkait _environtment_ python yang dapat dipergunakan antara lain:
@@ -219,7 +243,7 @@ _environtment_ python dengan langkah berikut ini:
     - Aktivasi:
 
         ```shell
-        $ . env/bin/activate
+        $ . venv/bin/activate
         ```
 
         > Kembangkan _source-code_ dengan kondisi _environtment_ python sedang teraktivasi.
@@ -227,13 +251,13 @@ _environtment_ python dengan langkah berikut ini:
     - Deaktivasi:
 
         ```shell
-        (env) $ deactivate
+        (venv) $ deactivate
         ```
 
 3. Pastikan [pustaka pendukung](requirements.txt) terpasang di _environtment_ python.
 
     ```shell
-    (env) $ pip install --upgrade pip && pip install -r requirements.txt
+    (venv) $ pip install --upgrade pip && pip install -r requirements.txt
     ```
 
 ---

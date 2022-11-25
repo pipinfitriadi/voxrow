@@ -293,13 +293,6 @@ deactivate_root:
 	@sudo cp -f install/sshd_config /etc/ssh/sshd_config
 	@sudo systemctl restart sshd
 
-linter_test:
-	@echo "===================== Linter Test ====================="
-	@cd ../ \
-		&& flake8 \
-			--exclude env/ \
-		&& cd server/
-
 # Permission denied when executing docker commands from Gitlab CI/CD pipeline
 # https://stackoverflow.com/questions/51769403/permission-denied-when-executing-docker-commands-from-gitlab-ci-cd-pipeline
 register_runner:
@@ -316,10 +309,10 @@ register_runner:
 
 deploy_pip:
 	@echo "===================== Deploy package to pip ====================="
-	@env/bin/python setup.py sdist
-	@env/bin/twine upload --skip-existing dist/*
+	@venv/bin/python setup.py sdist
+	@venv/bin/twine upload --skip-existing dist/*
 
 deploy_pip_test:
 	@echo "===================== Deploy test package to pip ====================="
-	@env/bin/python setup.py sdist
-	@env/bin/twine upload --skip-existing --repository testpypi dist/*
+	@venv/bin/python setup.py sdist
+	@venv/bin/twine upload --skip-existing --repository testpypi dist/*

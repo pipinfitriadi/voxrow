@@ -57,9 +57,9 @@ __pycache__/
 .pytest_cache/
 builds/
 dist/
-env/
 htmlcov/
 instance/
+venv/
 
 *.log
 *.pyc

@@ -65,15 +65,3 @@ services:
             cache_from:
                 - registry.gitlab.com/voxrow/voxrow:latest
         image: registry.gitlab.com/voxrow/voxrow:latest
-    linter_test:
-        image: registry.gitlab.com/voxrow/voxrow:latest
-        container_name: linter_test
-        volumes:
-            - ./../../:/home/:ro
-        working_dir: /home/
-        environment:
-            - EXCLUDE=env/
-        command: >
-            /bin/ash -c "
-            flake8 --exclude $$EXCLUDE
-            "
