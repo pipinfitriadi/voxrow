@@ -1,5 +1,15 @@
 {
     "markdown-toc.updateOnSave": false,
+    "markdownlint.ignore": [
+        "LICENSE"
+    ],
+    "markdownlint.config": {
+        "MD007": false,
+        "MD013": {
+            "code_blocks": false
+        },
+        "MD014": false
+    },
     "python.analysis.disabled": ["undefined-variable", "unresolved-import"],
     "python.linting.flake8Enabled": true,
     "python.pythonPath": "venv/bin/python",
