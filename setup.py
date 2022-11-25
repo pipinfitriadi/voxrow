@@ -91,7 +91,6 @@ setup(
     license='MS-RSL',
     url='https://gitlab.com/voxrow/voxrow',
     install_requires=[
-        'flake8',
         'flask',
         'flask-jwt-extended',
         'Flask-SQLAlchemy',
