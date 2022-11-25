@@ -60,7 +60,7 @@ Daftar isi:
 <!-- TOC -->
 
 - [VOXROW](#voxrow)
-    - [Instalasi VOXROW](#instalasi-voxrow)
+    - [Instalasi dan Cara Penggunaan VOXROW](#instalasi-dan-cara-penggunaan-voxrow)
         - [MacOS Hanya Jika _Error_](#macos-hanya-jika-error)
     - [_Server_](#server)
     - [_Source-code_](#source-code)
@@ -74,11 +74,13 @@ Daftar isi:
 
 ---
 
-## Instalasi VOXROW
+## Instalasi dan Cara Penggunaan VOXROW
 
 ```shell
 $ pip install voxrow
 ```
+
+> Contoh cara penggunaan VOXROW dapat dilihat di [`example/query.ipynb`](example/query.ipynb).
 
 ### MacOS (Hanya Jika _Error_)
 
