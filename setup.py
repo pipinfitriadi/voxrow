@@ -105,7 +105,7 @@ setup(
             "platform_machine != 'arm64'",
             "psycopg2-binary; sys_platform == 'darwin' "
             "and platform_machine == 'arm64'"
-        ],
+        ]
     },
     download_url=(
         'https://gitlab.com/voxrow/voxrow/-/archive/master/'
