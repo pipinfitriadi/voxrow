@@ -51,8 +51,27 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
+# Python gitlab ci example
+# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Python.gitlab-ci.yml
+# global before_script not executed when job has an own before_script
+# https://gitlab.com/gitlab-org/gitlab-runner/-/issues/2301
+
 stages:
   - Test
+  - Deploy
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+default:
+  image: python:3.9.15-slim
+  cache:
+    paths:
+      - .cache/pip
+      - venv/
+  before_script:
+    - python -m venv venv
+    - . venv/bin/activate
 
 Lint:
   stage: Test
@@ -60,5 +79,20 @@ Lint:
   only:
     changes:
       - "**/*.py"
+  before_script: []
   script:
     - flake8
+
+PyPI:
+  stage: Deploy
+  only:
+    - master
+  before_script:
+    - !reference [ default, before_script ] 
+    - python setup.py sdist
+    - pip install twine
+  script:
+    - twine upload dist/*
+  artifacts:
+    paths:
+      - dist/*.tar.gz
