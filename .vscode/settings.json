@@ -19,5 +19,8 @@
     "python.testing.pytestEnabled": false,
     "python.testing.nosetestsEnabled": false,
     "python.testing.unittestEnabled": true,
-    "python.linting.enabled": true
+    "python.linting.enabled": true,
+    "yaml.customTags": [
+        "!reference sequence"
+    ]
 }
