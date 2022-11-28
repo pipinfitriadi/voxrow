@@ -82,7 +82,7 @@ Lint:
       - "**/*.py"
   before_script: []
   script:
-    - flake8
+    - flake8 --exclude venv/
 
 PyPI:
   stage: Deploy
