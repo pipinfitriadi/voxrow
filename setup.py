@@ -84,7 +84,7 @@ setup(
             'server/nginx/*'
         ]
     },
-    version='0.9.16',
+    version='0.9.17',
     description="VOXROW's library",
     author='Pipin Fitriadi',
     author_email='pipinfitriadi@gmail.com',
@@ -95,15 +95,16 @@ setup(
         'flask-jwt-extended',
         'Flask-SQLAlchemy',
         'Flask-WTF',
-        'cryptography==3.2.1',
+        'cryptography>=3.2.1',
         'sshtunnel'
     ],
     extras_require={
         'postgres': [
-            "psycopg2; sys_platform != 'darwin' or "
-            "platform_machine != 'arm64'",
-            "psycopg2-binary; sys_platform == 'darwin' "
-            "and platform_machine == 'arm64'"
+            # "psycopg2; sys_platform != 'darwin' or "
+            # "platform_machine != 'arm64'",
+            # "psycopg2-binary; sys_platform == 'darwin' "
+            # "and platform_machine == 'arm64'"
+            'psycopg2-binary'
         ]
     },
     download_url=(

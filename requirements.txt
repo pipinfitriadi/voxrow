@@ -66,5 +66,5 @@ Flask-WTF
 # Must fixid cryptography version.
 # Dependency on rust removes support for a number of platforms
 # https://github.com/pyca/cryptography/issues/5771
-cryptography==3.2.1
+cryptography>=3.2.1
 sshtunnel
