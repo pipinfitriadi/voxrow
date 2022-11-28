@@ -76,12 +76,13 @@ default:
 Lint:
   stage: Test
   image: pipelinecomponents/flake8
+  cache: []
   only:
     changes:
       - "**/*.py"
   before_script: []
   script:
-    - flake8
+    - flake8 --exclude venv/
 
 PyPI:
   stage: Deploy

@@ -1,8 +1,17 @@
 {
     "markdown-toc.updateOnSave": false,
-    "python.analysis.disabled": ["undefined-variable", "unresolved-import"],
+    "markdownlint.ignore": [
+        "LICENSE"
+    ],
+    "markdownlint.config": {
+        "MD007": false,
+        "MD013": {
+            "code_blocks": false
+        },
+        "MD014": false
+    },
     "python.linting.flake8Enabled": true,
-    "python.pythonPath": "venv/bin/python",
+    "python.defaultInterpreterPath": "venv/bin/python",
     "files.exclude": {
         "**/.classpath": true,
         "**/.project": true,
@@ -17,7 +26,9 @@
         "*test*.py"
     ],
     "python.testing.pytestEnabled": false,
-    "python.testing.nosetestsEnabled": false,
     "python.testing.unittestEnabled": true,
-    "python.linting.enabled": true
+    "python.linting.enabled": true,
+    "yaml.customTags": [
+        "!reference sequence"
+    ]
 }
