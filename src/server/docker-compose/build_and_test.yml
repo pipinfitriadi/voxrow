@@ -61,7 +61,7 @@ services:
         image: registry.gitlab.com/voxrow/voxrow/docker:latest
     voxrow:
         build:
-            context: ../../
+            context: ../../../
             cache_from:
                 - registry.gitlab.com/voxrow/voxrow:latest
         image: registry.gitlab.com/voxrow/voxrow:latest

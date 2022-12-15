@@ -61,9 +61,9 @@ services:
         container_name: cert_create_staging
         volumes:
             - ./../../../static/:/data/letsencrypt/
-            - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/
-            - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/
-            - ./../../../../server/letsencrypt/log/:/var/log/letsencrypt/
+            - ./../../../../../server/letsencrypt/etc/:/etc/letsencrypt/
+            - ./../../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/
+            - ./../../../../../server/letsencrypt/log/:/var/log/letsencrypt/
         env_file: ./../../../../.env
         command: certonly --webroot --register-unsafely-without-email --agree-tos --webroot-path=/data/letsencrypt/ --staging -d $DOMAIN -d www.$DOMAIN
     cert_create_production:
@@ -71,9 +71,9 @@ services:
         container_name: cert_create_production
         volumes:
             - ./../../../static/:/data/letsencrypt/
-            - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/
-            - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/
-            - ./../../../../server/letsencrypt/log/:/var/log/letsencrypt/
+            - ./../../../../../server/letsencrypt/etc/:/etc/letsencrypt/
+            - ./../../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/
+            - ./../../../../../server/letsencrypt/log/:/var/log/letsencrypt/
         env_file: ./../../../../.env
         command: certonly --webroot --email $EMAIL --agree-tos --no-eff-email --webroot-path=/data/letsencrypt/ -d $DOMAIN -d www.$DOMAIN
     cert_info_staging:
@@ -81,23 +81,23 @@ services:
         container_name: cert_info_staging
         volumes:
             - ./../../../static/:/data/letsencrypt/:ro
-            - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/
-            - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/
+            - ./../../../../../server/letsencrypt/etc/:/etc/letsencrypt/
+            - ./../../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/
         command: certificates --staging
     cert_info_production:
         image: certbot/certbot
         container_name: cert_info_production
         volumes:
             - ./../../../static/:/data/letsencrypt/:ro
-            - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/
-            - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/
+            - ./../../../../../server/letsencrypt/etc/:/etc/letsencrypt/
+            - ./../../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/
         command: certificates
     cert_renew:
         image: certbot/certbot
         container_name: cert_renew
         volumes:
             - ./../../../static/:/data/letsencrypt/
-            - ./../../../../server/letsencrypt/etc/:/etc/letsencrypt/
-            - ./../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/
-            - ./../../../../server/letsencrypt/log/:/var/log/letsencrypt/
+            - ./../../../../../server/letsencrypt/etc/:/etc/letsencrypt/
+            - ./../../../../../server/letsencrypt/lib/:/var/lib/letsencrypt/
+            - ./../../../../../server/letsencrypt/log/:/var/log/letsencrypt/
         command: renew --webroot --webroot-path=/data/letsencrypt/ --quiet

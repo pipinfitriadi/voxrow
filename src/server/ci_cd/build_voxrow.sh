@@ -74,7 +74,7 @@ if [ $last_commit_hash == $file_last_commit_hash ]; then
             --password-stdin
 
     echo "======== Get latest voxrow ========"
-    COMPOSE_FILE='server/docker-compose/build_and_test.yml'
+    COMPOSE_FILE='src/server/docker-compose/build_and_test.yml'
     docker-compose \
         -f $COMPOSE_FILE \
         pull voxrow \
