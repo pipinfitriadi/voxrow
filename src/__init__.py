@@ -85,24 +85,22 @@ def display_time(seconds, granularity=2, sort_name=False):
     # https://stackoverflow.com/questions/4048651/python-function-to-convert-seconds-into-minutes-hours-and-days
     def result(seconds):
         check_granularity = 0
+        SECOND = 1
+        MINUTE = SECOND * 60
+        HOUR = MINUTE * 60
+        DAY = HOUR * 24
+        WEEK = DAY * 7
 
-        for name, count in [
-            (
-                'weeks',
-                (
-                    DAY := (
-                        HOUR := (
-                            MINUTE := (SECOND := 1) * 60
-                        ) * 60
-                    ) * 24
-                ) * 7
-            ),
-            ('days', DAY),
-            ('hours', HOUR),
-            ('minutes', MINUTE),
-            ('seconds', SECOND),
-        ]:
-            if (value := seconds // count):
+        for name, count in {
+            'weeks': WEEK,
+            'days': DAY,
+            'hours': HOUR,
+            'minutes': MINUTE,
+            'seconds': SECOND,
+        }.items():
+            value = seconds // count
+
+            if value:
                 yield text_result(value, name, sort_name)
                 check_granularity += 1
 
@@ -138,12 +136,9 @@ class Log:
                 pass
 
     def __call__(self, *data, sep=' | ', end='\n'):
+        last_time = datetime.now()
         self.__PROCESS_TIME.append(
-            (
-                (
-                    last_time := datetime.now()
-                ) - self.__LAST_TIME
-            ).seconds
+            (last_time - self.__LAST_TIME).seconds
         )
         self.__LAST_TIME = last_time
         total_time = (self.__LAST_TIME - self.__START_TIME).seconds
@@ -160,15 +155,14 @@ class Log:
             is_error = False
 
         if not is_error:
+            data = [
+                self.__LAST_TIME.strftime(STRING_DATETIME_FORMAT),
+                f'TOTAL: { display_time(total_time, 3, True) }',
+                f'AVG: { display_time(average_time, 3, True) }',
+                *data
+            ]
             print(
-                *(
-                    data := [
-                        self.__LAST_TIME.strftime(STRING_DATETIME_FORMAT),
-                        f'TOTAL: { display_time(total_time, 3, True) }',
-                        f'AVG: { display_time(average_time, 3, True) }',
-                        *data
-                    ]
-                ),
+                *data,
                 sep=sep,
                 end=end
             )
@@ -200,11 +194,10 @@ class Log:
 def blueprint_name(file):
     # How to get the filename without the extension from a path in Python?
     # https://stackoverflow.com/questions/678236/how-to-get-the-filename-without-the-extension-from-a-path-in-python
-    if (
-        name := (
-            path := Path(file)
-        ).resolve().stem
-    ) == '__init__':
+    path = Path(file)
+    name = (path).resolve().stem
+
+    if name == '__init__':
         name = path.parent.resolve().stem
 
     return name

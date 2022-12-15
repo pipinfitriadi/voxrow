@@ -115,7 +115,7 @@ dipergunakan perintah [Git](https://git-scm.com/) berikut ini:
 2. Masuk ke _folder_ `server/`:
 
     ```shell
-    $ cd voxrow/server/
+    $ cd voxrow/src/server/
     ```
 
 3. Pastikan [GNU Make](https://www.gnu.org/software/make/) sudah ada, dengan

@@ -56,9 +56,12 @@
 # build
 # twine
 
+# For Flask
 flask-jwt-extended
 Flask-SQLAlchemy
 Flask-WTF
+
+# For Query
 # Issue error rust when install SSHTunnel. Because:
 # 1. sshtunnel need paramiko>=2.7.2
 # 2. paramiko need cryptography>=2.5
@@ -68,3 +71,7 @@ Flask-WTF
 # https://github.com/pyca/cryptography/issues/5771
 cryptography>=3.2.1
 sshtunnel
+
+# For Airflow
+apache-airflow
+apache-airflow-providers-docker==3.3.0
