@@ -90,15 +90,19 @@ setup(
     author_email='pipinfitriadi@gmail.com',
     license='MS-RSL',
     url='https://gitlab.com/voxrow/voxrow',
-    install_requires=[
-        'flask',
-        'flask-jwt-extended',
-        'Flask-SQLAlchemy',
-        'Flask-WTF',
-        'cryptography>=3.2.1',
-        'sshtunnel'
-    ],
+    install_requires=[],
     extras_require={
+        'flask': [
+            'flask-jwt-extended',
+            'Flask-SQLAlchemy',
+            'Flask-WTF'
+        ],
+        'query': [
+            'SQLAlchemy',
+            'Jinja2',
+            'cryptography>=3.2.1',
+            'sshtunnel'
+        ],
         'postgres': [
             # "psycopg2; sys_platform != 'darwin' or "
             # "platform_machine != 'arm64'",
