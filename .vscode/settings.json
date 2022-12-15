@@ -12,7 +12,8 @@
     },
     "python.analysis.diagnosticSeverityOverrides": {
         "reportMissingImports": "none",
-        "reportMissingModuleSource": "none"
+        "reportMissingModuleSource": "none",
+        "reportUndefinedVariable": "none"
     },
     "python.linting.flake8Enabled": true,
     "python.defaultInterpreterPath": "venv/bin/python",
