@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Copyright 2020 Pipin Fitriadi <pipinfitriadi@gmail.com>
 
 # Licensed under the Microsoft Reference Source License (MS-RSL)
@@ -51,26 +53,38 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-ssl_buffer_size             8k;
-ssl_dhparam                 /etc/ssl/certs/dhparam-2048.pem;
+# Better way for multiline ssh command
+# https://forum.gitlab.com/t/better-way-for-multiline-ssh-command/23420
+set -e
+filename='Dockerfile requirements.txt'
 
-ssl_protocols               TLSv1.2
-                            TLSv1.1
-                            TLSv1;
-ssl_prefer_server_ciphers   on;
-ssl_ciphers                 ECDH+AESGCM:ECDH+AES256:ECDH+AES128:DH+3DES:!ADH:!AECDH:!MD5;
+# How do I find the most recent git commit that modified a file?
+# https://stackoverflow.com/questions/4784575/how-do-i-find-the-most-recent-git-commit-that-modified-a-file
+last_commit_hash=$(git log -n 1 --pretty=format:%H)
+file_last_commit_hash=$(git log -n 1 --pretty=format:%H -- $filename)
 
-ssl_ecdh_curve              secp384r1;
-ssl_session_tickets         off;
+if [ $last_commit_hash == $file_last_commit_hash ]; then
+    # Docker Registry login and docker CI template
+    # https://gitlab.com/gitlab-org/gitlab-runner/issues/2861
+    echo "======== Login docker ========"
+    echo $CI_REGISTRY_PASSWORD \
+        | docker login \
+            -u $CI_REGISTRY_USER \
+            $CI_REGISTRY \
+            --password-stdin
 
-# OCSP stapling
-ssl_stapling                on;
-ssl_stapling_verify         on;
-
-ssl_certificate             /etc/letsencrypt/live/$DOMAIN/fullchain.pem;
-ssl_certificate_key         /etc/letsencrypt/live/$DOMAIN/privkey.pem;
-
-listen                      443         ssl http2;
-listen                      [::]:443    ssl http2;
-
-include                     /home/web/voxrow/server/nginx/redirecting.conf;
+    echo "======== Get latest voxrow ========"
+    COMPOSE_FILE='src/server/docker-compose/build_and_test.yml'
+    docker-compose \
+        -f $COMPOSE_FILE \
+        pull voxrow \
+        || true
+    echo "======== Build voxrow ========"
+    docker-compose \
+        -f $COMPOSE_FILE \
+        build voxrow
+    echo "======== Push voxrow ========"
+    docker-compose \
+        -f $COMPOSE_FILE \
+        push voxrow 
+fi

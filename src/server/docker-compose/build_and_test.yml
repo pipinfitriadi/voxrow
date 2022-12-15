@@ -51,6 +51,17 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-[metadata]
-long_description = file: README.md
-long_description_content_type = text/markdown
+version: '3.7'
+services:
+    docker_image:
+        build:
+            context: .
+            cache_from:
+                - registry.gitlab.com/voxrow/voxrow/docker:latest
+        image: registry.gitlab.com/voxrow/voxrow/docker:latest
+    voxrow:
+        build:
+            context: ../../../
+            cache_from:
+                - registry.gitlab.com/voxrow/voxrow:latest
+        image: registry.gitlab.com/voxrow/voxrow:latest

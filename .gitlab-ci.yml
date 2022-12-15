@@ -90,10 +90,10 @@ PyPI:
     - master
   before_script:
     - !reference [ default, before_script ] 
-    - python setup.py sdist
-    - pip install twine
+    - pip install build twine
   script:
+    - python -m build
     - twine upload dist/*
   artifacts:
     paths:
-      - dist/*.tar.gz
+      - dist/*
