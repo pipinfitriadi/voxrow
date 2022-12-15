@@ -66,19 +66,19 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = 'voxrow'
-version = '0.9.19'
+version = '0.9.20'
 description = "VOXROW's library"
 readme = 'README.md'
 requires-python = '>=3.7.14'
-license = {file = 'LICENSE'}
-keywords = ['voxrow', 'library', 'raw sql query']
+license = {text = 'MS-RSL'}
+keywords = ['voxrow', 'library', 'raw sql query', 'airflow', 'sqlalchemy']
 authors = [
-    {name = "Pipin Fitriadi", email = "pipinfitriadi@gmail.com"}
+    {name = 'Pipin Fitriadi', email = 'pipinfitriadi@gmail.com'}
 ]
 classifiers = [
     'Development Status :: 3 - Alpha',
-    'Programming Language :: Python :: 3',
-    'License :: MS-RSL',
+    'Programming Language :: Python :: 3.8',
+    'License :: Other/Proprietary License',
     'Operating System :: OS Independent',
     'Framework :: Apache Airflow',
     'Framework :: Flask',
@@ -100,13 +100,7 @@ query = [
     'cryptography>=3.2.1',
     'sshtunnel'
 ]
-postgres = [
-    # "psycopg2; sys_platform != 'darwin' or "
-    # "platform_machine != 'arm64'",
-    # "psycopg2-binary; sys_platform == 'darwin' "
-    # "and platform_machine == 'arm64'"
-    'psycopg2-binary'
-]
+postgres = ['psycopg2-binary']
 airflow = [
     'apache-airflow',
     'apache-airflow-providers-docker==3.3.0'
