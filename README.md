@@ -198,6 +198,7 @@ antara lain:
 - [_Markdownlint_](https://marketplace.visualstudio.com/items?itemName=DavidAnson.vscode-markdownlint)
 - [_Python extension for Visual Studio Code_](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
 - [Jinja](https://marketplace.visualstudio.com/items?itemName=wholroyd.jinja)
+- [Better TOML](https://marketplace.visualstudio.com/items?itemName=bungcip.better-toml)
 
 ### Repositori Git
 

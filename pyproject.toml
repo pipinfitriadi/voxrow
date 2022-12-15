@@ -1,4 +1,4 @@
-# Copyright 2020 Pipin Fitriadi <pipinfitriadi@gmail.com>
+# Copyright 2022 Pipin Fitriadi <pipinfitriadi@gmail.com>
 
 # Licensed under the Microsoft Reference Source License (MS-RSL)
 
@@ -51,6 +51,73 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-[metadata]
-long_description = file: README.md
-long_description_content_type = text/markdown
+# Packaging Python Projects
+# https://packaging.python.org/en/latest/tutorials/packaging-projects/#packaging-python-projects
+# Classifiers
+# https://pypi.org/classifiers/
+# Configuring setuptools using pyproject.toml files
+# https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
+# Package Discovery and Namespace Packages
+# https://setuptools.pypa.io/en/latest/userguide/package_discovery.html
+
+[build-system]
+requires = ['setuptools']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = 'voxrow'
+version = '0.9.18'
+description = "VOXROW's library"
+readme = 'README.md'
+requires-python = '>=3.8.0'
+license = {file = 'LICENSE'}
+keywords = ['voxrow', 'library', 'raw sql query']
+authors = [
+    {name = "Pipin Fitriadi", email = "pipinfitriadi@gmail.com"}
+]
+classifiers = [
+    'Development Status :: 3 - Alpha',
+    'Programming Language :: Python :: 3',
+    'License :: MS-RSL',
+    'Operating System :: OS Independent',
+    'Framework :: Apache Airflow',
+    'Framework :: Flask',
+    'Topic :: Database',
+    'Topic :: Database :: Database Engines/Servers',
+    'Topic :: Internet :: WWW/HTTP'
+]
+dependencies = []
+
+[project.optional-dependencies]
+flask = [
+    'flask-jwt-extended',
+    'Flask-SQLAlchemy',
+    'Flask-WTF'
+]
+query = [
+    'SQLAlchemy',
+    'Jinja2',
+    'cryptography>=3.2.1',
+    'sshtunnel'
+]
+postgres = [
+    # "psycopg2; sys_platform != 'darwin' or "
+    # "platform_machine != 'arm64'",
+    # "psycopg2-binary; sys_platform == 'darwin' "
+    # "and platform_machine == 'arm64'"
+    'psycopg2-binary'
+]
+
+[project.urls]
+Repository = 'https://gitlab.com/voxrow/voxrow'
+
+[tool.setuptools.package-dir]
+voxrow = 'src'
+
+[tool.setuptools.package-data]
+voxrow = [
+    'server/Makefile',
+    'server/docker-compose/letsencrypt.yml',
+    'server/install/*',
+    'server/nginx/*'
+]
