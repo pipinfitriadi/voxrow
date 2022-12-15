@@ -56,7 +56,6 @@
 # build
 # twine
 
-flask
 flask-jwt-extended
 Flask-SQLAlchemy
 Flask-WTF
