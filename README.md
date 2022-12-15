@@ -80,7 +80,7 @@ Daftar isi:
 $ pip install voxrow
 ```
 
-> Contoh cara penggunaan VOXROW dapat dilihat di [`example/query.ipynb`](example/query.ipynb).
+> Contoh cara penggunaan VOXROW dapat dilihat di [`example/query.ipynb`](https://gitlab.com/voxrow/voxrow/-/blob/master/example/query.ipynb).
 
 ### MacOS (Hanya Jika _Error_)
 
@@ -93,7 +93,7 @@ $ xcode-select --install
 Instal VOXROW dengan perintah berikut ini:
 
 ```shell
-$ brew install openssl@3 rust && env LDFLAGS="-L$(brew --prefix openssl@3)/lib" CFLAGS="-I$(brew --prefix openssl@3)/include" pip install voxrow
+$ brew install openssl@3 rust && env LDFLAGS="-L$(brew --prefix openssl@3)/lib" CFLAGS="-I$(brew --prefix openssl@3)/include" pip install "voxrow[query]"
 ```
 
 ## _Server_
@@ -198,6 +198,7 @@ antara lain:
 - [_Markdownlint_](https://marketplace.visualstudio.com/items?itemName=DavidAnson.vscode-markdownlint)
 - [_Python extension for Visual Studio Code_](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
 - [Jinja](https://marketplace.visualstudio.com/items?itemName=wholroyd.jinja)
+- [Better TOML](https://marketplace.visualstudio.com/items?itemName=bungcip.better-toml)
 
 ### Repositori Git
 

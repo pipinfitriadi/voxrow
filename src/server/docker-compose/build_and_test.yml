@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Copyright 2020 Pipin Fitriadi <pipinfitriadi@gmail.com>
 
 # Licensed under the Microsoft Reference Source License (MS-RSL)
@@ -53,38 +51,17 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-# Better way for multiline ssh command
-# https://forum.gitlab.com/t/better-way-for-multiline-ssh-command/23420
-set -e
-filename='server/docker-compose/Dockerfile'
-
-# How do I find the most recent git commit that modified a file?
-# https://stackoverflow.com/questions/4784575/how-do-i-find-the-most-recent-git-commit-that-modified-a-file
-last_commit_hash=$(git log -n 1 --pretty=format:%H)
-file_last_commit_hash=$(git log -n 1 --pretty=format:%H -- $filename)
-
-if [ $last_commit_hash == $file_last_commit_hash ]; then
-    # Docker Registry login and docker CI template
-    # https://gitlab.com/gitlab-org/gitlab-runner/issues/2861
-    echo "======== Login docker ========"
-    echo $CI_REGISTRY_PASSWORD \
-        | docker login \
-            -u $CI_REGISTRY_USER \
-            $CI_REGISTRY \
-            --password-stdin
-
-    echo "======== Get latest docker image ========"
-    COMPOSE_FILE='server/docker-compose/build_and_test.yml'
-    docker-compose \
-        -f $COMPOSE_FILE \
-        pull docker_image \
-        || true
-    echo "======== Build docker image ========"
-    docker-compose \
-        -f $COMPOSE_FILE \
-        build docker_image
-    echo "======== Push docker image ========"
-    docker-compose \
-        -f $COMPOSE_FILE \
-        push docker_image 
-fi
+version: '3.7'
+services:
+    docker_image:
+        build:
+            context: .
+            cache_from:
+                - registry.gitlab.com/voxrow/voxrow/docker:latest
+        image: registry.gitlab.com/voxrow/voxrow/docker:latest
+    voxrow:
+        build:
+            context: ../../../
+            cache_from:
+                - registry.gitlab.com/voxrow/voxrow:latest
+        image: registry.gitlab.com/voxrow/voxrow:latest
