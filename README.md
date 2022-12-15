@@ -93,7 +93,7 @@ $ xcode-select --install
 Instal VOXROW dengan perintah berikut ini:
 
 ```shell
-$ brew install openssl@3 rust && env LDFLAGS="-L$(brew --prefix openssl@3)/lib" CFLAGS="-I$(brew --prefix openssl@3)/include" pip install voxrow
+$ brew install openssl@3 rust && env LDFLAGS="-L$(brew --prefix openssl@3)/lib" CFLAGS="-I$(brew --prefix openssl@3)/include" pip install "voxrow[query]"
 ```
 
 ## _Server_
