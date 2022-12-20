@@ -57,11 +57,11 @@ services:
         build:
             context: .
             cache_from:
-                - registry.gitlab.com/voxrow/voxrow/docker:latest
-        image: registry.gitlab.com/voxrow/voxrow/docker:latest
+                - registry.gitlab.com/voxrow/library/docker:latest
+        image: registry.gitlab.com/voxrow/library/docker:latest
     voxrow:
         build:
             context: ../../../
             cache_from:
-                - registry.gitlab.com/voxrow/voxrow:latest
-        image: registry.gitlab.com/voxrow/voxrow:latest
+                - registry.gitlab.com/voxrow/library:latest
+        image: registry.gitlab.com/voxrow/library:latest
