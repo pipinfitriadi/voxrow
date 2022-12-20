@@ -80,7 +80,7 @@ Daftar isi:
 $ pip install voxrow
 ```
 
-> Contoh cara penggunaan VOXROW dapat dilihat di [`example/query.ipynb`](https://gitlab.com/voxrow/voxrow/-/blob/master/example/query.ipynb).
+> Contoh cara penggunaan VOXROW dapat dilihat di [`example/query.ipynb`](https://gitlab.com/voxrow/library/-/blob/master/example/query.ipynb).
 
 ### MacOS (Hanya Jika _Error_)
 
@@ -107,7 +107,7 @@ VOXROW. Adapun langkah yang harus dipersiapkan adalah sebagai berikut:
 dipergunakan perintah [Git](https://git-scm.com/) berikut ini:
 
     ```shell
-    $ git clone --recurse-submodules -j8 https://gitlab.com/voxrow/voxrow.git
+    $ git clone --recurse-submodules -j8 https://gitlab.com/voxrow/library.git
     ```
 
     > Jangan jalankan perintah ini di _folder_ `root/` milik _server_!
