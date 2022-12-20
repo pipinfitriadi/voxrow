@@ -93,6 +93,7 @@ PyPI:
       - master
     changes:
       - src/**/*
+      - pyproject.toml
   except:
     - tags
   before_script:

@@ -73,5 +73,6 @@ cryptography>=3.2.1
 sshtunnel
 
 # For Airflow
-apache-airflow>=2.3.4
+apache-airflow==2.3.4; python_version == '3.7.13'
+apache-airflow; python_version >= '3.7.14'
 apache-airflow-providers-docker==3.3.0
