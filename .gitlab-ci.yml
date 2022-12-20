@@ -58,7 +58,7 @@
 
 stages:
   - Test
-  - Deploy
+  - Release
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
@@ -80,14 +80,21 @@ Lint:
   only:
     changes:
       - "**/*.py"
+  except:
+    - tags
   before_script: []
   script:
     - flake8 --exclude venv/
 
 PyPI:
-  stage: Deploy
+  stage: Release
   only:
-    - master
+    refs:
+      - master
+    changes:
+      - src/**/*
+  except:
+    - tags
   before_script:
     - !reference [ default, before_script ] 
     - pip install build twine
