@@ -66,10 +66,10 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = 'voxrow'
-version = '0.9.21'
+version = '0.9.22'
 description = "VOXROW's library"
 readme = 'README.md'
-requires-python = '>=3.7.14'
+requires-python = '>=3.7.13'
 license = {text = 'MS-RSL'}
 keywords = ['voxrow', 'library', 'raw sql query', 'airflow', 'sqlalchemy']
 authors = [
