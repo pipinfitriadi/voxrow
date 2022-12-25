@@ -306,3 +306,27 @@ def json_serializer(object):
 
 def json_deserializer(object):
     return loads(object, cls=JSONDecoder)
+
+
+def masking_text(
+    text: str,
+    percent_masking: float = .65,
+    left_to_right_masking: bool = False
+):
+    text = str(text)
+
+    for word in re.split(r'\W', text):
+        last_i_non_masking = int(
+            len(word) * (1 - percent_masking)
+        ) - 1
+        text = text.replace(
+            word,
+            ''.join(
+                char if i <= last_i_non_masking else '*'
+                for i, char in enumerate(
+                    word[::(-1 if left_to_right_masking else None)]
+                )
+            )[::(-1 if left_to_right_masking else None)]
+        )
+
+    return text
