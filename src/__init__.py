@@ -388,9 +388,7 @@ def masking_text(
                             if masking_direction_start_from == 'inner'
                             else None
                         )],
-                        key=lambda x: x[0] if x[0] is not None else float(
-                            'inf'
-                        )
+                        key=lambda x: float('inf') if x[0] is None else x[0]
                     )
                 )
 
