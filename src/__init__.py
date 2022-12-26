@@ -319,23 +319,82 @@ def masking_text(
         masking_direction_start_from:
         - right
         - left
+        - inner
+        - outer
     '''
 
     text = str(text)
-    words = [
-        ''.join(
-            char
-            if i <= int(len(word) * (1 - masking_percentage)) - 1
-            else masking_char
-            for i, char in enumerate(
-                word[::(
-                    -1 if masking_direction_start_from == 'left' else None
-                )]
+    words = []
+
+    for word in re.split(r'\W', text):
+        if word:
+            last_char_non_masking = int(
+                len(word) * (1 - masking_percentage) - 1
             )
-        )[::(-1 if masking_direction_start_from == 'left' else None)]
-        for word in re.split(r'\W', text)
-        if word
-    ]
+
+            if masking_direction_start_from in ['left', 'right']:
+                word = ''.join(
+                    char if i <= last_char_non_masking else masking_char
+                    for i, char in enumerate(
+                        word[::(
+                            -1 if masking_direction_start_from == 'left'
+                            else None
+                        )]
+                    )
+                )[::(-1 if masking_direction_start_from == 'left' else None)]
+            else:
+                middle_i = len(word) // 2
+                word_is_odd = len(word) % 2
+                enum_word = list(enumerate(word))
+                word = ''.join(
+                    char
+                    for _, char in sorted(
+                        [
+                            (
+                                i,
+                                (
+                                    char
+                                    if j <= last_char_non_masking
+                                    or i is None
+                                    else masking_char
+                                )
+                            )
+                            for j, (i, char) in enumerate([
+                                elements
+                                for companion in list([
+                                    *(
+                                        [(
+                                            (middle_i, word[middle_i]),
+                                            (None, '')
+                                        )]
+                                        if word_is_odd else []
+                                    ),
+                                    *zip(
+                                        enum_word[:middle_i][::-1],
+                                        enum_word[middle_i + (
+                                            1 if word_is_odd else 0
+                                        ):]
+                                    )
+                                ])[::(
+                                    -1
+                                    if masking_direction_start_from == 'inner'
+                                    else None
+                                )]
+                                for elements in companion
+                            ])
+                        ][::(
+                            -1
+                            if masking_direction_start_from == 'inner'
+                            else None
+                        )],
+                        key=lambda x: x[0] if x[0] is not None else float(
+                            'inf'
+                        )
+                    )
+                )
+
+            words.append(word)
+
     non_words = [non_word for non_word in re.split(r'\w', text) if non_word]
     return ''.join(
         ''.join(elements)
