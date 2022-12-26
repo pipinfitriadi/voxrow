@@ -324,6 +324,7 @@ def masking_text(
     '''
 
     text = str(text)
+    non_words = [non_word for non_word in re.split(r'\w', text) if non_word]
     words = []
 
     for word in re.split(r'\W', text):
@@ -395,7 +396,6 @@ def masking_text(
 
             words.append(word)
 
-    non_words = [non_word for non_word in re.split(r'\w', text) if non_word]
     return ''.join(
         ''.join(elements)
         for elements in zip_longest(
