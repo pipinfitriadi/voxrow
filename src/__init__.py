@@ -55,6 +55,7 @@
 
 import __main__ as main
 from datetime import date, datetime
+from itertools import zip_longest
 from json import (
     dumps,
     JSONDecoder as _JSONDecoder,
@@ -310,23 +311,40 @@ def json_deserializer(object):
 
 def masking_text(
     text: str,
-    percent_masking: float = .65,
-    left_to_right_masking: bool = False
-):
+    masking_percentage: float = .65,
+    masking_direction_start_from: str = 'right',
+    masking_char: str = '*'
+) -> str:
+    '''
+        masking_direction_start_from:
+        - right
+        - left
+    '''
+
     text = str(text)
-
-    for word in re.split(r'\W', text):
-        last_i_non_masking = int(
-            len(word) * (1 - percent_masking)
-        ) - 1
-        text = text.replace(
-            word,
-            ''.join(
-                char if i <= last_i_non_masking else '*'
-                for i, char in enumerate(
-                    word[::(-1 if left_to_right_masking else None)]
-                )
-            )[::(-1 if left_to_right_masking else None)]
+    words = [
+        ''.join(
+            char
+            if i <= int(len(word) * (1 - masking_percentage)) - 1
+            else masking_char
+            for i, char in enumerate(
+                word[::(
+                    -1 if masking_direction_start_from == 'left' else None
+                )]
+            )
+        )[::(-1 if masking_direction_start_from == 'left' else None)]
+        for word in re.split(r'\W', text)
+        if word
+    ]
+    non_words = [non_word for non_word in re.split(r'\w', text) if non_word]
+    return ''.join(
+        ''.join(elements)
+        for elements in zip_longest(
+            *(
+                (words, non_words)
+                if len(words) > len(non_words)
+                else (non_words, words)
+            ),
+            fillvalue=''
         )
-
-    return text
+    )
