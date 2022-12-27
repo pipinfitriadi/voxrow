@@ -1,4 +1,6 @@
-# Copyright 2020 Pipin Fitriadi <pipinfitriadi@gmail.com>
+#!/usr/bin/env python3
+
+# Copyright 2022 Pipin Fitriadi <pipinfitriadi@gmail.com>
 
 # Licensed under the Microsoft Reference Source License (MS-RSL)
 
@@ -51,31 +53,71 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-# For Development and Deployment Code Only
-# flake8
-# build
-# twine
+import logging
+from typing import Iterator
 
-# For Flask
-flask-jwt-extended
-Flask-SQLAlchemy
-Flask-WTF
+import requests
 
-# For Query
-# Issue error rust when install SSHTunnel. Because:
-# 1. sshtunnel need paramiko>=2.7.2
-# 2. paramiko need cryptography>=2.5
-# 3. Latest cryptography need rust when install, create error on Alpine or Windows
-# Must fixid cryptography version.
-# Dependency on rust removes support for a number of platforms
-# https://github.com/pyca/cryptography/issues/5771
-cryptography >= 3.2.1
-sshtunnel
+HEADERS: dict = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+    'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36'
+}
 
-# For Airflow
-apache-airflow == 2.3.4; python_version == "3.7.13"
-apache-airflow; python_version > "3.7.13"
-apache-airflow-providers-docker == 3.1.0
 
-# For Geospatial
-requests
+def arcgis_data(
+    url_service: str,
+    url_headers_request: dict = HEADERS,
+    result_offset: int = 0,
+    units: str = 'esriSRUnit_Meter'
+) -> Iterator[dict]:
+    total_rows = requests.get(
+        url_service,
+        {
+            'where': '1=1',
+            'returnCountOnly': True,
+            'f': 'json'
+        },
+        headers=url_headers_request
+    ).json()['count']
+    curr_total = 0
+
+    while True:
+        response = requests.get(
+            url_service,
+            {
+                'where': '1=1',
+                'units': units,
+                'outFields': '*',
+                'resultOffset': result_offset,
+                'f': 'geojson'
+            },
+            headers=url_headers_request
+        ).json()
+        features = response.get('features', [])
+
+        for feature in features:
+            yield feature['properties']
+
+        curr_total += len(features)
+        result_offset += len(features)
+        logging.info(
+            ' | '.join([
+                'ArcGIS Map Service API',
+                f'Progress Fetch Rows (%): {100*curr_total/total_rows:3.0f}%',
+                f'Final Total Rows: {total_rows:,}',
+                f'Current Total Rows: {curr_total:,}'
+            ])
+        )
+        exceeded_transfer_limit = response.get('exceededTransferLimit')
+
+        if (
+            exceeded_transfer_limit is False
+            or (
+                exceeded_transfer_limit is None
+                and not response.get('properties', {}).get(
+                    'exceededTransferLimit', False
+                )
+            )
+            or curr_total >= total_rows
+        ):
+            break
