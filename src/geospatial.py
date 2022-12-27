@@ -108,11 +108,15 @@ def arcgis_data(
                 f'Current Total Rows: {curr_total:,}'
             ])
         )
+        exceeded_transfer_limit = response.get('exceededTransferLimit')
 
         if (
-            response.get('exceededTransferLimit') is False
-            or not response.get('properties', {}).get(
-                'exceededTransferLimit', False
+            exceeded_transfer_limit is False
+            or (
+                exceeded_transfer_limit is None
+                and not response.get('properties', {}).get(
+                    'exceededTransferLimit', False
+                )
             )
             or curr_total >= total_rows
         ):
