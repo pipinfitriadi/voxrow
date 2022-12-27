@@ -64,7 +64,7 @@ HEADERS: dict = {
 }
 
 
-def get_arcgis_data(
+def arcgis_data(
     url_service: str,
     url_headers_request: dict = HEADERS,
     result_offset: int = 0,
