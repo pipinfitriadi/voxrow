@@ -93,13 +93,12 @@ def arcgis_data(
             },
             headers=url_headers_request
         ).json()
-        features = response.get('features', [])
 
-        for feature in features:
-            yield feature['properties']
+        for feature in response.get('features', []):
+            yield feature
+            curr_total += 1
+            result_offset += 1
 
-        curr_total += len(features)
-        result_offset += len(features)
         logging.info(
             ' | '.join([
                 'ArcGIS Map Service API',
