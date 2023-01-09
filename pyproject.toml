@@ -107,7 +107,7 @@ airflow = [
     'apache-airflow-providers-docker == 3.1.0'
 ]
 geospatial = ['requests']
-trakteer = ['beautifulsoup4', 'cloudscraper']
+scrape = ['beautifulsoup4', 'cloudscraper']
 
 [project.urls]
 Repository = 'https://gitlab.com/voxrow/library'

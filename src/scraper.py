@@ -62,7 +62,17 @@ from bs4 import BeautifulSoup
 import cloudscraper
 
 
-class Trakteer:
+class Scrape:
+    def __init__(self, delay: int = 10, browser: str = 'chrome'):
+        self._scraper = cloudscraper.create_scraper(
+            delay=delay, browser=browser
+        )
+
+    def _parser(self, html: str) -> BeautifulSoup:
+        return BeautifulSoup(html, 'html.parser')
+
+
+class Trakteer(Scrape):
     "Python's Library for https://trakteer.id/"
 
     URL: str = 'https://trakteer.id'
@@ -76,15 +86,13 @@ class Trakteer:
     ):
         self.__email = email
         self.__password = password
-        self.__scraper = cloudscraper.create_scraper(
-            delay=delay, browser=browser
-        )
+        super().__init__(delay, browser)
 
     def __check_auth(self):
-        if token := BeautifulSoup(
-            self.__scraper.get(self.URL).text, 'html.parser'
+        if token := self._parser(
+            self._scraper.get(self.URL).text
         ).find('input', {'name': '_token'}):
-            self.__scraper.post(
+            self._scraper.post(
                 f'{self.URL}/login',
                 {
                     '_token': token.get('value'),
@@ -100,7 +108,7 @@ class Trakteer:
         '''
 
         self.__check_auth()
-        return self.__scraper.get(
+        return self._scraper.get(
             f'{self.URL}/manage/showcase/fetch',
             params={'status': status, 'category': category}
         ).json()['data']
