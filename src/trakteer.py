@@ -81,13 +81,13 @@ class Trakteer:
         )
 
     def __check_auth(self):
-        if found_tag := BeautifulSoup(
+        if token := BeautifulSoup(
             self.__scraper.get(self.URL).text, 'html.parser'
         ).find('input', {'name': '_token'}):
             self.__scraper.post(
                 f'{self.URL}/login',
                 {
-                    '_token': found_tag.get('value'),
+                    '_token': token.get('value'),
                     'email': self.__email,
                     'password': self.__password
                 }
