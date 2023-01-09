@@ -79,3 +79,7 @@ apache-airflow-providers-docker == 3.1.0
 
 # For Geospatial
 requests
+
+# For Trakteer
+beautifulsoup4
+cloudscraper
