@@ -2,6 +2,18 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "PIP Install",
+            "type": "python",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "module": "pip",
+            "args": [
+                "install",
+                "-r", "${workspaceFolder}/requirements.txt"
+            ]
+        },
+        {
             "name": "Linting",
             "type": "python",
             "request": "launch",

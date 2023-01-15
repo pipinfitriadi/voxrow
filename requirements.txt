@@ -83,3 +83,5 @@ requests
 # For Scrape
 beautifulsoup4
 cloudscraper
+selenium
+webdriver-manager
