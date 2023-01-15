@@ -80,7 +80,7 @@ Daftar isi:
 $ pip install voxrow
 ```
 
-> Contoh cara penggunaan VOXROW dapat dilihat di [`example/query.ipynb`](https://gitlab.com/voxrow/library/-/blob/master/example/query.ipynb).
+> Contoh cara penggunaan VOXROW dapat dilihat di [`example/example.ipynb`](https://gitlab.com/voxrow/library/-/blob/master/example/example.ipynb).
 
 ### MacOS (Hanya Jika _Error_)
 

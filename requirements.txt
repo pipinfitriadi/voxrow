@@ -79,3 +79,9 @@ apache-airflow-providers-docker == 3.1.0
 
 # For Geospatial
 requests
+
+# For Scrape
+beautifulsoup4
+cloudscraper
+selenium
+webdriver-manager

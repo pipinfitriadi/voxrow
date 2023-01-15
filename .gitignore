@@ -66,3 +66,4 @@ venv/
 *.pyc
 .coverage
 .env
+voxrow.ipynb
