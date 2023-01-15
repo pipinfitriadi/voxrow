@@ -55,17 +55,27 @@
 
 # How To By-Pass Cloudflare While Scraping?
 # https://blog.octachart.com/how-to-by-pass-cloudflare-while-scraping
+# VeNoMouS/cloudscraper: A Python module to bypass Cloudflare's anti-bot page.
+# https://github.com/VeNoMouS/cloudscraper
+# How to share cookies between Selenium and requests in Python
+# https://medium.com/geekculture/how-to-share-cookies-between-selenium-and-requests-in-python-d36c3c8768b
 
+from time import sleep
 from typing import List
 
 from bs4 import BeautifulSoup
 import cloudscraper
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
 
 
 class Scrape:
-    def __init__(self, delay: int = 10, browser: str = 'chrome'):
+    def __init__(self, delay: int = 10, browser: str = 'chrome', **kwargs):
         self._scraper = cloudscraper.create_scraper(
-            delay=delay, browser=browser
+            delay=delay, browser=browser, **kwargs
         )
 
     def _parser(self, html: str) -> BeautifulSoup:
@@ -76,30 +86,63 @@ class Trakteer(Scrape):
     "Python's Library for https://trakteer.id/"
 
     URL: str = 'https://trakteer.id'
+    SLEEP: int = 5
 
     def __init__(
         self,
         email: str,
         password: str,
         delay: int = 10,
-        browser: str = 'chrome'
+        browser: str = 'chrome',
+        headless: bool = False,
+        **kwargs
     ):
         self.__email = email
         self.__password = password
-        super().__init__(delay, browser)
+        self.__headless = headless
+        super().__init__(delay, browser, **kwargs)
 
-    def __check_auth(self):
+    def __enter__(self):
+        options = Options()
+
+        if self.__headless:
+            options.add_argument('--headless')
+
+        self._driver = webdriver.Chrome(
+            service=ChromeService(
+                ChromeDriverManager().install()
+            ),
+            options=options
+        )
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        self._driver.quit()
+
+    def __token(self, url: str) -> str:
         if token := self._parser(
-            self._scraper.get(self.URL).text
+            self._scraper.get(url).text
         ).find('input', {'name': '_token'}):
+            token = token['value']
+
+        return token
+
+    def _check_auth(self):
+        if token := self.__token(self.URL):
             self._scraper.post(
                 f'{self.URL}/login',
                 {
-                    '_token': token.get('value'),
+                    '_token': token,
                     'email': self.__email,
                     'password': self.__password
                 }
             )
+            self._driver.get(self.URL)
+
+            for key, value in self._scraper.cookies.get_dict().items():
+                self._driver.add_cookie({'name': key, 'value': value})
+
+            self._driver.get(self.URL)
 
     def rewards(self, status: str = None, category: str = None) -> List[dict]:
         '''
@@ -107,8 +150,23 @@ class Trakteer(Scrape):
         :param category: all, *your-category*
         '''
 
-        self.__check_auth()
+        self._check_auth()
         return self._scraper.get(
             f'{self.URL}/manage/showcase/fetch',
             params={'status': status, 'category': category}
         ).json()['data']
+
+    def reward_update(self, id: str, unit_price: int):
+        self._check_auth()
+        self._driver.get(f'{self.URL}/manage/showcase/{id}/edit')
+        sleep(self.SLEEP)
+        self._driver.execute_script(
+            "arguments[0].setAttribute('value', arguments[1]);",
+            self._driver.find_element(by=By.NAME, value='required_item'),
+            unit_price
+        )
+        self._driver.execute_script(
+            'arguments[0].click();',
+            self._driver.find_element(by=By.ID, value='form-submit-button')
+        )
+        sleep(self.SLEEP)
