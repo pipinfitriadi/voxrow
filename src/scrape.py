@@ -86,7 +86,7 @@ class Trakteer(Scrape):
     "Python's Library for https://trakteer.id/"
 
     URL: str = 'https://trakteer.id'
-    SLEEP: int = 5
+    SLEEP: int = 7
 
     def __init__(
         self,
@@ -117,7 +117,7 @@ class Trakteer(Scrape):
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        self._driver.quit()
+        self._driver.close()
 
     def __token(self, url: str) -> str:
         if token := self._parser(
