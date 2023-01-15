@@ -90,7 +90,7 @@ from . import deserialize, json_serializer, serialize
 
 
 def database_uri(
-    db_driver='postgresql',
+    db_driver='postgresql+psycopg2',
     db_host='localhost',
     db_port=5432,
     db_name='postgres',
@@ -106,7 +106,7 @@ def database_uri(
             f'{ db_driver }://{ db_user }:{ db_pass }@'
             f'{ db_host }:{ db_port }/{ db_name }'
         )
-        if db_driver else ''
+        if db_driver else 'sqlite:///voxrow.db'
     )
 
     # flask sqlalchemy mysql encoding problems
@@ -131,7 +131,7 @@ def database_uri_from_env(
     use_charset_utf8_env='USE_CHARSET_UTF8',
 ):
     return database_uri(
-        getenv(db_driver_env, 'postgresql'),
+        getenv(db_driver_env, 'postgresql+psycopg2'),
         getenv(db_host_env, 'localhost'),
         int(
             getenv(db_port_env, '5432')
