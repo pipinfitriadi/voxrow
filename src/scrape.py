@@ -60,6 +60,7 @@
 # How to share cookies between Selenium and requests in Python
 # https://medium.com/geekculture/how-to-share-cookies-between-selenium-and-requests-in-python-d36c3c8768b
 
+import logging
 from time import sleep
 from typing import List
 
@@ -86,7 +87,6 @@ class Trakteer(Scrape):
     "Python's Library for https://trakteer.id/"
 
     URL: str = 'https://trakteer.id'
-    SLEEP: int = 7
 
     def __init__(
         self,
@@ -100,6 +100,7 @@ class Trakteer(Scrape):
         self.__email = email
         self.__password = password
         self.__headless = headless
+        self._driver = None
         super().__init__(delay, browser, **kwargs)
 
     def __enter__(self):
@@ -116,8 +117,34 @@ class Trakteer(Scrape):
         )
         return self
 
+    def use_driver(func):
+        def wrapper(self, *args, **kwargs):
+            if self._driver:
+                self._check_auth(True)
+                func(self, *args, **kwargs)
+            else:
+                logging.error('Works only in The Python with statement!')
+
+        return wrapper
+
+    def __wait_until_page_loaded(self):
+        while True:
+            sleep(7)
+            if 'complete' == self._driver.execute_script(
+                'return document.readyState;'
+            ):
+                logging.info(f'{self._driver.current_url} page has loaded')
+                break
+
+            logging.info(f'{self._driver.current_url} page still loading')
+
+    def __logout(self):
+        self._scraper.get(f'{self.URL}/logout')
+
     def __exit__(self, exception_type, exception_value, traceback):
-        self._driver.close()
+        self.__logout()
+        self._driver.quit()
+        logging.info(f'Successfully logged out from {self.URL}')
 
     def __token(self, url: str) -> str:
         if token := self._parser(
@@ -127,7 +154,7 @@ class Trakteer(Scrape):
 
         return token
 
-    def _check_auth(self):
+    def _check_auth(self, use_driver: bool = False):
         if token := self.__token(self.URL):
             self._scraper.post(
                 f'{self.URL}/login',
@@ -137,6 +164,9 @@ class Trakteer(Scrape):
                     'password': self.__password
                 }
             )
+            logging.info(f'Successfully logged in to {self.URL}')
+
+        if use_driver and not self._driver.get_cookies():
             self._driver.get(self.URL)
 
             for key, value in self._scraper.cookies.get_dict().items():
@@ -156,10 +186,10 @@ class Trakteer(Scrape):
             params={'status': status, 'category': category}
         ).json()['data']
 
+    @use_driver
     def reward_update(self, id: str, unit_price: int):
-        self._check_auth()
         self._driver.get(f'{self.URL}/manage/showcase/{id}/edit')
-        sleep(self.SLEEP)
+        self.__wait_until_page_loaded()
         self._driver.execute_script(
             "arguments[0].setAttribute('value', arguments[1]);",
             self._driver.find_element(by=By.NAME, value='required_item'),
@@ -169,4 +199,4 @@ class Trakteer(Scrape):
             'arguments[0].click();',
             self._driver.find_element(by=By.ID, value='form-submit-button')
         )
-        sleep(self.SLEEP)
+        self.__wait_until_page_loaded()
