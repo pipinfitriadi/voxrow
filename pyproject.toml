@@ -66,7 +66,7 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = 'voxrow'
-version = '0.9.30'
+version = '0.9.31'
 description = "VOXROW's library"
 readme = 'README.md'
 requires-python = '>=3.7.13'
@@ -95,7 +95,7 @@ flask = [
     'Flask-WTF'
 ]
 query = [
-    'SQLAlchemy',
+    'SQLAlchemy==1.4.46',
     'Jinja2',
     'cryptography >= 3.2.1',
     'sshtunnel'
