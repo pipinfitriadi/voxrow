@@ -69,9 +69,6 @@ from statistics import mean
 from sys import exc_info
 from traceback import print_exception
 
-STRING_DATE_FORMAT = '%Y-%m-%d'
-STRING_DATETIME_FORMAT = f'{ STRING_DATE_FORMAT }T%H:%M:%S'
-
 
 def display_time(seconds, granularity=2, sort_name=False):
     def text_result(value, name, sort_name):
@@ -157,7 +154,7 @@ class Log:
 
         if not is_error:
             data = [
-                self.__LAST_TIME.strftime(STRING_DATETIME_FORMAT),
+                self.__LAST_TIME.isoformat(),
                 f'TOTAL: { display_time(total_time, 3, True) }',
                 f'AVG: { display_time(average_time, 3, True) }',
                 *data
@@ -220,28 +217,10 @@ def deserialize(object):
             pass
 
         if isinstance(object, str):
-            for regex, str_time_format in [
-                [
-                    r'^\d{4}-\d{2}-\d{2}$',
-                    STRING_DATE_FORMAT
-                ],
-                [
-                    r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$',
-                    STRING_DATETIME_FORMAT
-                ]
-            ]:
-                if re.match(regex, object):
-                    is_time = False
-
-                    try:
-                        object = datetime.strptime(object, str_time_format)
-
-                        is_time = True
-                    except Exception:
-                        pass
-
-                    if is_time:
-                        break
+            try:
+                object = datetime.fromisoformat(object)
+            except Exception:
+                pass
         else:
             object = deserialize(object)
     elif isinstance(object, dict):
@@ -292,9 +271,9 @@ def serialize(object):
     # How to serialize a datetime object as JSON using Python?
     # https://code-maven.com/serialize-datetime-object-as-json-in-python
     if isinstance(object, datetime):
-        object = object.strftime(STRING_DATETIME_FORMAT)
+        object = object.isoformat()
     elif isinstance(object, date):
-        object = object.strftime(STRING_DATE_FORMAT)
+        object = object.isoformat()
     elif isinstance(object, set):
         object = list(object)
 
