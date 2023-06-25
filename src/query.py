@@ -185,7 +185,90 @@ class RetryingQuery(_Query):
 
 
 class Query:
-    def __init__(self, engine, use_charset_utf8=False, template_dir=None):
+    DATABASE_URI_PARAMS: dict = {
+        'db_driver',
+        'db_host',
+        'db_port',
+        'db_name',
+        'db_user',
+        'db_pass',
+        'use_charset_utf8'
+    }
+
+    def __create_engine(self, engine, use_charset_utf8: bool = False):
+        '''
+        engine:
+        - obj: SQLAlchemy's engine instance.
+        - str: Build SQLAlchemy's engine from string database uri.
+        - dict: Build SQLAlchemy's engine from database_uri's func kwargs and
+        SSHTunnelForwarder's func kwarg.
+
+        use_charset_utf8: bool
+        - Use use_charset_utf8=True for mysql driver if needed.
+        '''
+
+        if isinstance(engine, dict):
+            engine = {
+                key: value
+                for key, value in engine.items()
+                if key in self.DATABASE_URI_PARAMS
+            }
+
+            if use_charset_utf8:
+                engine['use_charset_utf8'] = use_charset_utf8
+
+            if all([
+                self.__db_host,
+                self.__db_port
+            ]):
+                engine.update({
+                    'db_host': self.__db_host,
+                    'db_port': self.__db_port
+                })
+
+            # Process to returning string database uri.
+            url = database_uri(**engine)
+        elif isinstance(engine, Engine):
+            url = str(engine.url)
+        else:
+            url = engine
+
+        # "set character set" in sqlalchemy?
+        # https://groups.google.com/forum/#!topic/sqlalchemy/3kiPusCy8FM
+        if (
+            url.startswith('mysql')
+            and 'charset=utf8' not in url
+            and use_charset_utf8
+        ):
+            # Add params to given URL in Python
+            # https://stackoverflow.com/questions/2506379/add-params-to-given-url-in-python
+            (
+                query := dict(
+                    parse_qsl(
+                        (
+                            url := list(
+                                urlparse(url)
+                            )
+                        )[4]
+                    )
+                )
+            ).update({'charset': 'utf8'})
+            url[4] = urlencode(query)
+            url = urlunparse(url)
+
+        return create_engine(
+            url,
+            json_serializer=json_serializer,
+            pool_size=10,
+            max_overflow=2,
+            pool_recycle=300,
+            pool_pre_ping=True,
+            pool_use_lifo=True
+        )
+
+    def __init__(
+        self, engine, use_charset_utf8: bool = False, template_dir: str = None
+    ):
         '''
         engine:
         - obj: SQLAlchemy's engine instance.
@@ -205,37 +288,19 @@ class Query:
         self.__env = Environment(
             loader=FileSystemLoader(self.__template_dir)
         )
-        self.__ssh_param = {}
-        self.__engine = engine
         self.__use_charset_utf8 = use_charset_utf8
-
-        if isinstance(self.__engine, dict):
-            self.__db_host = None
-            self.__db_port = None
-            database_uri_param = {
-                'db_driver',
-                'db_host',
-                'db_port',
-                'db_name',
-                'db_user',
-                'db_pass',
-                'use_charset_utf8'
-            }
-            self.__ssh_param = {
+        self.__engine = engine
+        self.__ssh_param = (
+            {
                 key: value
                 for key, value in self.__engine.items()
-                if key not in database_uri_param
+                if key not in self.DATABASE_URI_PARAMS
             }
-            self.__engine = {
-                key: value
-                for key, value in self.__engine.items()
-                if key in database_uri_param
-            }
-
-            if self.__use_charset_utf8:
-                self.__engine['use_charset_utf8'] = self.__use_charset_utf8
-            elif use_charset_utf8 := self.__engine.get('use_charset_utf8'):
-                self.__use_charset_utf8 = use_charset_utf8
+            if isinstance(self.__engine, dict)
+            else {}
+        )
+        self.__db_host = None
+        self.__db_port = None
 
     def __call__(self, string, **kwargs):
         '''
@@ -261,7 +326,7 @@ class Query:
         '''
 
         if self.__ssh_param:
-            ssh_param = self.__ssh_param
+            ssh_param = self.__ssh_param.copy()
             self.__ssh_param = {}
 
             while True:
@@ -312,7 +377,7 @@ class Query:
                         self.__db_host = None
                         self.__db_port = None
 
-            self.__ssh_param = ssh_param
+            self.__ssh_param = ssh_param.copy()
         else:
             # Issue with a python function returning a generator or a normal
             # object
@@ -600,48 +665,6 @@ class Query:
         else:
             stream_results = False
 
-        # Process to returning string database uri.
-        if isinstance(self.__engine, dict):
-            engine = self.__engine
-
-            if all([
-                self.__db_host,
-                self.__db_port
-            ]):
-                engine.update({
-                    'db_host': self.__db_host,
-                    'db_port': self.__db_port
-                })
-
-            url = database_uri(**engine)
-        elif isinstance(self.__engine, Engine):
-            url = str(self.__engine.url)
-        else:
-            url = self.__engine
-
-        # "set character set" in sqlalchemy?
-        # https://groups.google.com/forum/#!topic/sqlalchemy/3kiPusCy8FM
-        if (
-            url.startswith('mysql')
-            and 'charset=utf8' not in url
-            and self.__use_charset_utf8
-        ):
-            # Add params to given URL in Python
-            # https://stackoverflow.com/questions/2506379/add-params-to-given-url-in-python
-            (
-                query := dict(
-                    parse_qsl(
-                        (
-                            url := list(
-                                urlparse(url)
-                            )
-                        )[4]
-                    )
-                )
-            ).update({'charset': 'utf8'})
-            url[4] = urlencode(query)
-            url = urlunparse(url)
-
         # scoped_session(sessionmaker()) or plain sessionmaker() in sqlalchemy?
         # https://stackoverflow.com/questions/6519546/scoped-sessionsessionmaker-or-plain-sessionmaker-in-sqlalchemy
         # how to fix “OperationalError: (psycopg2.OperationalError) server
@@ -650,14 +673,9 @@ class Query:
         session = scoped_session(
             sessionmaker(
                 bind=(
-                    engine := create_engine(
-                        url,
-                        json_serializer=json_serializer,
-                        pool_size=10,
-                        max_overflow=2,
-                        pool_recycle=300,
-                        pool_pre_ping=True,
-                        pool_use_lifo=True
+                    engine := self.__create_engine(
+                        self.__engine,
+                        self.__use_charset_utf8
                     )
                 ).execution_options(stream_results=stream_results),
                 query_cls=RetryingQuery
