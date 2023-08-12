@@ -54,6 +54,7 @@
 # and non-infringement.
 
 from collections.abc import Iterable
+from copy import copy
 from datetime import date, datetime
 from json import dumps
 import logging
@@ -73,6 +74,7 @@ from sqlalchemy.exc import OperationalError, StatementError
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm.query import Query as _Query
 from sqlalchemy.orm.session import sessionmaker
+from sqlalchemy.orm.scoping import ScopedSessionMixin
 from sqlalchemy.sql import text
 from sqlalchemy.sql.expression import null
 from sqlalchemy.types import (
@@ -195,77 +197,6 @@ class Query:
         'use_charset_utf8'
     }
 
-    def __create_engine(self, engine, use_charset_utf8: bool = False):
-        '''
-        engine:
-        - obj: SQLAlchemy's engine instance.
-        - str: Build SQLAlchemy's engine from string database uri.
-        - dict: Build SQLAlchemy's engine from database_uri's func kwargs and
-        SSHTunnelForwarder's func kwarg.
-
-        use_charset_utf8: bool
-        - Use use_charset_utf8=True for mysql driver if needed.
-        '''
-
-        if isinstance(engine, dict):
-            engine = {
-                key: value
-                for key, value in engine.items()
-                if key in self.DATABASE_URI_PARAMS
-            }
-
-            if use_charset_utf8:
-                engine['use_charset_utf8'] = use_charset_utf8
-
-            if all([
-                self.__db_host,
-                self.__db_port
-            ]):
-                engine.update({
-                    'db_host': self.__db_host,
-                    'db_port': self.__db_port
-                })
-
-            # Process to returning string database uri.
-            url = database_uri(**engine)
-        elif isinstance(engine, Engine):
-            url = str(engine.url)
-        else:
-            url = engine
-
-        # "set character set" in sqlalchemy?
-        # https://groups.google.com/forum/#!topic/sqlalchemy/3kiPusCy8FM
-        if (
-            url.startswith('mysql')
-            and 'charset=utf8' not in url
-            and use_charset_utf8
-        ):
-            # Add params to given URL in Python
-            # https://stackoverflow.com/questions/2506379/add-params-to-given-url-in-python
-            (
-                query := dict(
-                    parse_qsl(
-                        (
-                            url := list(
-                                urlparse(url)
-                            )
-                        )[4]
-                    )
-                )
-            ).update({'charset': 'utf8'})
-            url[4] = urlencode(query)
-            url = urlunparse(url)
-
-        return create_engine(
-            url,
-            json_serializer=json_serializer,
-            pool_size=10,
-            max_overflow=2,
-            pool_recycle=300,
-            pool_pre_ping=True,
-            pool_use_lifo=True
-        )
-
     def __init__(
         self, engine, use_charset_utf8: bool = False, template_dir: str = None
     ):
@@ -301,6 +232,80 @@ class Query:
         )
         self.__db_host = None
         self.__db_port = None
+        self.__is_in_context = False
+
+    @property
+    def __create_engine(self) -> Engine:
+        engine = copy(self.__engine)
+
+        if isinstance(engine, dict):
+            engine = {
+                key: value
+                for key, value in engine.items()
+                if key in self.DATABASE_URI_PARAMS
+            }
+
+            if self.__use_charset_utf8:
+                engine['use_charset_utf8'] = self.__use_charset_utf8
+
+            if all([
+                self.__db_host,
+                self.__db_port
+            ]):
+                engine.update({
+                    'db_host': self.__db_host,
+                    'db_port': self.__db_port
+                })
+
+            # Process to returning string database uri.
+            url = database_uri(**engine)
+        elif isinstance(engine, Engine):
+            url = str(engine.url)
+        else:
+            url = engine
+
+        # "set character set" in sqlalchemy?
+        # https://groups.google.com/forum/#!topic/sqlalchemy/3kiPusCy8FM
+        if (
+            url.startswith('mysql')
+            and 'charset=utf8' not in url
+            and self.__use_charset_utf8
+        ):
+            # Add params to given URL in Python
+            # https://stackoverflow.com/questions/2506379/add-params-to-given-url-in-python
+            (
+                query := dict(
+                    parse_qsl(
+                        (
+                            url := list(
+                                urlparse(url)
+                            )
+                        )[4]
+                    )
+                )
+            ).update({'charset': 'utf8'})
+            url[4] = urlencode(query)
+            url = urlunparse(url)
+
+        return create_engine(
+            url,
+            json_serializer=json_serializer,
+            pool_size=10,
+            max_overflow=2,
+            pool_recycle=300,
+            pool_pre_ping=True,
+            pool_use_lifo=True
+        )
+
+    def __create_session(self, engine: Engine) -> ScopedSessionMixin:
+        # scoped_session(sessionmaker()) or plain sessionmaker() in sqlalchemy?
+        # https://stackoverflow.com/questions/6519546/scoped-sessionsessionmaker-or-plain-sessionmaker-in-sqlalchemy
+        # how to fix “OperationalError: (psycopg2.OperationalError) server
+        # closed the connection unexpectedly”
+        # https://stackoverflow.com/questions/55457069/how-to-fix-operationalerror-psycopg2-operationalerror-server-closed-the-conn
+        return scoped_session(
+            sessionmaker(bind=engine, query_cls=RetryingQuery)
+        )()
 
     def __call__(self, string, **kwargs):
         '''
@@ -448,7 +453,7 @@ class Query:
             )
         )
 
-    def render(self, string, literal_binds=True, **kwargs):
+    def render(self, string: str, literal_binds=True, **kwargs):
         '''
         Function for render jinja2 template and bind parameter sql.
 
@@ -582,6 +587,74 @@ class Query:
 
         return string
 
+    def __enter__(self):
+        self.__is_in_context = True
+        self.__engine_for_process = self.__create_engine
+        self.__session = self.__create_session(self.__engine_for_process)
+        return self
+
+    def __exit__(self, *exc):
+        self.__is_in_context = False
+        self.__session.commit()
+        self.__session.close()
+        self.__engine_for_process.dispose()
+
+    def __stream_result(self, string: str) -> bool:
+        for s in re.findall(
+            r"'[^']*'",
+            _string := '\n'.join([
+                s
+                for s in re.sub(
+                    r'--.*', '', str(string)
+                ).split('\n')
+                if s
+            ]),
+            flags=re.DOTALL
+        ):
+            _string = re.sub(
+                s.replace('[', r'\[').replace(']', r'\]'),
+                "''",
+                _string,
+                1
+            )
+
+        regex_sql_space = r'\s+(.*\s+)?'
+
+        # Chapter 13 SQL Statements
+        # https://dev.mysql.com/doc/refman/5.6/en/sql-statements.html
+        for regex in [
+            'EXPLAIN',
+            'INSERT',
+            'SET',
+            regex_sql_space.join(['DELETE', 'FROM']),
+            regex_sql_space.join(['MERGE', 'INTO', 'USING']),
+            'CREATE',
+            'ALTER',
+            'DROP',
+            regex_sql_space.join(['RENAME', 'TABLE']),
+            regex_sql_space.join(['TRUNCATE', 'TABLE']),
+            'SHOW',
+            'DESCRIBE',
+            'CALL',
+            'DO',
+            'HANDLER',
+            'LOAD',
+            'REPLACE',
+            'KILL',
+            'GRANT'
+        ]:
+            if re.findall(
+                fr'\s*{ regex }\s+.*',
+                _string,
+                flags=re.DOTALL + re.IGNORECASE
+            ):
+                stream_results = False
+                break
+        else:
+            stream_results = True
+
+        return stream_results
+
     def __query(self, string, **kwargs):
         '''
         Func to get sql query result.
@@ -607,83 +680,19 @@ class Query:
 
         string = self.render(string, None, **kwargs)
 
-        if (
-            stream_results := kwargs.get('stream_results')
-        ) is None:
-            for s in re.findall(
-                r"'[^']*'",
-                _string := '\n'.join([
-                    s
-                    for s in re.sub(
-                        r'--.*', '', str(string)
-                    ).split('\n')
-                    if s
-                ]),
-                flags=re.DOTALL
-            ):
-                _string = re.sub(
-                    s.replace('[', r'\[').replace(']', r'\]'),
-                    "''",
-                    _string,
-                    1
-                )
+        if not (
+            stream_results := kwargs.get('stream_results', False)
+        ):
+            stream_results = self.__stream_result(string)
 
-            regex_sql_space = r'\s+(.*\s+)?'
-
-            # Chapter 13 SQL Statements
-            # https://dev.mysql.com/doc/refman/5.6/en/sql-statements.html
-            for regex in [
-                'EXPLAIN',
-                'INSERT',
-                'SET',
-                regex_sql_space.join(['DELETE', 'FROM']),
-                regex_sql_space.join(['MERGE', 'INTO', 'USING']),
-                'CREATE',
-                'ALTER',
-                'DROP',
-                regex_sql_space.join(['RENAME', 'TABLE']),
-                regex_sql_space.join(['TRUNCATE', 'TABLE']),
-                'SHOW',
-                'DESCRIBE',
-                'CALL',
-                'DO',
-                'HANDLER',
-                'LOAD',
-                'REPLACE',
-                'KILL',
-                'GRANT'
-            ]:
-                if re.findall(
-                    fr'\s*{ regex }\s+.*',
-                    _string,
-                    flags=re.DOTALL + re.IGNORECASE
-                ):
-                    stream_results = False
-                    break
-            else:
-                stream_results = True
-        else:
-            stream_results = False
-
-        # scoped_session(sessionmaker()) or plain sessionmaker() in sqlalchemy?
-        # https://stackoverflow.com/questions/6519546/scoped-sessionsessionmaker-or-plain-sessionmaker-in-sqlalchemy
-        # how to fix “OperationalError: (psycopg2.OperationalError) server
-        # closed the connection unexpectedly”
-        # https://stackoverflow.com/questions/55457069/how-to-fix-operationalerror-psycopg2-operationalerror-server-closed-the-conn
-        session = scoped_session(
-            sessionmaker(
-                bind=(
-                    engine := self.__create_engine(
-                        self.__engine,
-                        self.__use_charset_utf8
-                    )
-                ).execution_options(stream_results=stream_results),
-                query_cls=RetryingQuery
-            )
-        )()
+        if not self.__is_in_context:
+            self.__engine_for_process = self.__create_engine
+            self.__session = self.__create_session(self.__engine_for_process)
 
         try:
-            query_result = session.execute(string)
+            query_result = self.__session.execute(
+                string, execution_options={'stream_results': stream_results}
+            )
 
             # memory-efficient built-in SqlAlchemy iterator /
             # generator:
@@ -758,12 +767,15 @@ class Query:
                 yield ']'
 
             query_result.close()
-            session.commit()
+
+            if not self.__is_in_context:
+                self.__session.commit()
         except (KeyboardInterrupt, SystemExit, Exception):
-            session.rollback()
+            self.__session.rollback()
 
             if kwargs.get('debug_mode') in [None, True]:
                 raise
         finally:
-            session.close()
-            engine.dispose()
+            if not self.__is_in_context:
+                self.__session.close()
+                self.__engine_for_process.dispose()
