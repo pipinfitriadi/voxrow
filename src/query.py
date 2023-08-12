@@ -331,6 +331,7 @@ class Query:
         '''
 
         if self.__ssh_param:
+            self.__is_in_context = False
             ssh_param = self.__ssh_param.copy()
             self.__ssh_param = {}
 
@@ -588,16 +589,18 @@ class Query:
         return string
 
     def __enter__(self):
-        self.__is_in_context = True
         self.__engine_for_process = self.__create_engine
         self.__session = self.__create_session(self.__engine_for_process)
+        self.__is_in_context = True
         return self
 
     def __exit__(self, *exc):
+        if self.__is_in_context:
+            self.__session.commit()
+            self.__session.close()
+            self.__engine_for_process.dispose()
+
         self.__is_in_context = False
-        self.__session.commit()
-        self.__session.close()
-        self.__engine_for_process.dispose()
 
     def __stream_result(self, string: str) -> bool:
         for s in re.findall(
