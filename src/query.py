@@ -790,21 +790,19 @@ class Query:
         Bulk Insert (PostgreSQL Only!)
         '''
         csv_input = StringIO()
-        not_empty = False
         count = 0
 
         for i, row in enumerate(data):
             if i == 0:
                 csv_writer = csv.DictWriter(csv_input, row.keys())
                 csv_writer.writeheader()
-                not_empty = True
 
             csv_writer.writerow(row)
             count += 1
         else:
             csv_input.seek(0)
 
-        if not_empty:
+        if count:
             if not self.__in_context:
                 self.__engine_for_process = self.__create_engine
                 self.__session = self.__create_session(
@@ -813,6 +811,7 @@ class Query:
 
             with self.__session.connection().connection.cursor() as cur:
                 if hasattr(cur, 'copy_expert'):
+                    # PostgreSQL
                     cur.copy_expert(
                         f'''
                         COPY
