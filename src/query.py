@@ -53,9 +53,11 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from copy import copy
+import csv
 from datetime import date, datetime
+from io import StringIO
 from json import dumps
 import logging
 from os import getenv, getcwd
@@ -232,7 +234,7 @@ class Query:
         )
         self.__db_host = None
         self.__db_port = None
-        self.__is_in_context = False
+        self.__in_context = False
 
     @property
     def __create_engine(self) -> Engine:
@@ -331,7 +333,7 @@ class Query:
         '''
 
         if self.__ssh_param:
-            self.__is_in_context = False
+            self.__in_context = False
             ssh_param = self.__ssh_param.copy()
             self.__ssh_param = {}
 
@@ -591,16 +593,16 @@ class Query:
     def __enter__(self):
         self.__engine_for_process = self.__create_engine
         self.__session = self.__create_session(self.__engine_for_process)
-        self.__is_in_context = True
+        self.__in_context = True
         return self
 
     def __exit__(self, *exc):
-        if self.__is_in_context:
+        if self.__in_context:
             self.__session.commit()
             self.__session.close()
             self.__engine_for_process.dispose()
 
-        self.__is_in_context = False
+        self.__in_context = False
 
     def __stream_result(self, string: str) -> bool:
         for s in re.findall(
@@ -688,7 +690,7 @@ class Query:
         ):
             stream_results = self.__stream_result(string)
 
-        if not self.__is_in_context:
+        if not self.__in_context:
             self.__engine_for_process = self.__create_engine
             self.__session = self.__create_session(self.__engine_for_process)
 
@@ -771,7 +773,7 @@ class Query:
 
             query_result.close()
 
-            if not self.__is_in_context:
+            if not self.__in_context:
                 self.__session.commit()
         except (KeyboardInterrupt, SystemExit, Exception):
             self.__session.rollback()
@@ -779,6 +781,62 @@ class Query:
             if kwargs.get('debug_mode') in [None, True]:
                 raise
         finally:
-            if not self.__is_in_context:
+            if not self.__in_context:
                 self.__session.close()
                 self.__engine_for_process.dispose()
+
+    def insert(self, data: Iterator[dict], table_name: str):
+        '''
+        Bulk Insert (PostgreSQL Only!)
+        '''
+        csv_input = StringIO()
+        not_empty = False
+        count = 0
+
+        for i, row in enumerate(data):
+            if i == 0:
+                csv_writer = csv.DictWriter(csv_input, row.keys())
+                csv_writer.writeheader()
+                not_empty = True
+
+            csv_writer.writerow(row)
+            count += 1
+        else:
+            csv_input.seek(0)
+
+        if not_empty:
+            if not self.__in_context:
+                self.__engine_for_process = self.__create_engine
+                self.__session = self.__create_session(
+                    self.__engine_for_process
+                )
+
+            with self.__session.connection().connection.cursor() as cur:
+                if hasattr(cur, 'copy_expert'):
+                    cur.copy_expert(
+                        f'''
+                        COPY
+                            {table_name}
+                        FROM
+                            STDIN
+                        WITH (
+                            FORMAT CSV,
+                            HEADER TRUE
+                        )
+                        ;
+                        ''',
+                        csv_input
+                    )
+                else:
+                    logging.error(message := 'Working only on PostgreSQL!')
+                    raise Exception(message)
+
+            if not self.__in_context:
+                self.__session.commit()
+                self.__session.close()
+                self.__engine_for_process.dispose()
+
+        logging.debug(
+            f'{count:,} row{"s" if count > 1 else ""} has been inserted to '
+            f'{table_name}'
+        )
