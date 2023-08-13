@@ -57,7 +57,7 @@ import os
 
 from airflow.kubernetes.secret import Secret
 from airflow.models import Variable
-from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import (
+from airflow.providers.cncf.kubernetes.operators.pod import (
     KubernetesPodOperator
 )
 from airflow.operators.docker_operator import DockerOperator
@@ -209,11 +209,15 @@ class VoxrowOperator:
         task_id = kwargs['task_id']
 
         if use_kubernetes:
+            entrypoint = kwargs.pop('entrypoint', [])
             kwargs['cmds'] = kwargs.get(
-                'cmds', kwargs.pop('entrypoint', [])
+                'cmds',
+                [entrypoint] if isinstance(entrypoint, str) else entrypoint
             )
+            command = kwargs.pop('command', [])
             kwargs['arguments'] = kwargs.get(
-                'arguments', kwargs.pop('command', [])
+                'arguments',
+                [command] if isinstance(command, str) else command
             )
 
             for key in cls.DOCKER_TEMPLATE_FIELDS & kwargs.keys():
@@ -263,10 +267,10 @@ class VoxrowOperator:
             operator = KubernetesPodOperator(**kwargs)
         else:
             kwargs['entrypoint'] = kwargs.get(
-                'entrypoint', kwargs.pop('cmds', [])
+                'entrypoint', kwargs.pop('cmds', None)
             )
             kwargs['command'] = kwargs.get(
-                'command', kwargs.pop('arguments', [])
+                'command', kwargs.pop('arguments', None)
             )
 
             for key in cls.K8S_TEMPLATE_FIELDS & kwargs.keys():
