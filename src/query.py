@@ -53,7 +53,7 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-from collections.abc import Iterable, Iterator
+from typing import Iterable, Iterator
 from copy import copy
 import csv
 from datetime import date, datetime
