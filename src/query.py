@@ -53,7 +53,7 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-from typing import Iterable, Iterator
+from typing import Iterable
 from copy import copy
 import csv
 from datetime import date, datetime
@@ -785,7 +785,7 @@ class Query:
                 self.__session.close()
                 self.__engine_for_process.dispose()
 
-    def insert(self, data: Iterator[dict], table_name: str):
+    def insert(self, data: Iterable[dict], table_name: str):
         '''
         Bulk Insert (PostgreSQL Only!)
         '''
