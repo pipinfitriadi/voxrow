@@ -217,6 +217,7 @@ class Query:
         value is used as default.
         '''
 
+        self.__in_context = False
         self.__template_dir = template_dir if template_dir else getcwd()
         self.__env = Environment(
             loader=FileSystemLoader(self.__template_dir)
@@ -234,7 +235,6 @@ class Query:
         )
         self.__db_host = None
         self.__db_port = None
-        self.__in_context = False
 
     @property
     def __create_engine(self) -> Engine:
@@ -309,7 +309,7 @@ class Query:
             sessionmaker(bind=engine, query_cls=RetryingQuery)
         )()
 
-    def __call__(self, string, **kwargs):
+    def __call__(self, string, **kwargs) -> Iterable[dict]:
         '''
         string: str
         - Use for put raw query sql or sql file path. It is support jinja2
@@ -333,7 +333,6 @@ class Query:
         '''
 
         if self.__ssh_param:
-            self.__in_context = False
             ssh_param = self.__ssh_param.copy()
             self.__ssh_param = {}
 
@@ -361,7 +360,9 @@ class Query:
                     self.__db_port = tunnel.local_bind_port
 
                     try:
-                        result = self.__call__(string, **kwargs)
+                        with self:
+                            result = self.__call__(string, **kwargs)
+
                         break
                     except OperationalError as e:
                         if (
@@ -591,18 +592,16 @@ class Query:
         return string
 
     def __enter__(self):
+        self.__in_context = True
         self.__engine_for_process = self.__create_engine
         self.__session = self.__create_session(self.__engine_for_process)
-        self.__in_context = True
         return self
 
     def __exit__(self, *exc):
-        if self.__in_context:
-            self.__session.commit()
-            self.__session.close()
-            self.__engine_for_process.dispose()
-
         self.__in_context = False
+        self.__session.commit()
+        self.__session.close()
+        self.__engine_for_process.dispose()
 
     def __stream_result(self, string: str) -> bool:
         for s in re.findall(
@@ -660,7 +659,7 @@ class Query:
 
         return stream_results
 
-    def __query(self, string, **kwargs):
+    def __query(self, string, **kwargs) -> Generator:
         '''
         Func to get sql query result.
 
@@ -683,160 +682,164 @@ class Query:
                 - Use stream_results=False for update/insert/delete query.
         '''
 
-        string = self.render(string, None, **kwargs)
+        def method(string, **kwargs) -> Generator:
+            string = self.render(string, None, **kwargs)
 
-        if not (
-            stream_results := kwargs.get('stream_results', False)
-        ):
-            stream_results = self.__stream_result(string)
+            if not (stream_results := kwargs.get('stream_results', False)):
+                stream_results = self.__stream_result(string)
 
-        if not self.__in_context:
-            self.__engine_for_process = self.__create_engine
-            self.__session = self.__create_session(self.__engine_for_process)
-
-        try:
-            query_result = self.__session.execute(
-                string, execution_options={'stream_results': stream_results}
-            )
-
-            # memory-efficient built-in SqlAlchemy iterator /
-            # generator:
-            # https://stackoverflow.com/questions/7389759/memory-efficient-built-in-sqlalchemy-iterator-generator
-            # Python: Using Flask to stream chunked dynamic content to end
-            # users
-            # https://fabianlee.org/2019/11/18/python-using-flask-to-stream-chunked-dynamic-content-to-end-users/
-            # Streaming Contents
-            # https://flask.palletsprojects.com/en/1.1.x/patterns/streaming/#basic-usage
-            # Streaming JSON with Flask
-            # https://blog.al4.co.nz/2016/01/streaming-json-with-flask/
-            if (json_mode := kwargs.get('json_mode') is True):
-                yield '['
-
-            while True:
-                batch = query_result.fetchmany(
-                    kwargs.get('fetch_size', 100_000)
-                ) if query_result.returns_rows else None
-
-                def to_result(row, json_mode=False):
-                    data = dict(row)
-                    return (
-                        json_serializer(data)
-                        if json_mode else deserialize(data)
-                    )
-
-                if not batch:
-                    if not query_result.returns_rows:
-                        yield to_result(
-                            {
-                                'affected_row': query_result.rowcount,
-                                'query': self.__compile(string),
-                                'finish_time': datetime.now()
-                            },
-                            json_mode
-                        )
-
-                    break
-
-                rows = batch.__iter__()
-
-                try:
-                    prev_row = next(rows)
-
-                    for row in rows:
-                        result = to_result(prev_row, json_mode)
-                        prev_row = row
-                        yield result + ', ' if json_mode else result
-
-                    yield to_result(prev_row, json_mode)
-                except StopIteration:
-                    pass
-                # KeyboardInterrupt and SystemExit should not be wrapped by
-                # sqlalchemy #689
-                # https://github.com/sqlalchemy/sqlalchemy/issues/689
-                # Avoiding accidentally catching KeyboardInterrupt and
-                # SystemExit in Python 2.4
-                # https://stackoverflow.com/questions/2669750/avoiding-accidentally-catching-keyboardinterrupt-and-systemexit-in-python-2-4
-                # Except block handles 'BaseException'
-                # https://lgtm.com/rules/6780080/
-                # Catch multiple exceptions in one line (except block)
-                # https://stackoverflow.com/questions/6470428/catch-multiple-exceptions-in-one-line-except-block
-                # How to get the process ID to kill a nohup process?
-                # https://stackoverflow.com/questions/17385794/how-to-get-the-process-id-to-kill-a-nohup-process
-                # Fixing “Lock wait timeout exceeded; try restarting
-                # transaction” for a 'stuck" Mysql table?
-                # https://stackoverflow.com/questions/2766785/fixing-lock-wait-timeout-exceeded-try-restarting-transaction-for-a-stuck-my/10315184
-                except (KeyboardInterrupt, SystemExit, Exception):
-                    break
-
-            if json_mode:
-                yield ']'
-
-            query_result.close()
-
-            if not self.__in_context:
-                self.__session.commit()
-        except (KeyboardInterrupt, SystemExit, Exception):
-            self.__session.rollback()
-
-            if kwargs.get('debug_mode') in [None, True]:
-                raise
-        finally:
-            if not self.__in_context:
-                self.__session.close()
-                self.__engine_for_process.dispose()
-
-    def insert(self, data: Iterable[dict], table_name: str) -> Generator:
-        '''
-        Bulk Insert (PostgreSQL Only!)
-        '''
-        csv_input = StringIO()
-        count = 0
-
-        for i, row in enumerate(data):
-            if i == 0:
-                csv_writer = csv.DictWriter(csv_input, row.keys())
-                csv_writer.writeheader()
-
-            csv_writer.writerow(row)
-            count += 1
-            yield row
-        else:
-            csv_input.seek(0)
-
-        if count:
-            if not self.__in_context:
-                self.__engine_for_process = self.__create_engine
-                self.__session = self.__create_session(
-                    self.__engine_for_process
+            try:
+                query_result = self.__session.execute(
+                    string,
+                    execution_options={'stream_results': stream_results}
                 )
 
-            with self.__session.connection().connection.cursor() as cur:
-                if hasattr(cur, 'copy_expert'):
-                    # PostgreSQL
-                    cur.copy_expert(
-                        f'''
-                        COPY
-                            {table_name}
-                        FROM
-                            STDIN
-                        WITH (
-                            FORMAT CSV,
-                            HEADER TRUE
+                # memory-efficient built-in SqlAlchemy iterator /
+                # generator:
+                # https://stackoverflow.com/questions/7389759/memory-efficient-built-in-sqlalchemy-iterator-generator
+                # Python: Using Flask to stream chunked dynamic content to end
+                # users
+                # https://fabianlee.org/2019/11/18/python-using-flask-to-stream-chunked-dynamic-content-to-end-users/
+                # Streaming Contents
+                # https://flask.palletsprojects.com/en/1.1.x/patterns/streaming/#basic-usage
+                # Streaming JSON with Flask
+                # https://blog.al4.co.nz/2016/01/streaming-json-with-flask/
+                if (json_mode := kwargs.get('json_mode') is True):
+                    yield '['
+
+                while True:
+                    batch = query_result.fetchmany(
+                        kwargs.get('fetch_size', 100_000)
+                    ) if query_result.returns_rows else None
+
+                    def to_result(row, json_mode=False):
+                        data = dict(row)
+                        return (
+                            json_serializer(data)
+                            if json_mode else deserialize(data)
                         )
-                        ;
-                        ''',
-                        csv_input
-                    )
-                else:
-                    logging.error(message := 'Working only on PostgreSQL!')
-                    raise Exception(message)
 
-            if not self.__in_context:
-                self.__session.commit()
-                self.__session.close()
-                self.__engine_for_process.dispose()
+                    if not batch:
+                        if not query_result.returns_rows:
+                            yield to_result(
+                                {
+                                    'affected_row': query_result.rowcount,
+                                    'query': self.__compile(string),
+                                    'finish_time': datetime.now()
+                                },
+                                json_mode
+                            )
 
-        logging.debug(
-            f'{count:,} row{"s" if count > 1 else ""} has been inserted to '
-            f'{table_name}'
-        )
+                        break
+
+                    rows = batch.__iter__()
+
+                    try:
+                        prev_row = next(rows)
+
+                        for row in rows:
+                            result = to_result(prev_row, json_mode)
+                            prev_row = row
+                            yield result + ', ' if json_mode else result
+
+                        yield to_result(prev_row, json_mode)
+                    except StopIteration:
+                        pass
+                    # KeyboardInterrupt and SystemExit should not be wrapped by
+                    # sqlalchemy #689
+                    # https://github.com/sqlalchemy/sqlalchemy/issues/689
+                    # Avoiding accidentally catching KeyboardInterrupt and
+                    # SystemExit in Python 2.4
+                    # https://stackoverflow.com/questions/2669750/avoiding-accidentally-catching-keyboardinterrupt-and-systemexit-in-python-2-4
+                    # Except block handles 'BaseException'
+                    # https://lgtm.com/rules/6780080/
+                    # Catch multiple exceptions in one line (except block)
+                    # https://stackoverflow.com/questions/6470428/catch-multiple-exceptions-in-one-line-except-block
+                    # How to get the process ID to kill a nohup process?
+                    # https://stackoverflow.com/questions/17385794/how-to-get-the-process-id-to-kill-a-nohup-process
+                    # Fixing “Lock wait timeout exceeded; try restarting
+                    # transaction” for a 'stuck" Mysql table?
+                    # https://stackoverflow.com/questions/2766785/fixing-lock-wait-timeout-exceeded-try-restarting-transaction-for-a-stuck-my/10315184
+                    except (KeyboardInterrupt, SystemExit, Exception):
+                        break
+
+                if json_mode:
+                    yield ']'
+
+                query_result.close()
+            except (KeyboardInterrupt, SystemExit, Exception):
+                self.__session.rollback()
+
+                if kwargs.get('debug_mode') in [None, True]:
+                    raise
+
+        if self.__in_context:
+            yield from method(string, **kwargs)
+        else:
+            with self:
+                yield from method(string, **kwargs)
+
+    def insert(
+        self,
+        data: Iterable[dict],
+        table_name: str,
+        generator_mode=False
+    ) -> Iterable[dict]:
+        '''
+        Bulk Insert (PostgreSQL Only!)
+
+        generator_mode: bool
+        - Use generator_mode=True if we want result as generator.
+        '''
+
+        def method(data: Iterable[dict], table_name: str) -> Generator:
+            count = 0
+            csv_input = StringIO()
+
+            for i, row in enumerate(data):
+                if i == 0:
+                    csv_writer = csv.DictWriter(csv_input, row.keys())
+                    csv_writer.writeheader()
+
+                csv_writer.writerow(row)
+                count += 1
+                yield row
+            else:
+                csv_input.seek(0)
+
+            if count:
+                with self.__session.connection().connection.cursor() as cur:
+                    if hasattr(cur, 'copy_expert'):
+                        # PostgreSQL
+                        cur.copy_expert(
+                            f'''
+                            COPY
+                                {table_name}
+                            FROM
+                                STDIN
+                            WITH (
+                                FORMAT CSV,
+                                HEADER TRUE
+                            )
+                            ;
+                            ''',
+                            csv_input
+                        )
+                    else:
+                        logging.error(message := 'Working only on PostgreSQL!')
+                        raise Exception(message)
+
+            logging.debug(
+                f'{count:,} row{"s" if count > 1 else ""} '
+                f'has been inserted to {table_name}'
+            )
+
+        kwargs = {'data': data, 'table_name': table_name}
+
+        if self.__in_context:
+            result = method(**kwargs)
+        else:
+            with self:
+                result = method(**kwargs)
+
+        return result if generator_mode else list(result)
