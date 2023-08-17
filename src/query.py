@@ -53,7 +53,6 @@
 # the implied warranties of merchantability, fitness for a particular purpose
 # and non-infringement.
 
-from typing import Iterable
 from copy import copy
 import csv
 from datetime import date, datetime
@@ -64,6 +63,7 @@ from os import getenv, getcwd
 from os.path import isfile, join as path_join
 import re
 from time import sleep
+from typing import Generator, Iterable
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from jinja2 import Environment, FileSystemLoader
@@ -785,7 +785,7 @@ class Query:
                 self.__session.close()
                 self.__engine_for_process.dispose()
 
-    def insert(self, data: Iterable[dict], table_name: str):
+    def insert(self, data: Iterable[dict], table_name: str) -> Generator:
         '''
         Bulk Insert (PostgreSQL Only!)
         '''
@@ -799,6 +799,7 @@ class Query:
 
             csv_writer.writerow(row)
             count += 1
+            yield row
         else:
             csv_input.seek(0)
 
