@@ -616,7 +616,9 @@ class Query:
             flags=re.DOTALL
         ):
             _string = re.sub(
-                s.replace('[', r'\[').replace(']', r'\]'),
+                s.replace('[', r'\[').replace(']', r'\]').replace(
+                    '(', r'\('
+                ).replace(')', r'\)'),
                 "''",
                 _string,
                 1
