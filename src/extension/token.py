@@ -119,7 +119,7 @@ def check_if_token_in_blacklist(decrypted_token):
         # Memastikan token tidak masuk daftar blacklist
         or len(
             Token.read(
-                (Token.is_revoked == True) # noqa
+                (Token.is_revoked == True)  # noqa
                 & (Token.jti == jti)
             )
         ) > 0

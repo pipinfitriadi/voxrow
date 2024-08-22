@@ -102,7 +102,8 @@ def arcgis_data(
         logging.info(
             ' | '.join([
                 'ArcGIS Map Service API',
-                f'Progress Fetch Rows (%): {100*curr_total/total_rows:3.0f}%',
+                'Progress Fetch Rows (%): '
+                f'{100 * curr_total / total_rows:3.0f}%',
                 f'Final Total Rows: {total_rows:,}',
                 f'Current Total Rows: {curr_total:,}'
             ])

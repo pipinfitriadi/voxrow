@@ -196,7 +196,7 @@ class Token(Model):
         cls.update(
             # flake8 complains on boolean comparison “==” in filter clause
             # https://stackoverflow.com/questions/18998010/flake8-complains-on-boolean-comparison-in-filter-clause
-            (cls.is_revoked == False) # noqa
+            (cls.is_revoked == False)  # noqa
             & (
                 (cls.user_id == token_or_row.user_id)
                 | (cls.expires <= datetime.now())
