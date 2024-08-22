@@ -332,75 +332,19 @@ class Query:
                 - Use stream_results=False for update/insert/delete query.
         '''
 
-        if self.__ssh_param:
-            ssh_param = self.__ssh_param.copy()
-            self.__ssh_param = {}
+        # Issue with a python function returning a generator or a normal
+        # object
+        # https://stackoverflow.com/questions/25313283/issue-with-a-python-function-returning-a-generator-or-a-normal-object
+        generator_mode = kwargs.pop('generator_mode', None)
 
-            while True:
-                with SSHTunnelForwarder(**ssh_param) as tunnel:
-                    # Python SSHTunnel w/ Paramiko - CLI works, but
-                    # not in script
-                    # https://stackoverflow.com/questions/39945269/python-sshtunnel-w-paramiko-cli-works-but-not-in-script
-                    # Menjalankan query dengan mode SSH
-                    # SSHTunnelForwarder's func kwargs
-                    # https://sshtunnel.readthedocs.io/en/latest/#api
-                    # Setup a SSH Tunnel With the Sshtunnel Module in Python
-                    # https://blog.ruanbekker.com/blog/2018/04/23/setup-a-ssh-tunnel-with-the-sshtunnel-module-in-python/
-                    # SSHTunnelForwarder.daemon_forward_servers is not
-                    # respected:
-                    # https://github.com/pahaz/sshtunnel/issues/102
-                    # tunnel without clause:
-                    # tunnel.daemon_forward_servers = True
-                    # tunnel.daemon_transport = True
-                    # tunnel.start()
-                    # tunnel.stop()
-                    sleep(1)
+        result = self.__query(string, **kwargs)
 
-                    self.__db_host = tunnel.local_bind_host
-                    self.__db_port = tunnel.local_bind_port
-
-                    try:
-                        with self:
-                            result = self.__call__(string, **kwargs)
-
-                        break
-                    except OperationalError as e:
-                        if (
-                            e.args
-                            and e.orig
-                            and e.orig.args
-                            and (
-                                # Error MySQL: Lost Connection
-                                'mysql' in e.args[0].lower()
-                                and e.orig.args[0] == 2013
-                            )
-                        ):
-                            continue
-                        else:
-                            raise
-                    except (KeyboardInterrupt, SystemExit):
-                        break
-                    except Exception:
-                        raise
-                    finally:
-                        self.__db_host = None
-                        self.__db_port = None
-
-            self.__ssh_param = ssh_param.copy()
-        else:
-            # Issue with a python function returning a generator or a normal
-            # object
-            # https://stackoverflow.com/questions/25313283/issue-with-a-python-function-returning-a-generator-or-a-normal-object
-            generator_mode = kwargs.pop('generator_mode', None)
-
-            result = self.__query(string, **kwargs)
-
-            if not generator_mode:
-                result = (
-                    ''.join(result)
-                    if kwargs.get('json_mode') is True
-                    else list(result)
-                )
+        if not generator_mode:
+            result = (
+                ''.join(result)
+                if kwargs.get('json_mode') is True
+                else list(result)
+            )
 
         return result
 
@@ -593,6 +537,29 @@ class Query:
 
     def __enter__(self):
         self.__in_context = True
+
+        if self.__ssh_param:
+            # Python SSHTunnel w/ Paramiko - CLI works, but
+            # not in script
+            # https://stackoverflow.com/questions/39945269/python-sshtunnel-w-paramiko-cli-works-but-not-in-script
+            # Menjalankan query dengan mode SSH
+            # SSHTunnelForwarder's func kwargs
+            # https://sshtunnel.readthedocs.io/en/latest/#api
+            # Setup a SSH Tunnel With the Sshtunnel Module in Python
+            # https://blog.ruanbekker.com/blog/2018/04/23/setup-a-ssh-tunnel-with-the-sshtunnel-module-in-python/
+            # SSHTunnelForwarder.daemon_forward_servers is not
+            # respected:
+            # https://github.com/pahaz/sshtunnel/issues/102
+            # tunnel without clause:
+            # tunnel.daemon_forward_servers = True
+            # tunnel.daemon_transport = True
+            # tunnel.start()
+            # tunnel.stop()
+            self.__tunnel = SSHTunnelForwarder(**self.__ssh_param)
+            self.__tunnel.__enter__()
+            self.__db_host = self.__tunnel.local_bind_host
+            self.__db_port = self.__tunnel.local_bind_port
+
         self.__engine_for_process = self.__create_engine
         self.__session = self.__create_session(self.__engine_for_process)
         return self
@@ -602,6 +569,11 @@ class Query:
         self.__session.commit()
         self.__session.close()
         self.__engine_for_process.dispose()
+
+        if self.__ssh_param:
+            self.__tunnel.__exit__(self, *exc)
+            self.__db_host = None
+            self.__db_port = None
 
     def __stream_result(self, string: str) -> bool:
         for s in re.findall(
