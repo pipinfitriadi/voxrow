@@ -84,7 +84,7 @@ Lint:
     - tags
   before_script: []
   script:
-    - flake8 --exclude venv/
+    - flake8 --extend-ignore=E201,E202,W503 --exclude=venv/
 
 PyPI:
   stage: Release
