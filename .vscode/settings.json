@@ -7,6 +7,8 @@
  */
 
 {
+    "basedpyright.analysis.diagnosticMode": "workspace",
+    "basedpyright.analysis.typeCheckingMode": "off",
     "csv-preview.lineNumbers": "ordinal",
     "csv-preview.resizeColumns": "all",
     "editor.fontFamily": "'JetBrains Mono'",
@@ -15,11 +17,6 @@
     "git.blame.editorDecoration.enabled": true,
     "notebook.output.scrolling": true,
     "notebook.output.fontFamily": "'Fira Code', 'Consolas', 'Courier New', monospace",
-    "python.analysis.diagnosticSeverityOverrides": {
-        "reportMissingImports": "none",
-        "reportMissingModuleSource": "none",
-        "reportInvalidTypeForm": "none"
-    },
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
     "python.terminal.activateEnvironment": false,
     "python-envs.pythonProjects": [],
