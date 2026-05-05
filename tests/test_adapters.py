@@ -7,18 +7,15 @@
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 5 May 2026
 
 from tempfile import NamedTemporaryFile
-from typing import TYPE_CHECKING
 
 import pytest
+from anyio import Path
 from duckdb import DuckDBPyConnection, connect
 from pydantic import validate_call
 from pydantic.dataclasses import dataclass
 
 from voxrow.core.adapters.ports import duckdb, pathlib
 from voxrow.core.domain import value_objects
-
-if TYPE_CHECKING:
-    from anyio import Path
 
 
 @dataclass(config=value_objects.CONFIG_DICT, frozen=True)
@@ -44,7 +41,7 @@ class TestPorts:
 
     @pytest.mark.asyncio
     async def test_pathlib(self) -> None:
-        with NamedTemporaryFile(mode="w+", suffix=".txt") as temp_file:
+        with NamedTemporaryFile(mode="wb+", suffix=".dat") as temp_file:
             data: str = b"Test"
             data_port: pathlib.PathDataPort = pathlib.PathDataPort()
             file: Path = await data_port.load(
@@ -55,6 +52,7 @@ class TestPorts:
                 ),
             )
 
+            assert file == Path(temp_file.name)
             assert data_port.extract(
                 source=value_objects.PathSource(
                     file,
