@@ -10,17 +10,18 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = 'voxrow'
-description = "VOXROW"
+description = "VOXROW's library"
 readme = 'README.md'
 requires-python = '>=3.12'
 license = {text = 'Proprietary'}
 keywords = [
-    'VOXROW',
+    'voxrow',
+    'library',
 ]
-authors = [{name = 'Pipin Fitriadi'}, {email = 'pipinfitriadi@gmail.com'}]
+authors = [{name = 'Pipin Fitriadi', email = 'pipinfitriadi@gmail.com'}]
 maintainers = [{name = 'Pipin Fitriadi', email = 'pipinfitriadi@gmail.com'}]
 classifiers = [
-    'Development Status :: 2 - Pre-Alpha',
+    'Development Status :: 3 - Alpha',
     'Intended Audience :: Developers',
     'Intended Audience :: Information Technology',
     'License :: Other/Proprietary License',
