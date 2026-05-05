@@ -41,7 +41,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install dependencies
-        run: pip install --editable . --group code-quality
+        run: pip install --editable '.[database, http, not_supported_by_vercel, storage] --group code-quality
       - name: Test
         run: |
           ruff check --preview --select E,E305
@@ -68,7 +68,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install dependencies
-        run: pip install --editable . --group code-coverage
+        run: pip install --editable '.[database, http, not_supported_by_vercel, storage] --group code-coverage
       - name: Test
         run: coverage run -m pytest -rfEP -q --junit-xml=code-coverage.xml
       - name: Display coverage
