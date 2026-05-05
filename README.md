@@ -7,15 +7,16 @@ Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 22 May 2025
 -->
 
 <!-- omit in toc -->
-# Python
+# VOXROW
 
 [![License](https://img.shields.io/badge/license-Proprietary-red)](LICENSE)
-[![PyPI - Python Version](https://img.shields.io/badge/python-3.13%2B-blue?logo=Python&logoColor=white)](https://www.python.org/downloads/release/python-3131/)
+[![PyPI - Python Version](https://img.shields.io/badge/python-3.12%2B-blue?logo=Python&logoColor=white)](https://www.python.org/downloads/release/python-3127/)
+[![codecov](https://codecov.io/gh/pipinfitriadi/voxrow/graph/badge.svg?token=rTWjBKukUU)](https://codecov.io/gh/pipinfitriadi/voxrow)
 
 - [Setup](#setup)
 - [CI/CD](#cicd)
 
-This repository serves as a centralized Python's workspace,
+This repository serves as a centralized VOXROW's workspace,
 providing structure and resources to support development activities.
 It may include configuration files, environment setup, shared utilities
 and documentation that help maintain consistency and streamline workflows
@@ -25,14 +26,13 @@ across projects or teams.
 
 Follow these steps the first time you use VS Code after cloning this git repository:
 
-1. Change `name` value in [pyproject.toml](pyproject.toml) to your project name
-2. Create a _`.env`_ file based on [_`template.env`_](template.env)
+1. Create a _`.env`_ file based on [_`template.env`_](template.env)
    and set your environment values
-3. Use the command <kbd>command | ctrl</kbd> + <kbd>shift</kbd> + <kbd>P</kbd>,
+2. Use the command <kbd>command | ctrl</kbd> + <kbd>shift</kbd> + <kbd>P</kbd>,
     select `Tasks: Run Task`, and then choose `Preparation`
-4. Use the command <kbd>command | ctrl</kbd> + <kbd>shift</kbd> + <kbd>P</kbd>,
+3. Use the command <kbd>command | ctrl</kbd> + <kbd>shift</kbd> + <kbd>P</kbd>,
     select `Python: Select Interpreter`, and then choose _`./.venv/bin/python`_
-5. Use the command <kbd>command | ctrl</kbd> + <kbd>shift</kbd> + <kbd>P</kbd>,
+4. Use the command <kbd>command | ctrl</kbd> + <kbd>shift</kbd> + <kbd>P</kbd>,
     select `Tasks: Run Task`, and then choose `Python: Preparation`
 
 ## CI/CD

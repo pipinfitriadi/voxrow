@@ -6,6 +6,7 @@
         "augustocdias.tasks-shell-input",
         "charliermarsh.ruff",
         "DavidAnson.vscode-markdownlint",
+        "detachhead.basedpyright",
         "grapecity.gc-excelviewer",
         "kejun.markdown-alert",
         "mechatroner.rainbow-csv",
@@ -14,6 +15,8 @@
         "ms-python.python",
         "ms-toolsai.jupyter",
         "narasimapandiyan.jetbrainsmono",
+        "samuelcolvin.jinjahtml",
+        "waderyan.gitblame",
         "yzhang.markdown-all-in-one"
     ]
 }

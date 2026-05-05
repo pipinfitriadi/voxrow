@@ -9,10 +9,14 @@ requires = ['setuptools>=61.0', 'setuptools-git-versioning<2']
 build-backend = 'setuptools.build_meta'
 
 [project]
-name = 'template'
+name = 'voxrow'
+description = "VOXROW"
 readme = 'README.md'
-requires-python = '>=3.13'
+requires-python = '>=3.12'
 license = {text = 'Proprietary'}
+keywords = [
+    'VOXROW',
+]
 authors = [{name = 'Pipin Fitriadi'}, {email = 'pipinfitriadi@gmail.com'}]
 maintainers = [{name = 'Pipin Fitriadi', email = 'pipinfitriadi@gmail.com'}]
 classifiers = [
@@ -23,16 +27,36 @@ classifiers = [
     'Natural Language :: English',
     'Natural Language :: Indonesian',
     'Operating System :: OS Independent',
-    'Programming Language :: Python :: 3.13',
+    'Programming Language :: Python :: 3.12',
     'Topic :: Software Development :: Libraries :: Python Modules',
     'Topic :: Utilities',
 ]
+dependencies = [
+    'pandas',
+    'pydantic',
+]
 dynamic = ['version']
+
+[project.optional-dependencies]
+database = [
+    'sqlmodel',
+    'psycopg2-binary',
+]
+http = [
+    'httpx',
+]
+not_supported_by_vercel = [
+    'duckdb',
+]
+storage = [
+    'boto3',
+]
 
 [dependency-groups]
 code-coverage = [
     'coverage',
     'pytest',
+    'pytest-asyncio',
     'toml',
 ]
 code-quality = [
@@ -44,11 +68,16 @@ notebook = [
     'magic_duckdb',
 ]
 dev = [
+    'build',
     'git-filter-repo',
+    'httpx[cli]',
     {include-group = 'code-coverage'},
     {include-group = 'code-quality'},
     {include-group = 'notebook'},
 ]
+
+[project.urls]
+Repository = 'https://github.com/pipinfitriadi/voxrow'
 
 [tool.ruff.lint]
 select = ['ALL']
@@ -70,6 +99,9 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 'tests/*.py' = ['S101']
+
+[tool.setuptools.packages.find]
+include = ['voxrow.core.*']
 
 [tool.setuptools-git-versioning]
 enabled = true

@@ -136,7 +136,7 @@
           "-m", "pip", "install",
           "--require-virtualenv",
           "--editable",
-          "${workspaceFolder}",
+          "${workspaceFolder}[database, http, not_supported_by_vercel, storage]",
           "--group",
           "dev"
       ]
@@ -170,7 +170,7 @@
     "env": {
       "PIP_DISABLE_PIP_VERSION_CHECK": "1",
       "PYTHON_INTERPRETER_PATH": "${workspaceFolder}/.venv/bin/python",
-      "UPSTREAM": "https://github.com/pipinfitriadi/workspace.git",
+      "UPSTREAM": "https://github.com/pipinfitriadi/python.git",
     }
   }
 }
