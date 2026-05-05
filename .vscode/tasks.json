@@ -129,6 +129,18 @@
     },
     {
       "problemMatcher": [],
+      "label": "Python: Upgrade PIP",
+      "type": "shell",
+      "command": "${PYTHON_INTERPRETER_PATH}",
+      "args": [
+          "-m", "pip", "install",
+          "--require-virtualenv",
+          "--upgrade",
+          "pip"
+      ]
+  },
+    {
+      "problemMatcher": [],
       "label": "Python: Environment dependencies",
       "type": "shell",
       "command": "${PYTHON_INTERPRETER_PATH}",
