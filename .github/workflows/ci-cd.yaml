@@ -1,0 +1,83 @@
+# Copyright (C) Pipin Fitriadi - All Rights Reserved
+
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 11 December 2025
+
+name: CI/CD
+on:
+  push:
+    branches: ['**']
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+-[a-z]+'
+      - '[0-9]+.[0-9]+.[0-9]+-[a-z]+.[0-9]+'
+    paths:
+      - '**/*.ipynb'
+      - '**/*.py'
+      - tests/**/*
+      - pyproject.toml
+  workflow_dispatch:
+    inputs:
+      codecoverage-percentage-passed:
+        description: Percentage as an integer for passing code coverage
+        type: number
+        default: 100
+        required: true
+jobs:
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    env:
+      PIP_ROOT_USER_ACTION: ignore
+      PIP_DISABLE_PIP_VERSION_CHECK: 1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install --editable . --group code-quality
+      - name: Test
+        run: |
+          ruff check --preview --select E,E305
+          ruff check
+  code-coverage:
+    name: Code Coverage
+    if:
+      github.ref_type == 'tag' ||
+      contains('refs/heads/main', github.ref) ||
+      startsWith(github.ref, 'refs/heads/release/') ||
+      startsWith(github.ref, 'refs/heads/hotfix/')
+    runs-on: ubuntu-latest
+    env:
+      PIP_ROOT_USER_ACTION: ignore
+      PIP_DISABLE_PIP_VERSION_CHECK: 1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install --editable . --group code-coverage
+      - name: Test
+        run: coverage run -m pytest -rfEP -q --junit-xml=code-coverage.xml
+      - name: Display coverage
+        run: coverage report -m
+      - name: Publish coverage report
+        uses: mikepenz/action-junit-report@v4
+        if: success() || failure() # always run even if the previous step fails
+        with:
+          report_paths: code-coverage.xml
+          annotate_only: true
+      - name: Percentage passed
+        run: if [ $(printf '%.0f' $(coverage report | awk '$1 == "TOTAL" {print $NF+0}')) -ge ${{ github.event.inputs.codecoverage-percentage-passed || 100 }} ]; then exit; else exit 1; fi
