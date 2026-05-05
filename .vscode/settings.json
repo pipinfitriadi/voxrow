@@ -1,0 +1,41 @@
+/**
+ * Copyright (C) Pipin Fitriadi - All Rights Reserved
+ *
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 22 May 2025
+ */
+
+{
+    "csv-preview.lineNumbers": "ordinal",
+    "csv-preview.resizeColumns": "all",
+    "editor.fontFamily": "'JetBrains Mono'",
+    "editor.fontLigatures": true,
+    "editor.minimap.enabled": false,
+    "git.blame.editorDecoration.enabled": true,
+    "notebook.output.scrolling": true,
+    "notebook.output.fontFamily": "'Fira Code', 'Consolas', 'Courier New', monospace",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingImports": "none",
+        "reportMissingModuleSource": "none",
+        "reportInvalidTypeForm": "none"
+    },
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+    "python.terminal.activateEnvironment": false,
+    "python-envs.pythonProjects": [],
+    "rainbow_csv.rbql_with_headers_by_default": true,
+    "rainbow_csv.virtual_alignment_mode": "always",
+    "rainbow_csv.virtual_alignment_char": "space",
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "terminal.integrated.profiles.linux": {
+        "bash": {
+            "path": "bash",
+            "icon": "terminal-bash",
+            "args": ["--init-file", "${workspaceFolder}/.bashrc"]
+        }
+    },
+    "window.autoDetectColorScheme": false,
+    "workbench.colorTheme": "Atom One Dark",
+    "workbench.iconTheme": "a-file-icon-vscode",
+    "workbench.sideBar.location": "right"
+}

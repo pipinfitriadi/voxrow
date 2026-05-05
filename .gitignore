@@ -1,0 +1,24 @@
+# Copyright (C) Pipin Fitriadi - All Rights Reserved
+
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 24 July 2025
+
+*.egg-info/
+__pycache__/
+.ipynb_checkpoints/
+.venv/
+build/
+
+.coverage
+*.env
+*.csv
+*.json
+*.txt
+*.xlsx
+code-coverage.xml
+
+!.oh-my-posh/**/*
+!.vscode/**/*
+!tests/files/**/*
+!template.env

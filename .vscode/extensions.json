@@ -1,0 +1,19 @@
+{
+    "recommendations": [
+        "adpyke.codesnap",
+        "akamud.vscode-theme-onedark",
+        "atommaterial.a-file-icon-vscode",
+        "augustocdias.tasks-shell-input",
+        "charliermarsh.ruff",
+        "DavidAnson.vscode-markdownlint",
+        "grapecity.gc-excelviewer",
+        "kejun.markdown-alert",
+        "mechatroner.rainbow-csv",
+        "mermaidchart.vscode-mermaid-chart",
+        "mhutchie.git-graph",
+        "ms-python.python",
+        "ms-toolsai.jupyter",
+        "narasimapandiyan.jetbrainsmono",
+        "yzhang.markdown-all-in-one"
+    ]
+}

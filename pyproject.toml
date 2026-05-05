@@ -1,0 +1,79 @@
+# Copyright (C) Pipin Fitriadi - All Rights Reserved
+
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 30 November 2025
+
+[build-system]
+requires = ['setuptools>=61.0', 'setuptools-git-versioning<2']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = 'template'
+readme = 'README.md'
+requires-python = '>=3.13'
+license = {text = 'Proprietary'}
+authors = [{name = 'Pipin Fitriadi'}, {email = 'pipinfitriadi@gmail.com'}]
+maintainers = [{name = 'Pipin Fitriadi', email = 'pipinfitriadi@gmail.com'}]
+classifiers = [
+    'Development Status :: 2 - Pre-Alpha',
+    'Intended Audience :: Developers',
+    'Intended Audience :: Information Technology',
+    'License :: Other/Proprietary License',
+    'Natural Language :: English',
+    'Natural Language :: Indonesian',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python :: 3.13',
+    'Topic :: Software Development :: Libraries :: Python Modules',
+    'Topic :: Utilities',
+]
+dynamic = ['version']
+
+[dependency-groups]
+code-coverage = [
+    'coverage',
+    'pytest',
+    'toml',
+]
+code-quality = [
+    'ruff',
+]
+notebook = [
+    'ipykernel',
+    'duckdb',
+    'magic_duckdb',
+]
+dev = [
+    'git-filter-repo',
+    {include-group = 'code-coverage'},
+    {include-group = 'code-quality'},
+    {include-group = 'notebook'},
+]
+
+[tool.ruff.lint]
+select = ['ALL']
+ignore = [
+    'C408',
+    'COM812',
+    'D100',
+    'D101',
+    'D102',
+    'D103',
+    'D104',
+    'D105',
+    'D107',
+    'D203',
+    'D212',
+    'EXE001',
+    'TID252',
+]
+
+[tool.ruff.lint.per-file-ignores]
+'tests/*.py' = ['S101']
+
+[tool.setuptools-git-versioning]
+enabled = true
+template = '{tag}'
+dev_template = '{tag}'
+dirty_template = '{tag}'
+tag_filter = '^\d+\.\d+\.\d+(-[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*)?(\+[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*)?$'

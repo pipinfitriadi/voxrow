@@ -1,0 +1,11 @@
+# Copyright (C) Pipin Fitriadi - All Rights Reserved
+
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 24 July 2025
+
+MD013:
+  line_length: 80
+MD033:
+  allowed_elements:
+    - kbd

@@ -1,0 +1,176 @@
+/**
+ * Copyright (C) Pipin Fitriadi - All Rights Reserved
+ *
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 22 May 2025
+ */
+
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "problemMatcher": [],
+      "label": "CI/CD: Code Quality (E305)",
+      "type": "shell",
+      "command": "${PYTHON_INTERPRETER_PATH}",
+      "args": ["-m", "ruff", "check", "--preview", "--select", "E,E305"]
+    },
+    {
+      "problemMatcher": [],
+      "label": "CI/CD: Code Quality",
+      "dependsOn": "CI/CD: Code Quality (E305)",
+      "type": "shell",
+      "command": "${PYTHON_INTERPRETER_PATH}",
+      "args": ["-m", "ruff", "check"]
+    },
+    {
+      "problemMatcher": [],
+      "label": "CI/CD: Code Quality - Fixing (E305)",
+      "type": "shell",
+      "command": "${PYTHON_INTERPRETER_PATH}",
+      "args": ["-m", "ruff", "check", "--preview", "--select", "E,E305", "--fix"]
+    },
+    {
+      "problemMatcher": [],
+      "label": "CI/CD: Code Quality - Fixing",
+      "dependsOn": "CI/CD: Code Quality - Fixing (E305)",
+      "type": "shell",
+      "command": "${PYTHON_INTERPRETER_PATH} -m ruff check --fix && ${PYTHON_INTERPRETER_PATH} -m ruff format"
+    },
+    {
+      "problemMatcher": [],
+      "label": "CI/CD: Test",
+      "type": "shell",
+      "command": "${PYTHON_INTERPRETER_PATH}",
+      "args": ["-m", "coverage", "run", "-m", "pytest", "-rfEP", "-q", "--junit-xml=code-coverage.xml"]
+    },
+    {
+      "problemMatcher": [],
+      "label": "CI/CD: Code Coverage",
+      "dependsOn": "CI/CD: Test",
+      "type": "shell",
+      "command": "${PYTHON_INTERPRETER_PATH}",
+      "args": ["-m", "coverage", "report", "-m"]
+    },
+    {
+      "problemMatcher": [],
+      "label": "CI/CD: Code Coverage - Percentage passed",
+      "dependsOn": "CI/CD: Code Coverage",
+      "type": "shell",
+      "command": "if [ $(printf '%.0f' $(${PYTHON_INTERPRETER_PATH} -m coverage report | awk '$1 == \"TOTAL\" {print $NF+0}')) -ge ${input:codecoverage-percentage-passed} ]; then exit; else exit 1; fi",
+    },
+    {
+      "problemMatcher": [],
+      "label": "CI/CD",
+      "dependsOrder": "parallel",
+      "dependsOn": [
+          "CI/CD: Code Quality",
+          "CI/CD: Code Coverage - Percentage passed",
+      ]
+    },
+    {
+      "problemMatcher": [],
+      "label": "Git: Fetch All",
+      "type": "shell",
+      "command": "if [[ $(git remote | grep upstream) != 'upstream' ]]; then git remote add upstream $UPSTREAM && git remote set-url --push upstream DISABLE && git remote -v | grep upstream; fi && git fetch --all --prune"
+    },
+    {
+      "problemMatcher": [],
+      "label": "Preparation",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Git: Fetch All",
+        "Preparation: Git Flow",
+        "Preparation: VS Code Extensions",
+        "Preparation: oh-my-posh",
+        "Python: Create VEnv"
+      ],
+      "type": "shell",
+      "command": "echo Environment preparation is complete"
+    },
+    {
+      "problemMatcher": [],
+      "label": "Preparation: Git Flow",
+      "type": "shell",
+      "command": "which git-flow || sudo apt install git-flow; git show-branch develop >/dev/null 2>&1 || (git checkout main && git checkout -b develop); git flow config >/dev/null 2>&1 || git flow init -d"
+    },
+    {
+      "problemMatcher": [],
+      "label": "Preparation: jq",
+      "type": "shell",
+      "command": "which jq || sudo apt install jq"
+    },
+    {
+      "problemMatcher": [],
+      "label": "Preparation: oh-my-posh",
+      "dependsOn": "Preparation: unzip",
+      "type": "shell",
+      "command": "which $HOME/.local/bin/oh-my-posh || curl -s https://ohmyposh.dev/install.sh | bash -s"
+    },
+    {
+      "problemMatcher": [],
+      "label": "Preparation: unzip",
+      "type": "shell",
+      "command": "which unzip || sudo apt install unzip"
+    },
+    {
+      "problemMatcher": [],
+      "label": "Preparation: VS Code Extensions",
+      "dependsOn": "Preparation: jq",
+      "type": "shell",
+      "command": "jq -r '.recommendations[]' .vscode/extensions.json | xargs -L 1 code --install-extension"
+    },
+    {
+        "problemMatcher": [],
+        "label": "Python: Create VEnv",
+        "type": "shell",
+        "command": "if [ ! -d .venv/ ]; then ${input:python-app} -m venv .venv/; fi && .venv/bin/python -V"
+    },
+    {
+      "problemMatcher": [],
+      "label": "Python: Environment dependencies",
+      "type": "shell",
+      "command": "${PYTHON_INTERPRETER_PATH}",
+      "args": [
+          "-m", "pip", "install",
+          "--require-virtualenv",
+          "--editable",
+          "${workspaceFolder}",
+          "--group",
+          "dev"
+      ]
+    },
+    {
+      "problemMatcher": [],
+      "label": "Python: Preparation",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+          "Python: Create VEnv",
+          "Python: Environment dependencies"
+      ],
+      "type": "shell"
+    },
+  ],
+  "inputs": [
+    {
+      "id": "codecoverage-percentage-passed",
+      "type": "promptString",
+      "description": "Percentage as an integer for passing code coverage",
+      "default": "100"
+    },
+    {
+      "id": "python-app",
+      "type": "promptString",
+      "description": "Python app path for creating virtual environment",
+      "default": "python3"
+    }
+  ],
+  "options": {
+    "env": {
+      "PIP_DISABLE_PIP_VERSION_CHECK": "1",
+      "PYTHON_INTERPRETER_PATH": "${workspaceFolder}/.venv/bin/python",
+      "UPSTREAM": "https://github.com/pipinfitriadi/workspace.git",
+    }
+  }
+}
