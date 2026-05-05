@@ -7,6 +7,7 @@
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 13 January 2026
 
 from collections.abc import Iterator
+from dataclasses import KW_ONLY
 from enum import StrEnum
 from http import HTTPMethod
 from pathlib import Path
@@ -153,9 +154,10 @@ class SQLModelSource(Source):
 @dataclass(frozen=True)
 class PathDomain:
     file: Path
-    is_bytes: bool = False
     encoding: str | None = None
     errors: str | None = None
+    _: KW_ONLY
+    is_bytes: bool = False
 
 
 @dataclass(frozen=True)

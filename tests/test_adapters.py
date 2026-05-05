@@ -6,12 +6,19 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 5 May 2026
 
+from tempfile import NamedTemporaryFile
+from typing import TYPE_CHECKING
+
+import pytest
 from duckdb import DuckDBPyConnection, connect
 from pydantic import validate_call
 from pydantic.dataclasses import dataclass
 
-from voxrow.core.adapters.ports import duckdb
+from voxrow.core.adapters.ports import duckdb, pathlib
 from voxrow.core.domain import value_objects
+
+if TYPE_CHECKING:
+    from anyio import Path
 
 
 @dataclass(config=value_objects.CONFIG_DICT, frozen=True)
@@ -26,7 +33,7 @@ class FakeTransformDuckDB(duckdb.AbstractDuckDB):
 
 
 class TestPorts:
-    def test_tranform_duckdb(self) -> None:
+    def test_duckdb(self) -> None:
         conn: DuckDBPyConnection = connect()
         data: tuple[dict, ...] = (dict(a=1),)
 
@@ -34,3 +41,23 @@ class TestPorts:
             tuple(FakeTransformDuckDB(conn, "test_table", 5, as_iterator=True)(data))
             == data
         )
+
+    @pytest.mark.asyncio
+    async def test_pathlib(self) -> None:
+        with NamedTemporaryFile(mode="w+", suffix=".txt") as temp_file:
+            data: str = b"Test"
+            data_port: pathlib.PathDataPort = pathlib.PathDataPort()
+            file: Path = await data_port.load(
+                data,
+                destination=value_objects.PathDestination(
+                    temp_file.name,
+                    is_bytes=True,
+                ),
+            )
+
+            assert data_port.extract(
+                source=value_objects.PathSource(
+                    file,
+                    is_bytes=True,
+                )
+            ) == data
