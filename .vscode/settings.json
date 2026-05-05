@@ -14,6 +14,7 @@
     "editor.fontFamily": "'JetBrains Mono'",
     "editor.fontLigatures": true,
     "editor.minimap.enabled": false,
+    "flake8.enabled": false,
     "git.blame.editorDecoration.enabled": true,
     "notebook.output.scrolling": true,
     "notebook.output.fontFamily": "'Fira Code', 'Consolas', 'Courier New', monospace",
