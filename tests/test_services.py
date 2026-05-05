@@ -10,28 +10,45 @@ from tempfile import NamedTemporaryFile
 
 import pytest
 from anyio import Path
+from duckdb import DuckDBPyConnection, connect
+from pydantic import validate_call
+from pydantic.dataclasses import dataclass
 
+from voxrow.core.adapters.ports.duckdb import AbstractDuckDB
 from voxrow.core.domain import value_objects
-from voxrow.core.services.unit_of_work import pathlib
+from voxrow.core.services import handlers
+from voxrow.core.services.unit_of_work import duckdb, pathlib
+
+
+@dataclass(config=value_objects.CONFIG_DICT, frozen=True)
+class FakeTransformDuckDB(AbstractDuckDB):
+    @validate_call
+    def __call__(self, data: value_objects.Data) -> value_objects.Data:
+        self.register(data)
+
+        yield from self.get_data(
+            self.connection.query(f"SELECT a * 2 AS b FROM {self.view_name};")  # noqa: S608
+        )
 
 
 class TestUnitOfWork:
     @pytest.mark.asyncio
     async def test_path_data(self) -> None:
+        data: str = "Test"
+
         with (
             NamedTemporaryFile(mode="w+", suffix=".txt") as temp_file,
             pathlib.PathDataUnitOfWork()(
                 destination=value_objects.PathDestination(temp_file.name),
             ) as uow,
         ):
-            data: str = "Test"
-            file_path: Path = await uow.data.load(
+            file: Path = await uow.data.load(
                 data,
                 destination=uow.destination,
             )
 
-            assert file_path.read_text() == data
-            assert file_path == Path(temp_file.name)
+            assert file == Path(temp_file.name)
+            assert file.read_text() == data
 
         with (
             pytest.raises(
@@ -41,3 +58,53 @@ class TestUnitOfWork:
             pathlib.PathDataUnitOfWork(),
         ):
             pass  # pragma: no cover
+
+
+class TestHandlers:
+    @pytest.mark.asyncio
+    async def test_etl_duckdb(self) -> None:
+        data: tuple[dict, ...] = (dict(b=2),)
+        connection: DuckDBPyConnection = connect()
+        destination_table: str = "destination"
+
+        with duckdb.DuckDBDataUnitOfWork(
+            connection,
+            as_iterator=True,
+        )(
+            destination=value_objects.DuckDBDestination(
+                f"""
+                CREATE TABLE
+                    {destination_table}
+                AS
+                SELECT
+                    *
+                FROM
+                    source
+                ;
+                """,  # noqa: S608
+                table=value_objects.Table(
+                    destination_table,
+                    "main",
+                ),
+            ),
+        ) as uow:
+            table: value_objects.Table = await handlers.etl(
+                source=connection.query("SELECT 1 a;"),
+                destination=uow,
+                transform=FakeTransformDuckDB(
+                    connection,
+                    "fake_table",
+                    fetch_size=5,
+                    as_iterator=True,
+                )
+            )
+
+            assert (
+                tuple(
+                    uow.data.extract(
+                        source=value_objects.DuckDBSource(
+                            f"SELECT * FROM {table.schema}.{table.name};",  # noqa: S608
+                        ),
+                    )
+                ) == data
+            )
