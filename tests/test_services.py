@@ -167,7 +167,7 @@ class TestHandlers:
                 destination=uow(
                     destination=value_objects.SQLModelDestination(FakeTable)
                 ),
-                transform=lambda data: [{**row, "b": fake_json_column} for row in data],
+                transform=lambda data: ({**row, "b": fake_json_column} for row in data),
             )
 
             fake_row: FakeTable = session.exec(
