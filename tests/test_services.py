@@ -31,36 +31,58 @@ class FakeTransformDuckDB(AbstractDuckDB):
         )
 
 
-class TestUnitOfWork:
+class TestHandlers:
     @pytest.mark.asyncio
-    async def test_path_data(self) -> None:
+    async def test_etl_data(self) -> None:
         data: str = "Test"
+        data_bytes: bytes = data.encode()
+        uow: pathlib.PathDataUnitOfWork = pathlib.PathDataUnitOfWork()
 
         with (
             NamedTemporaryFile(mode="w+", suffix=".txt") as temp_file,
-            pathlib.PathDataUnitOfWork()(
+            uow(
                 destination=value_objects.PathDestination(temp_file.name),
-            ) as uow,
+            ),
         ):
-            file: Path = await uow.data.load(
-                data,
-                destination=uow.destination,
+            file: Path = await handlers.etl(
+                source=data,
+                destination=uow,
             )
 
             assert file == Path(temp_file.name)
             assert file.read_text() == data
 
         with (
+            NamedTemporaryFile(mode="wb+", suffix=".dat") as temp_file,
+            uow(
+                destination=value_objects.PathDestination(
+                    temp_file.name,
+                    is_bytes=True,
+                ),
+            ),
+        ):
+            file: Path = await handlers.etl(
+                source=data_bytes,
+                destination=uow,
+            )
+
+            assert file == Path(temp_file.name)
+            assert uow.data.extract(
+                source=value_objects.PathSource(
+                    file,
+                    is_bytes=True,
+                ),
+            ) == data_bytes
+
+        with (
             pytest.raises(
                 ValueError,
                 match="destination or source must not be empty",
             ),
-            pathlib.PathDataUnitOfWork(),
+            uow,
         ):
             pass  # pragma: no cover
 
-
-class TestHandlers:
     @pytest.mark.asyncio
     async def test_etl_duckdb(self) -> None:
         data: tuple[dict, ...] = (dict(b=2),)
