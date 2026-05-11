@@ -7,29 +7,22 @@
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 21 January 2026
 
 from tempfile import NamedTemporaryFile
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 import pytest
 from anyio import Path
-from duckdb import DuckDBPyConnection, connect
-from pydantic import AnyUrl, BaseModel, validate_call
+from duckdb import DuckDBPyConnection
+from pydantic import BaseModel, validate_call
 from pydantic.dataclasses import dataclass
+from sqlalchemy import Engine
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, MetaData, Session, select, text
 
-from voxrow.core.adapters.database.sqlmodel import (
-    PydanticJSON,
-    SQLModelEntity,
-    get_db_engine,
-    get_schema,
-)
+from voxrow.core.adapters.database.sqlmodel import PydanticJSON, SQLModelEntity
 from voxrow.core.adapters.ports.duckdb import AbstractDuckDB
 from voxrow.core.domain import value_objects
 from voxrow.core.services import handlers
 from voxrow.core.services.unit_of_work import duckdb, pathlib, sqlmodel
-
-if TYPE_CHECKING:
-    from sqlalchemy import Engine
 
 
 class FakeSQLModel(SQLModelEntity):
@@ -72,7 +65,9 @@ class TestHandlers:
         with NamedTemporaryFile(mode="w+", suffix=".txt") as temp_file:
             file: Path = await handlers.etl(
                 source=data,
-                destination=uow(destination=value_objects.PathDestination(temp_file.name)),
+                destination=uow(
+                    destination=value_objects.PathDestination(temp_file.name)
+                ),
             )
 
             assert file == Path(temp_file.name)
@@ -90,12 +85,15 @@ class TestHandlers:
             )
 
             assert file == Path(temp_file.name)
-            assert uow.data.extract(
-                source=value_objects.PathSource(
-                    file,
-                    is_bytes=True,
-                ),
-            ) == data_bytes
+            assert (
+                uow.data.extract(
+                    source=value_objects.PathSource(
+                        file,
+                        is_bytes=True,
+                    ),
+                )
+                == data_bytes
+            )
 
         with (
             pytest.raises(
@@ -107,16 +105,15 @@ class TestHandlers:
             pass  # pragma: no cover
 
     @pytest.mark.asyncio
-    async def test_etl_duckdb(self) -> None:
+    async def test_etl_duckdb(self, fake_duckdb_conn: DuckDBPyConnection) -> None:
         data: tuple[dict, ...] = (dict(b=2),)
-        connection: DuckDBPyConnection = connect()
         destination_table: str = "destination"
         uow: duckdb.DuckDBDataUnitOfWork = duckdb.DuckDBDataUnitOfWork(
-            connection,
+            fake_duckdb_conn,
             as_iterator=True,
         )
         table: value_objects.Table = await handlers.etl(
-            source=connection.query("SELECT 1 a;"),
+            source=fake_duckdb_conn.query("SELECT 1 a;"),
             destination=uow(
                 destination=value_objects.DuckDBDestination(
                     f"""
@@ -136,11 +133,11 @@ class TestHandlers:
                 ),
             ),
             transform=FakeTransformDuckDB(
-                connection,
+                fake_duckdb_conn,
                 "fake_table",
                 fetch_size=5,
                 as_iterator=True,
-            )
+            ),
         )
 
         assert (
@@ -150,27 +147,26 @@ class TestHandlers:
                         f"SELECT * FROM {table.schema}.{table.name};",  # noqa: S608
                     ),
                 )
-            ) == data
+            )
+            == data
         )
 
     @pytest.mark.asyncio
-    async def test_etl_sqlmodel(self, tmp_path: Path) -> None:
+    async def test_etl_sqlmodel(self, fake_db_engine: Engine) -> None:
         fake_json_column: FakeJsonColumn = FakeJsonColumn(c="tes")
-        engine: Engine = get_db_engine(AnyUrl(f"sqlite:///{tmp_path}/database.sqlite3"))
-        schema: str = get_schema(engine)
 
-        assert schema == value_objects.DEFAULT_SCHEMA
+        FakeSQLModel.metadata.create_all(fake_db_engine)
 
-        FakeSQLModel.metadata.create_all(engine)
-
-        with Session(engine) as session:
+        with Session(fake_db_engine) as session:
             uow: sqlmodel.SQLModelDataUnitOfWork = sqlmodel.SQLModelDataUnitOfWork(
                 session
             )
 
             await handlers.etl(
                 source=uow(source=value_objects.SQLModelSource(text("SELECT 1 AS a;"))),
-                destination=uow(destination=value_objects.SQLModelDestination(FakeTable)),
+                destination=uow(
+                    destination=value_objects.SQLModelDestination(FakeTable)
+                ),
                 transform=lambda data: [{**row, "b": fake_json_column} for row in data],
             )
 
