@@ -180,6 +180,6 @@ class TestHandlers:
 
             fake_row.delete()
 
-            assert fake_row.a == 1
-            assert fake_row.b.c == fake_json_column.c
-            assert fake_row.deleted_at is not None
+        assert fake_row.a == 1
+        assert fake_row.b.c == fake_json_column.c
+        assert fake_row.deleted_at is not None
