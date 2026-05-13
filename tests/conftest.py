@@ -16,6 +16,9 @@ from sqlalchemy import Engine
 from voxrow.core.adapters.database import sqlmodel
 from voxrow.core.domain import value_objects
 
+# Constants
+TEST_FILES_DIR: Path = Path("tests") / "files"
+
 
 @pytest.fixture
 def fake_duckdb_conn() -> DuckDBPyConnection:

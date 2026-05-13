@@ -6,8 +6,10 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 21 January 2026
 
+from collections.abc import Callable
 from tempfile import NamedTemporaryFile
 from typing import ClassVar
+from unittest.mock import MagicMock
 
 import pytest
 from anyio import Path
@@ -20,9 +22,28 @@ from sqlmodel import Field, MetaData, Session, select, text
 
 from voxrow.core.adapters.database.sqlmodel import PydanticJSON, SQLModelEntity
 from voxrow.core.adapters.ports.duckdb import AbstractDuckDB
-from voxrow.core.domain import value_objects
+from voxrow.core.domain import domain_services, value_objects
 from voxrow.core.services import handlers
-from voxrow.core.services.unit_of_work import duckdb, pathlib, sqlmodel
+from voxrow.core.services.unit_of_work import duckdb, httpx, pathlib, sqlmodel
+
+from .conftest import TEST_FILES_DIR
+
+
+# Mocks
+@pytest.fixture
+def mock_httpx(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "voxrow.core.adapters.ports.httpx.get",
+        lambda *args, **kwargs: MagicMock(  # noqa: ARG005
+            json=MagicMock(
+                return_value=domain_services.loads_from_json(
+                    (
+                        TEST_FILES_DIR / "jsonplaceholder" / "users" / "get.json"
+                    ).read_text()
+                ),
+            ),
+        ),
+    )
 
 
 class FakeSQLModel(SQLModelEntity):
@@ -55,9 +76,19 @@ class FakeTransformDuckDB(AbstractDuckDB):
         )
 
 
-class TestHandlers:
+class TestHandlersEtl:
+    def test_httpx(self, mock_httpx: Callable) -> None:  # noqa: ARG002
+        fake_user_total: int = 10
+
+        with httpx.HttpxDataUnitOfWork()(
+            source=value_objects.HttpxSource(
+                "https://jsonplaceholder.typicode.com/users"
+            ),
+        ) as uow:
+            assert len(uow.data.extract(source=uow.source)) == fake_user_total
+
     @pytest.mark.asyncio
-    async def test_etl_pathlib(self) -> None:
+    async def test_pathlib(self) -> None:
         data: str = "Test"
         data_bytes: bytes = data.encode()
         uow: pathlib.PathDataUnitOfWork = pathlib.PathDataUnitOfWork()
@@ -105,7 +136,7 @@ class TestHandlers:
             pass  # pragma: no cover
 
     @pytest.mark.asyncio
-    async def test_etl_duckdb(self, fake_duckdb_conn: DuckDBPyConnection) -> None:
+    async def test_duckdb(self, fake_duckdb_conn: DuckDBPyConnection) -> None:
         data: tuple[dict, ...] = (dict(b=2),)
         destination_table: str = "destination"
         uow: duckdb.DuckDBDataUnitOfWork = duckdb.DuckDBDataUnitOfWork(
@@ -152,7 +183,7 @@ class TestHandlers:
         )
 
     @pytest.mark.asyncio
-    async def test_etl_sqlmodel(self, fake_db_engine: Engine) -> None:
+    async def test_sqlmodel(self, fake_db_engine: Engine) -> None:
         fake_json_column: FakeJsonColumn = FakeJsonColumn(c="tes")
 
         FakeSQLModel.metadata.create_all(fake_db_engine)
