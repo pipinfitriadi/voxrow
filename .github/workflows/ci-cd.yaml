@@ -73,6 +73,10 @@ jobs:
         run: coverage run -m pytest -rfEP -q --junit-xml=code-coverage.xml
       - name: Display coverage
         run: coverage report -m
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       - name: Publish coverage report
         uses: mikepenz/action-junit-report@v6
         if: success() || failure() # always run even if the previous step fails
@@ -81,3 +85,20 @@ jobs:
           annotate_only: true
       - name: Percentage passed
         run: if [ $(printf '%.0f' $(coverage report | awk '$1 == "TOTAL" {print $NF+0}')) -ge ${{ github.event.inputs.codecoverage-percentage-passed || 100 }} ]; then exit; else exit 1; fi
+  release:
+    name: Release
+    needs: [code-quality, code-coverage]
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    env:
+      PIP_ROOT_USER_ACTION: ignore
+      PIP_DISABLE_PIP_VERSION_CHECK: 1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
