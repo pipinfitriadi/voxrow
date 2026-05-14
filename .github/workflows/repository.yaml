@@ -25,5 +25,5 @@ jobs:
           REMOTE: ${{ vars.GIT_MIRROR_REPOSITORY_URL }}
           GIT_USERNAME: ${{ vars.GIT_MIRROR_USERNAME }}
           GIT_PASSWORD: ${{ secrets.GIT_MIRROR_PASSWORD }}
-          GIT_PUSH_ARGS: --tags --force
-          PUSH_ALL_REFS: true
+          # GIT_PUSH_ARGS: --tags --force
+          # PUSH_ALL_REFS: true
