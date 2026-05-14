@@ -94,7 +94,7 @@ jobs:
       PIP_ROOT_USER_ACTION: ignore
       PIP_DISABLE_PIP_VERSION_CHECK: 1
       name: python
-      url: https://pypi.org/project/${{ github.event.repository.name }
+      url: https://pypi.org/project/${{ github.event.repository.name }}
     permissions:
       id-token: write
     steps:
