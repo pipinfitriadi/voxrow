@@ -1,0 +1,26 @@
+# Copyright (C) Pipin Fitriadi - All Rights Reserved
+
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 14 May 2026
+
+name: Repository
+on: [delete, push]
+concurrency:
+  group: mirror-repo
+  cancel-in-progress: false
+jobs:
+  mirror:
+    name: Mirror Repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Mirror this repository
+        uses: yesolutions/mirror-action@master
+        with:
+          REMOTE: ${{ vars.GIT_MIRROR_REPOSITORY_URL }}
+          GIT_USERNAME: ${{ vars.GIT_MIRROR_USERNAME }}
+          GIT_PASSWORD: ${{ secrets.GIT_MIRROR_PASSWORD }}
