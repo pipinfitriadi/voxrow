@@ -74,7 +74,7 @@ jobs:
       - name: Display coverage
         run: coverage report -m
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       - name: Publish coverage report
