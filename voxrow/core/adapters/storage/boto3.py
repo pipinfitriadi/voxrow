@@ -36,7 +36,7 @@ def all_location(
     credential: value_objects.Boto3Credential,
     bucket: str,
     prefix: str,
-) -> tuple[dict, ...]:  # pragma: no cover
+) -> tuple[dict, ...]:
     return tuple(
         content
         for page in (
@@ -55,7 +55,7 @@ def move(
     source_prefix: str,
     destination_prefix: str,
     content: dict,
-) -> None:  # pragma: no cover
+) -> None:
     old_key: str = content["Key"]
     new_key: str = old_key.replace(source_prefix, destination_prefix, 1)
     source: dict = dict(Bucket=bucket, Key=old_key)
@@ -75,7 +75,7 @@ def moves(
     source_prefix: str,
     destination_prefix: str,
     contents: tuple[dict, ...],
-) -> None:  # pragma: no cover
+) -> None:
     client: BaseClient = get_client(credential)
     worker: Callable = partial(
         move,
