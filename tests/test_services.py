@@ -13,8 +13,9 @@ from unittest.mock import MagicMock
 
 import pytest
 from anyio import Path
+from botocore.client import BaseClient
 from duckdb import DuckDBPyConnection
-from pydantic import BaseModel, validate_call
+from pydantic import AnyUrl, BaseModel, validate_call
 from pydantic.dataclasses import dataclass
 from sqlalchemy import Engine
 from sqlalchemy.dialects.postgresql import JSONB
@@ -24,12 +25,24 @@ from voxrow.core.adapters.database.sqlmodel import PydanticJSON, SQLModelEntity
 from voxrow.core.adapters.ports.duckdb import AbstractDuckDB
 from voxrow.core.domain import domain_services, value_objects
 from voxrow.core.services import handlers
-from voxrow.core.services.unit_of_work import duckdb, httpx, pathlib, sqlmodel
+from voxrow.core.services.unit_of_work import boto3, duckdb, httpx, pathlib, sqlmodel
 
 from .conftest import TEST_FILES_DIR
 
 
 # Mocks
+@pytest.fixture
+def mock_boto3(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "voxrow.core.adapters.storage.boto3.boto3.client",
+        lambda *args, **kwargs: MagicMock(  # noqa: ARG005
+            spec=BaseClient,
+            get_object=MagicMock(),
+            put_object=MagicMock(),
+        ),
+    )
+
+
 @pytest.fixture
 def mock_httpx(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
@@ -77,6 +90,32 @@ class FakeTransformDuckDB(AbstractDuckDB):
 
 
 class TestHandlersEtl:
+    @pytest.mark.asyncio
+    async def test_boto3(
+        self,
+        fake_boto3_credential: value_objects.Boto3Credential,
+        mock_boto3: Callable,  # noqa: ARG002
+    ) -> None:
+        bucket: str = "datalake"
+        key: str = "fake_file_new.json"
+        uow: boto3.Boto3DataUnitOfWork = boto3.Boto3DataUnitOfWork(
+            fake_boto3_credential,
+            value_objects.Boto3Scheme.r2,
+        )
+
+        assert await handlers.etl(
+            source=uow(
+                source=value_objects.Boto3Source(bucket, "fake_file_old.json"),
+            ),
+            destination=uow(
+                destination=value_objects.Boto3Destination(
+                    bucket,
+                    key,
+                    value_objects.ContentType.json,
+                ),
+            ),
+        ) == AnyUrl(f"{value_objects.Boto3Scheme.r2}://{bucket}/{key}")
+
     def test_httpx(self, mock_httpx: Callable) -> None:  # noqa: ARG002
         fake_user_total: int = 10
 

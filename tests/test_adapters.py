@@ -16,16 +16,13 @@ from voxrow.core.domain import value_objects
 class TestDatabase:
     def test_duckdb(
         self,
+        fake_boto3_credential: value_objects.Boto3Credential,
         fake_duckdb_conn: DuckDBPyConnection,
         fake_db_dsn: value_objects.DatabaseType,
     ) -> None:
         duckdb.connect_to_r2(
             fake_duckdb_conn,
-            value_objects.Boto3Credential(
-                "https://123.r2.cloudflarestorage.com",
-                "123",
-                "123",
-            ),
+            fake_boto3_credential,
         )
 
         assert (

@@ -17,8 +17,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          lfs: true
           fetch-depth: 0
+          lfs: true
       - name: Mirror this repository
         uses: yesolutions/mirror-action@master
         with:

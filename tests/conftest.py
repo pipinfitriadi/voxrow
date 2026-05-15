@@ -21,6 +21,15 @@ TEST_FILES_DIR: Path = Path("tests") / "files"
 
 
 @pytest.fixture
+def fake_boto3_credential() -> value_objects.Boto3Credential:
+    return value_objects.Boto3Credential(
+        "https://123.r2.cloudflarestorage.com",
+        "123",
+        "123",
+    )
+
+
+@pytest.fixture
 def fake_duckdb_conn() -> DuckDBPyConnection:
     return connect()
 
