@@ -159,6 +159,7 @@
       "dependsOrder": "sequence",
       "dependsOn": [
           "Python: Create VEnv",
+          "Python: Upgrade PIP",
           "Python: Environment dependencies"
       ],
       "type": "shell"

@@ -32,8 +32,6 @@ Follow these steps the first time you use VS Code after cloning this git reposit
 3. Use the command <kbd>f1</kbd>, select `Python: Select Interpreter`,
     and then choose _`./.venv/bin/python`_
 4. Use the command <kbd>f1</kbd>, select `Tasks: Run Task`,
-    and then choose `Python: Upgrade PIP`
-5. Use the command <kbd>f1</kbd>, select `Tasks: Run Task`,
     and then choose `Python: Preparation`
 
 ## CI/CD
