@@ -40,6 +40,7 @@ dynamic = ['version']
 
 [project.optional-dependencies]
 database = [
+    'google-cloud-bigquery',
     'sqlmodel',
     'psycopg2-binary',
 ]
