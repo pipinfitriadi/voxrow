@@ -110,8 +110,7 @@ class FakeTransformDuckDB(AbstractDuckDB):
 
 
 class TestHandlersEtl:
-    @pytest.mark.asyncio
-    async def test_bigquery(self, mock_bigquery: Callable) -> None:  # noqa: ARG002
+    def test_bigquery(self, mock_bigquery: Callable) -> None:  # noqa: ARG002
         uow: bigquery.BigqueryDataUnitOfWork = bigquery.BigqueryDataUnitOfWork(
             get_client(
                 "project-id",
