@@ -93,6 +93,12 @@ class Source: ...
 
 
 @dataclass(frozen=True)
+class BigquerySource(Source):
+    query: str
+    page_size: int | None = None
+
+
+@dataclass(frozen=True)
 class Boto3Credential:
     endpoint_url: HttpUrl
     aws_access_key_id: SecretStr

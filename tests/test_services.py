@@ -14,22 +14,55 @@ from unittest.mock import MagicMock
 import pytest
 from anyio import Path
 from duckdb import DuckDBPyConnection
+from google.cloud.bigquery import Client
+from google.oauth2.service_account import Credentials
 from pydantic import AnyUrl, BaseModel, validate_call
 from pydantic.dataclasses import dataclass
 from sqlalchemy import Engine
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, MetaData, Session, select, text
 
+from voxrow.core.adapters.database.bigquery import get_client
 from voxrow.core.adapters.database.sqlmodel import PydanticJSON, SQLModelEntity
 from voxrow.core.adapters.ports.duckdb import AbstractDuckDB
 from voxrow.core.domain import domain_services, value_objects
 from voxrow.core.services import handlers
-from voxrow.core.services.unit_of_work import boto3, duckdb, httpx, pathlib, sqlmodel
+from voxrow.core.services.unit_of_work import (
+    bigquery,
+    boto3,
+    duckdb,
+    httpx,
+    pathlib,
+    sqlmodel,
+)
 
 from .conftest import TEST_FILES_DIR
 
 
 # Mocks
+@pytest.fixture
+def mock_bigquery(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "voxrow.core.adapters.database.bigquery.Client",
+        lambda *args, **kwargs: MagicMock(  # noqa: ARG005
+            spec=Client,
+            query=MagicMock(
+                return_value=MagicMock(
+                    result=MagicMock(
+                        return_value=MagicMock(
+                            pages=((dict(a=1),),),
+                        )
+                    ),
+                ),
+            ),
+        ),
+    )
+    monkeypatch.setattr(
+        "voxrow.core.adapters.database.bigquery.Credentials.from_service_account_file",
+        lambda *args, **kwargs: MagicMock(spec=Credentials),  # noqa: ARG005
+    )
+
+
 @pytest.fixture
 def mock_httpx(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
@@ -77,6 +110,18 @@ class FakeTransformDuckDB(AbstractDuckDB):
 
 
 class TestHandlersEtl:
+    @pytest.mark.asyncio
+    async def test_bigquery(self, mock_bigquery: Callable) -> None:  # noqa: ARG002
+        uow: bigquery.BigqueryDataUnitOfWork = bigquery.BigqueryDataUnitOfWork(
+            get_client(
+                "project-id",
+                TEST_FILES_DIR / "google" / "service_account.json",
+            )
+        )
+
+        with uow(source=value_objects.BigquerySource("SELECT 1 a;")):
+            assert tuple(uow.data.extract(source=uow.source)) == (dict(a=1),)
+
     @pytest.mark.asyncio
     async def test_boto3(
         self,
