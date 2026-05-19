@@ -142,15 +142,14 @@ class TestHandlersEtl:
             )
 
             assert file == Path(temp_file.name)
-            assert (
-                uow.data.extract(
-                    source=value_objects.PathSource(
-                        file,
-                        is_bytes=True,
-                    ),
-                )
-                == data_bytes
-            )
+
+            with uow(
+                source=value_objects.PathSource(
+                    file,
+                    is_bytes=True,
+                ),
+            ):
+                assert uow.data.extract(source=uow.source) == data_bytes
 
         with (
             pytest.raises(
@@ -197,16 +196,12 @@ class TestHandlersEtl:
             ),
         )
 
-        assert (
-            tuple(
-                uow.data.extract(
-                    source=value_objects.DuckDBSource(
-                        f"SELECT * FROM {table.schema}.{table.name};",  # noqa: S608
-                    ),
-                )
-            )
-            == data
-        )
+        with uow(
+            source=value_objects.DuckDBSource(
+                f"SELECT * FROM {table.schema}.{table.name};",  # noqa: S608
+            ),
+        ):
+            assert tuple(uow.data.extract(source=uow.source)) == data
 
     @pytest.mark.asyncio
     async def test_sqlmodel(self, fake_db_engine: Engine) -> None:
