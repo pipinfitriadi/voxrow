@@ -7,7 +7,6 @@
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 21 January 2026
 
 from collections.abc import Callable
-from tempfile import NamedTemporaryFile
 from typing import ClassVar
 from unittest.mock import MagicMock
 
@@ -114,12 +113,12 @@ class TestHandlersEtl:
             assert len(uow.data.extract(source=uow.source)) == fake_user_total
 
     @pytest.mark.asyncio
-    async def test_pathlib(self) -> None:
+    async def test_pathlib(self, tmp_path: Path) -> None:
         data: str = "Test"
         data_bytes: bytes = data.encode()
         uow: pathlib.PathDataUnitOfWork = pathlib.PathDataUnitOfWork()
 
-        with NamedTemporaryFile(mode="w+", suffix=".txt") as temp_file:
+        with (tmp_path / "file.txt").open(mode="w+") as temp_file:
             file: Path = await handlers.etl(
                 source=data,
                 destination=uow(
@@ -130,7 +129,7 @@ class TestHandlersEtl:
             assert file == Path(temp_file.name)
             assert file.read_text() == data
 
-        with NamedTemporaryFile(mode="wb+", suffix=".dat") as temp_file:
+        with (tmp_path / "file.dat").open(mode="wb+") as temp_file:
             file: Path = await handlers.etl(
                 source=data_bytes,
                 destination=uow(
