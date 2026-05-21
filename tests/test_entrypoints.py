@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+
+# Copyright (C) PT. Alto Network - All Rights Reserved
+
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Pipin Fitriadi <pipin.fitriadi@alto.id>, 21 May 2026
+
+from pathlib import Path
+
+import pytest
+from pydantic import FilePath
+from typer import Context, Typer
+from typer.testing import CliRunner, Result
+
+from voxrow.core.domain import value_objects
+from voxrow.core.entrypoints import typer
+
+
+@pytest.fixture
+def fake_env_file(tmp_path: Path) -> FilePath:
+    return tmp_path / ".env"
+
+
+class TestTyper:
+    app: Typer
+    runner: CliRunner
+
+    @pytest.fixture(autouse=True)
+    def setup(self) -> None:
+        self.runner = CliRunner()
+        self.app = Typer()
+
+        @self.app.callback()
+        def callback(context: Context, env_file: FilePath) -> None:
+            context.obj = value_objects.Settings(_env_file=env_file)
+
+        @self.app.command()
+        @typer.inject_settings
+        def command(*, settings: value_objects.Settings) -> None: ...
+
+    def test_command(self, fake_env_file: FilePath) -> None:
+        result: Result = self.runner.invoke(
+            self.app,
+            [fake_env_file.as_posix(), "command"],
+        )
+
+        assert result.exit_code == 0
