@@ -35,8 +35,6 @@ from voxrow.core.services.unit_of_work import (
     sqlmodel,
 )
 
-from .conftest import TEST_FILES_DIR
-
 
 # Mocks
 @pytest.fixture
@@ -63,14 +61,14 @@ def mock_bigquery(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def mock_httpx(monkeypatch: pytest.MonkeyPatch) -> None:
+def mock_httpx(test_files_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "voxrow.core.adapters.ports.httpx.get",
         lambda *args, **kwargs: MagicMock(  # noqa: ARG005
             json=MagicMock(
                 return_value=domain_services.loads_from_json(
                     (
-                        TEST_FILES_DIR / "jsonplaceholder" / "users" / "get.json"
+                        test_files_dir / "jsonplaceholder" / "users" / "get.json"
                     ).read_text()
                 ),
             ),
@@ -109,11 +107,11 @@ class FakeTransformDuckDB(AbstractDuckDB):
 
 
 class TestHandlersEtl:
-    def test_bigquery(self, mock_bigquery: Callable) -> None:  # noqa: ARG002
+    def test_bigquery(self, test_files_dir: Path, mock_bigquery: Callable) -> None:  # noqa: ARG002
         uow: bigquery.BigqueryDataUnitOfWork = bigquery.BigqueryDataUnitOfWork(
             get_client(
                 "project-id",
-                TEST_FILES_DIR / "google" / "service_account.json",
+                test_files_dir / "google" / "service_account.json",
             )
         )
 
