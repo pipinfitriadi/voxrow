@@ -35,11 +35,16 @@ classifiers = [
 dependencies = [
     'pandas',
     'pydantic',
+    'pydantic-settings',
 ]
 dynamic = ['version']
 
 [project.optional-dependencies]
+cli = [
+    'typer',
+]
 database = [
+    'google-cloud-bigquery',
     'sqlmodel',
     'psycopg2-binary',
 ]

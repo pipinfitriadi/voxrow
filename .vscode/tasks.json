@@ -148,7 +148,7 @@
           "-m", "pip", "install",
           "--require-virtualenv",
           "--editable",
-          "${workspaceFolder}[database, http, not_supported_by_vercel, storage]",
+          "${workspaceFolder}[cli, database, http, not_supported_by_vercel, storage]",
           "--group",
           "dev"
       ]

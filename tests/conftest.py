@@ -18,9 +18,6 @@ from sqlalchemy import Engine
 from voxrow.core.adapters.database import sqlmodel
 from voxrow.core.domain import value_objects
 
-# Constants
-TEST_FILES_DIR: Path = Path("tests") / "files"
-
 
 # Mocks
 @pytest.fixture
@@ -46,6 +43,11 @@ def mock_boto3(monkeypatch: pytest.MonkeyPatch) -> None:
             put_object=MagicMock(),
         ),
     )
+
+
+@pytest.fixture
+def test_files_dir() -> Path:
+    return Path("tests") / "files"
 
 
 @pytest.fixture

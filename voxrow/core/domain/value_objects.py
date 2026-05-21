@@ -25,6 +25,7 @@ from pydantic import (
 )
 from pydantic.dataclasses import dataclass
 from pydantic_core import CoreSchema, core_schema
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Constants
 CONFIG_DICT = ConfigDict(arbitrary_types_allowed=True)
@@ -32,6 +33,14 @@ DATE_FMT: str = "%Y-%m-%d"
 DEFAULT_SCHEMA: str = "main"
 ENCODING: str = "utf-8"
 TIME_ZONE: ZoneInfo = ZoneInfo("Asia/Jakarta")
+
+
+class Settings(BaseSettings):
+    model_config: SettingsConfigDict = SettingsConfigDict(
+        env_nested_delimiter="__",
+        frozen=True,
+    )
+
 
 type DatabaseType = PostgresDsn | AnyUrl
 
@@ -90,6 +99,12 @@ class Destination: ...
 
 @dataclass(frozen=True)
 class Source: ...
+
+
+@dataclass(frozen=True)
+class BigquerySource(Source):
+    query: str
+    page_size: int | None = None
 
 
 @dataclass(frozen=True)
