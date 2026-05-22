@@ -43,7 +43,7 @@ class DeltaRichHandler(RichHandler):
         table.add_row(
             message_renderable,  # message log
             Text(
-                f"+{timedelta(seconds=0.0 if last is None else now - last)}",
+                "" if last is None else f"+{timedelta(seconds=now - last)}",
                 style="dim",
             ),  # delta time
         )
@@ -56,16 +56,20 @@ class DeltaRichHandler(RichHandler):
 
 
 @validate_call
-def set_logging_config() -> None:
+def set_logging_config(
+    log_time_format: str = "[%Y-%m-%d %H:%M:%S]",
+    *,
+    show_path: bool = False,
+) -> None:
     logging.basicConfig(
         level=logging.INFO,
         format="%(message)s",
         handlers=[
             DeltaRichHandler(
-                show_path=False,
+                show_path=show_path,
                 markup=True,
                 rich_tracebacks=True,
-                log_time_format="[%Y-%m-%d %H:%M:%S]",
+                log_time_format=log_time_format,
             )
         ],
         force=True,

@@ -48,6 +48,7 @@ class TestTyper:
         @typer.inject_settings
         def command(*, settings: value_objects.Settings) -> None:  # noqa: ARG001
             logger.info(fake_log_msg)
+            logger.info(fake_log_msg)
 
     def test_command(
         self,
@@ -59,8 +60,9 @@ class TestTyper:
             self.app,
             [fake_env_file.as_posix(), "command"],
         )
-        record: logging.LogRecord = caplog.records[0]
 
-        assert record.levelno == logging.INFO
-        assert record.msg == fake_log_msg
+        for record in caplog.records:
+            assert record.levelno == logging.INFO
+            assert record.msg == fake_log_msg
+
         assert result.exit_code == 0
