@@ -6,9 +6,10 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 13 January 2026
 
+import logging
 from collections.abc import Iterator
 from dataclasses import KW_ONLY
-from enum import StrEnum
+from enum import IntEnum, StrEnum
 from http import HTTPMethod
 from pathlib import Path
 from ssl import SSLContext
@@ -33,6 +34,17 @@ DATE_FMT: str = "%Y-%m-%d"
 DEFAULT_SCHEMA: str = "main"
 ENCODING: str = "utf-8"
 TIME_ZONE: ZoneInfo = ZoneInfo("Asia/Jakarta")
+
+
+class LogLevel(IntEnum):
+    CRITICAL = logging.CRITICAL
+    FATAL = logging.FATAL
+    ERROR = logging.ERROR
+    WARNING = logging.WARNING
+    WARN = logging.WARN  # noqa: LOG009
+    INFO = logging.INFO
+    DEBUG = logging.DEBUG
+    NOTSET = logging.NOTSET
 
 
 class Settings(BaseSettings):

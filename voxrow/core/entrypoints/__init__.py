@@ -57,19 +57,21 @@ class DeltaRichHandler(RichHandler):
 
 @validate_call
 def set_logging_config(
-    log_time_format: str = "[%Y-%m-%d %H:%M:%S]",
+    level: value_objects.LogLevel = logging.INFO,
+    fmt: str = "%(message)s",
+    time_fmt: str = "[%Y-%m-%d %H:%M:%S]",
     *,
     show_path: bool = False,
 ) -> None:
     logging.basicConfig(
-        level=logging.INFO,
-        format="%(message)s",
+        level=level,
+        format=fmt,
         handlers=[
             DeltaRichHandler(
                 show_path=show_path,
                 markup=True,
                 rich_tracebacks=True,
-                log_time_format=log_time_format,
+                log_time_format=time_fmt,
             )
         ],
         force=True,
