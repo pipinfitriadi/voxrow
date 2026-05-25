@@ -57,14 +57,13 @@ class DeltaRichHandler(RichHandler):
 
 @validate_call
 def set_logging_config(
-    name: str | None = None,
     level: value_objects.LogLevel = logging.INFO,
     fmt: str = "%(message)s",
     time_fmt: str = "[%Y-%m-%d %H:%M:%S]",
     *,
     show_path: bool = False,
 ) -> None:
-    logger: logging.Logger = logging.getLogger(name)
+    logger: logging.Logger = logging.getLogger()
 
     for handler in logger.handlers:
         if isinstance(handler, DeltaRichHandler):

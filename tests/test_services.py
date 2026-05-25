@@ -46,9 +46,7 @@ def mock_bigquery(monkeypatch: pytest.MonkeyPatch) -> None:
             query=MagicMock(
                 return_value=MagicMock(
                     result=MagicMock(
-                        return_value=MagicMock(
-                            pages=((dict(a=1),),),
-                        )
+                        return_value=(dict(a=1),),
                     ),
                 ),
             ),

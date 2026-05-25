@@ -30,9 +30,8 @@ class BigqueryDataPort(AbstractDataPort):
             page_size=source.page_size,
         )  # Waits for query to finish
 
-        for page in rows.pages:
-            for row in page:
-                yield dict(row)
+        for row in rows:
+            yield dict(row)
 
     @validate_call
     async def load(

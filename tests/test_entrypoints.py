@@ -65,7 +65,7 @@ class TestTyper:
                 ),
             ] = value_objects.LogLevel.INFO.name,
         ) -> None:
-            set_logging_config(__name__, value_objects.LogLevel[log_level])
+            set_logging_config(value_objects.LogLevel[log_level])
 
             context.obj = value_objects.Settings(_env_file=env_file)
 
@@ -87,13 +87,15 @@ class TestTyper:
             ["--log-level", "CRITICAL", env_file, "command"],
         )
 
-        assert caplog.records == []
+        assert len(caplog.records) == 0
         assert result.exit_code == 0
 
         result = self.runner.invoke(
             self.app,
             [env_file, "command"],
         )
+
+        assert len(caplog.records) > 0
 
         for record in caplog.records:
             assert record.levelno == logging.INFO
