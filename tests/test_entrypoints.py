@@ -8,10 +8,12 @@
 
 import logging
 from pathlib import Path
+from typing import Annotated
 
 import pytest
+from click import Choice
 from pydantic import FilePath
-from typer import Context, Typer
+from typer import Context, Option, Typer
 from typer.testing import CliRunner, Result
 
 from voxrow.core.domain import value_objects
@@ -34,14 +36,26 @@ class TestTyper:
 
     @pytest.fixture(autouse=True)
     def setup(self, fake_log_msg: str) -> None:
-        set_logging_config()
-
         self.runner = CliRunner()
         self.app = Typer()
         logger: logging.Logger = logging.getLogger(__name__)
 
         @self.app.callback()
-        def callback(context: Context, env_file: FilePath) -> None:
+        def callback(
+            context: Context,
+            env_file: FilePath,
+            log_level: Annotated[
+                str,
+                Option(
+                    click_type=Choice(
+                        value_objects.LogLevel._member_names_,
+                        case_sensitive=False,
+                    ),
+                ),
+            ] = value_objects.LogLevel.INFO.name,
+        ) -> None:
+            set_logging_config(__name__, value_objects.LogLevel[log_level])
+
             context.obj = value_objects.Settings(_env_file=env_file)
 
         @self.app.command()
@@ -56,9 +70,18 @@ class TestTyper:
         fake_env_file: FilePath,
         fake_log_msg: str,
     ) -> None:
+        env_file: str = fake_env_file.as_posix()
         result: Result = self.runner.invoke(
             self.app,
-            [fake_env_file.as_posix(), "command"],
+            ["--log-level", "CRITICAL", env_file, "command"],
+        )
+
+        assert caplog.records == []
+        assert result.exit_code == 0
+
+        result = self.runner.invoke(
+            self.app,
+            [env_file, "command"],
         )
 
         for record in caplog.records:
