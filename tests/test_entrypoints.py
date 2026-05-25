@@ -13,7 +13,7 @@ from typing import Annotated
 import pytest
 from click import Choice
 from pydantic import FilePath
-from typer import Context, Option, Typer
+from typer import Argument, Context, Option, Typer
 from typer.testing import CliRunner, Result
 
 from voxrow.core.domain import value_objects
@@ -22,7 +22,11 @@ from voxrow.core.entrypoints import set_logging_config, typer
 
 @pytest.fixture
 def fake_env_file(tmp_path: Path) -> FilePath:
-    return tmp_path / ".env"
+    env_file: FilePath = tmp_path / ".env"
+
+    env_file.write_text(data="")
+
+    return env_file
 
 
 @pytest.fixture
@@ -43,7 +47,10 @@ class TestTyper:
         @self.app.callback()
         def callback(
             context: Context,
-            env_file: FilePath,
+            env_file: Annotated[
+                Path,
+                Argument(exists=True, dir_okay=False),
+            ],
             log_level: Annotated[
                 str,
                 Option(
