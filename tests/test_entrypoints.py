@@ -49,7 +49,11 @@ class TestTyper:
             context: Context,
             env_file: Annotated[
                 Path,
-                Argument(exists=True, dir_okay=False),
+                Argument(
+                    exists=True,
+                    dir_okay=False,
+                    help="Example: https://github.com/pipinfitriadi/voxrow/blob/main/template.env",
+                ),
             ],
             log_level: Annotated[
                 str,
