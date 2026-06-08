@@ -12,7 +12,7 @@ from unittest.mock import MagicMock
 import pytest
 from botocore.client import BaseClient
 from duckdb import DuckDBPyConnection, connect
-from pydantic import AnyUrl
+from pydantic import AnyUrl, DirectoryPath, FilePath
 from sqlalchemy import Engine
 
 from voxrow.core.adapters.database import sqlmodel
@@ -46,7 +46,7 @@ def mock_boto3(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def test_files_dir() -> Path:
+def test_files_dir() -> DirectoryPath:
     return Path("tests") / "files"
 
 
@@ -77,3 +77,13 @@ def fake_db_dsn(tmp_path: Path) -> value_objects.DatabaseType:
 @pytest.fixture
 def fake_db_engine(fake_db_dsn: value_objects.DatabaseType) -> Engine:
     return sqlmodel.get_db_engine(fake_db_dsn)
+
+
+@pytest.fixture
+def fake_google_project_id() -> str:
+    return "project-id"
+
+
+@pytest.fixture
+def fake_google_service_account_file(test_files_dir: DirectoryPath) -> FilePath:
+    return test_files_dir / "google" / "service_account.json"
