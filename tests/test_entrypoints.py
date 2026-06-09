@@ -8,11 +8,11 @@
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Literal
+from typing import TYPE_CHECKING
 
 import pytest
 from pydantic import FilePath
-from typer import Argument, Context, Option, Typer
+from typer import Context, Typer
 from typer.testing import CliRunner, Result
 
 from voxrow.core.domain import value_objects
@@ -49,22 +49,11 @@ class TestTyper:
         @self.app.callback()
         def callback(
             context: Context,
-            env_file: Annotated[
-                Path,
-                Argument(
-                    exists=True,
-                    dir_okay=False,
-                    help="Example: https://github.com/pipinfitriadi/voxrow/blob/main/template.env",
-                ),
-            ],
-            log_level: Annotated[
-                Literal[*value_objects.LogLevel._member_names_],
-                Option(case_sensitive=False),
-            ] = value_objects.LogLevel.INFO.name,
-            log_file: Annotated[
-                Path | None,
-                Option(help="Example: file.log"),
-            ] = None,
+            env_file: typer.get_env_file_type(
+                "Example: https://github.com/pipinfitriadi/voxrow/blob/main/template.env"
+            ),
+            log_level: typer.LogLevelType = value_objects.LogLevel.INFO.name,
+            log_file: typer.get_log_file_type() = None,
         ) -> None:
             console: Console = get_console(log_file)
 
@@ -72,11 +61,11 @@ class TestTyper:
 
             context.obj = value_objects.Settings(_env_file=env_file, console=console)
 
-        @self.app.command()
-        @typer.inject_settings
         def command(*, settings: value_objects.Settings) -> None:  # noqa: ARG001
             logger.info(fake_log_msg)
             logger.info(fake_log_msg)
+
+        typer.add_tasks(self.app, command)
 
     def test_command(
         self,
