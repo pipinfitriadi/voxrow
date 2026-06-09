@@ -8,6 +8,7 @@
 
 import logging
 from datetime import timedelta
+from pathlib import Path
 
 from pydantic import validate_call
 from rich.console import Console, ConsoleRenderable
@@ -53,6 +54,19 @@ class DeltaRichHandler(RichHandler):
             traceback=traceback,
             message_renderable=table,
         )
+
+
+@validate_call
+def get_console(log_file: Path | None = None) -> Console:
+    console_kwargs: dict = dict(
+        log_path=False,
+        log_time_format=value_objects.LOG_TIME_FMT,
+    )
+
+    if log_file:
+        console_kwargs["file"] = log_file.open("a", encoding=value_objects.ENCODING)
+
+    return Console(**console_kwargs)
 
 
 @validate_call(config=value_objects.CONFIG_DICT)
