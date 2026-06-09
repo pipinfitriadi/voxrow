@@ -8,17 +8,19 @@
 
 import logging
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal
 
 import pytest
 from pydantic import FilePath
-from rich.console import Console
 from rich.rule import Rule
 from typer import Argument, Context, Option, Typer
 from typer.testing import CliRunner, Result
 
 from voxrow.core.domain import value_objects
-from voxrow.core.entrypoints import set_logging_config, typer
+from voxrow.core.entrypoints import get_console, set_logging_config, typer
+
+if TYPE_CHECKING:
+    from rich.console import Console
 
 
 @pytest.fixture
@@ -65,17 +67,7 @@ class TestTyper:
                 Option(help="Example: file.log"),
             ] = None,
         ) -> None:
-            console_kwargs: dict = dict(
-                log_path=False,
-                log_time_format=value_objects.LOG_TIME_FMT,
-            )
-
-            if log_file:
-                console_kwargs["file"] = log_file.open(
-                    "a", encoding=value_objects.ENCODING
-                )
-
-            console: Console = Console(**console_kwargs)
+            console: Console = get_console(log_file)
 
             set_logging_config(value_objects.LogLevel[log_level], console=console)
 
