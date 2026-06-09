@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Annotated, Literal
 
 import pytest
 from pydantic import FilePath
-from rich.rule import Rule
 from typer import Argument, Context, Option, Typer
 from typer.testing import CliRunner, Result
 
@@ -75,11 +74,9 @@ class TestTyper:
 
         @self.app.command()
         @typer.inject_settings
-        def command(*, settings: value_objects.Settings) -> None:
-            settings.console.log(Rule("Start"))
+        def command(*, settings: value_objects.Settings) -> None:  # noqa: ARG001
             logger.info(fake_log_msg)
             logger.info(fake_log_msg)
-            settings.console.log(Rule("Finish"))
 
     def test_command(
         self,

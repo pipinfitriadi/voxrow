@@ -10,6 +10,7 @@ from functools import wraps
 from inspect import Parameter, Signature, signature
 
 from pydantic import validate_call
+from rich.rule import Rule
 from typer import Context
 
 from ..adapters.tasks import Task
@@ -28,7 +29,13 @@ def inject_settings(task: Task) -> Task:
     ) -> any:  # pragma: no cover
         kwargs.pop(keyword, None)
 
-        return task(*args, settings=context.obj, **kwargs)
+        settings: value_objects.Settings = context.obj
+
+        settings.console.log(Rule("Start"))
+        result: any = task(*args, settings=settings, **kwargs)
+        settings.console.log(Rule("Finish"))
+
+        return result
 
     wrapper.__signature__ = Signature(
         parameters=(
