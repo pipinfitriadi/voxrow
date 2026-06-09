@@ -116,7 +116,7 @@ class TestTyper:
 
         for log_line, test_word in zip(
             log_file.read_text().splitlines(),
-            ("Start", fake_log_msg, fake_log_msg, "Finish"),
+            (" Start: command ", fake_log_msg, fake_log_msg, " Finish: command "),
             strict=True,
         ):
             assert test_word in log_line

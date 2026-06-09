@@ -31,9 +31,9 @@ def inject_settings(task: Task) -> Task:
 
         settings: value_objects.Settings = context.obj
 
-        settings.console.log(Rule("Start"))
+        settings.console.log(Rule(f"Start: {task.__name__}"))
         result: any = task(*args, settings=settings, **kwargs)
-        settings.console.log(Rule("Finish"))
+        settings.console.log(Rule(f"Finish: {task.__name__}"))
 
         return result
 
