@@ -8,13 +8,39 @@
 
 from functools import wraps
 from inspect import Parameter, Signature, signature
+from pathlib import Path
+from typing import Annotated, Literal, TypeAlias
 
 from pydantic import validate_call
 from rich.rule import Rule
-from typer import Context
+from typer import Argument, Context, Option, Typer
 
 from ..adapters.tasks import Task
 from ..domain import value_objects
+
+LogLevelType: TypeAlias = Annotated[  # noqa: UP040
+    Literal[*value_objects.LogLevel._member_names_],
+    Option(case_sensitive=False),
+]
+
+
+@validate_call
+def get_env_file_type(typer_help: str | None = None) -> type[Path]:
+    return Annotated[
+        Path,
+        Argument(
+            exists=True,
+            dir_okay=False,
+            help=typer_help,
+        ),
+    ]
+
+
+@validate_call
+def get_log_file_type(
+    typer_help: str | None = "Example: file.log",
+) -> type[Path] | None:
+    return Annotated[Path | None, Option(help=typer_help)]
 
 
 @validate_call(config=value_objects.CONFIG_DICT)
@@ -53,3 +79,9 @@ def inject_settings(task: Task) -> Task:
     )
 
     return wrapper
+
+
+@validate_call(config=value_objects.CONFIG_DICT)
+def add_tasks(app: Typer, *tasks: Task) -> None:
+    for task in tasks:
+        app.command(task.__name__)(inject_settings(task))
