@@ -12,6 +12,8 @@ from typing import Annotated, Literal
 
 import pytest
 from pydantic import FilePath
+from rich.console import Console
+from rich.rule import Rule
 from typer import Argument, Context, Option, Typer
 from typer.testing import CliRunner, Result
 
@@ -58,22 +60,41 @@ class TestTyper:
                 Literal[*value_objects.LogLevel._member_names_],
                 Option(case_sensitive=False),
             ] = value_objects.LogLevel.INFO.name,
+            log_file: Annotated[
+                Path | None,
+                Option(help="Example: file.log"),
+            ] = None,
         ) -> None:
-            set_logging_config(value_objects.LogLevel[log_level])
+            console_kwargs: dict = dict(
+                log_path=False,
+                log_time_format=value_objects.LOG_TIME_FMT,
+            )
 
-            context.obj = value_objects.Settings(_env_file=env_file)
+            if log_file:
+                console_kwargs["file"] = log_file.open(
+                    "a", encoding=value_objects.ENCODING
+                )
+
+            console: Console = Console(**console_kwargs)
+
+            set_logging_config(value_objects.LogLevel[log_level], console=console)
+
+            context.obj = value_objects.Settings(_env_file=env_file, console=console)
 
         @self.app.command()
         @typer.inject_settings
-        def command(*, settings: value_objects.Settings) -> None:  # noqa: ARG001
+        def command(*, settings: value_objects.Settings) -> None:
+            settings.console.log(Rule("Start"))
             logger.info(fake_log_msg)
             logger.info(fake_log_msg)
+            settings.console.log(Rule("Finish"))
 
     def test_command(
         self,
         caplog: pytest.LogCaptureFixture,
         fake_env_file: FilePath,
         fake_log_msg: str,
+        tmp_path: Path,
     ) -> None:
         env_file: str = fake_env_file.as_posix()
         result: Result = self.runner.invoke(
@@ -84,15 +105,29 @@ class TestTyper:
         assert len(caplog.records) == 0
         assert result.exit_code == 0
 
+        log_file: FilePath = tmp_path / "file.log"
+
+        log_file.write_text("")
+
+        assert log_file.is_file()
+
+        test_record: int = 2
         result = self.runner.invoke(
             self.app,
-            [env_file, "command"],
+            ["--log-file", log_file, env_file, "command"],
         )
 
-        assert len(caplog.records) > 0
+        assert len(caplog.records) == test_record
 
         for record in caplog.records:
             assert record.levelno == logging.INFO
             assert record.msg == fake_log_msg
 
         assert result.exit_code == 0
+
+        for log_line, test_word in zip(
+            log_file.read_text().splitlines(),
+            ("Start", fake_log_msg, fake_log_msg, "Finish"),
+            strict=True,
+        ):
+            assert test_word in log_line

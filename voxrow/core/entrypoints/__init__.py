@@ -10,7 +10,7 @@ import logging
 from datetime import timedelta
 
 from pydantic import validate_call
-from rich.console import ConsoleRenderable
+from rich.console import Console, ConsoleRenderable
 from rich.logging import RichHandler
 from rich.table import Table
 from rich.text import Text
@@ -55,11 +55,12 @@ class DeltaRichHandler(RichHandler):
         )
 
 
-@validate_call
+@validate_call(config=value_objects.CONFIG_DICT)
 def set_logging_config(
     level: value_objects.LogLevel = logging.INFO,
     fmt: str = "%(message)s",
-    time_fmt: str = "[%Y-%m-%d %H:%M:%S]",
+    time_fmt: str = value_objects.LOG_TIME_FMT,
+    console: Console | None = None,
     *,
     show_path: bool = False,
 ) -> None:
@@ -74,6 +75,7 @@ def set_logging_config(
         markup=True,
         rich_tracebacks=True,
         log_time_format=time_fmt,
+        console=console,
     )
 
     handler.setFormatter(logging.Formatter(fmt))
