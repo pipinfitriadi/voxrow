@@ -10,18 +10,21 @@ import gzip
 import json
 from datetime import date, datetime
 from typing import Protocol, runtime_checkable
+from zoneinfo import ZoneInfo
 
 from pydantic import validate_call
 
 from .value_objects import ENCODING, TIME_ZONE, Data
 
 
-def now() -> datetime:
-    return datetime.now(tz=TIME_ZONE)
+@validate_call
+def now(tz: ZoneInfo = TIME_ZONE) -> datetime:
+    return datetime.now(tz)
 
 
-def today() -> date:
-    return now().date()
+@validate_call
+def today(tz: ZoneInfo = TIME_ZONE) -> date:
+    return now(tz).date()
 
 
 @runtime_checkable

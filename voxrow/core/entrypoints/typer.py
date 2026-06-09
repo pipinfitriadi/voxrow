@@ -6,17 +6,19 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 21 May 2026
 
+from datetime import datetime, timedelta
 from functools import wraps
 from inspect import Parameter, Signature, signature
 from pathlib import Path
 from typing import Annotated, Literal, TypeAlias
+from zoneinfo import ZoneInfo
 
-from pydantic import validate_call
+from pydantic import NonNegativeInt, validate_call
 from rich.rule import Rule
 from typer import Argument, Context, Option, Typer
 
 from ..adapters.tasks import Task
-from ..domain import value_objects
+from ..domain import domain_services, value_objects
 
 LogLevelType: TypeAlias = Annotated[  # noqa: UP040
     Literal[*value_objects.LogLevel._member_names_],
@@ -32,6 +34,25 @@ def get_env_file_type(typer_help: str | None = None) -> type[Path]:
             exists=True,
             dir_okay=False,
             help=typer_help,
+        ),
+    ]
+
+
+@validate_call
+def get_date_type(
+    delta_days: NonNegativeInt = 0,
+    tz: ZoneInfo = value_objects.TIME_ZONE,
+) -> type[datetime]:
+    return Annotated[
+        datetime,
+        Option(
+            formats=[value_objects.DATE_FMT],
+            default_factory=(
+                lambda: domain_services.now(tz) - timedelta(days=delta_days)
+            ),
+            show_default=(domain_services.now(tz) - timedelta(days=delta_days))
+            .date()
+            .isoformat(),
         ),
     ]
 

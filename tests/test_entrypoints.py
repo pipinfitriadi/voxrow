@@ -33,7 +33,7 @@ def fake_env_file(tmp_path: Path) -> FilePath:
 
 @pytest.fixture
 def fake_log_msg() -> str:
-    return "Test.."
+    return "Test"
 
 
 class TestTyper:
@@ -61,9 +61,12 @@ class TestTyper:
 
             context.obj = value_objects.Settings(_env_file=env_file, console=console)
 
-        def command(*, settings: value_objects.Settings) -> None:  # noqa: ARG001
-            logger.info(fake_log_msg)
-            logger.info(fake_log_msg)
+        def command(
+            date: typer.get_date_type(),
+            *,
+            settings: value_objects.Settings,  # noqa: ARG001
+        ) -> None:
+            logger.info("%s: %s", fake_log_msg, date.date())
 
         typer.add_tasks(self.app, command)
 
@@ -89,23 +92,25 @@ class TestTyper:
 
         assert log_file.is_file()
 
-        test_record: int = 2
+        test_record: int = 1
+        test_date: str = "2026-01-01"
+        test_log_message: str = f"{fake_log_msg}: {test_date}"
         result = self.runner.invoke(
             self.app,
-            ["--log-file", log_file, env_file, "command"],
+            ["--log-file", log_file, env_file, "command", "--date", test_date],
         )
 
         assert len(caplog.records) == test_record
 
         for record in caplog.records:
             assert record.levelno == logging.INFO
-            assert record.msg == fake_log_msg
+            assert record.message == test_log_message
 
         assert result.exit_code == 0
 
         for log_line, test_word in zip(
             log_file.read_text().splitlines(),
-            (" Start: command ", fake_log_msg, fake_log_msg, " Finish: command "),
+            (" Start: command ", test_log_message, " Finish: command "),
             strict=True,
         ):
             assert test_word in log_line
