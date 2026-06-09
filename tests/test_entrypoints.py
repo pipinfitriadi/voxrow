@@ -8,10 +8,9 @@
 
 import logging
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 import pytest
-from click import Choice
 from pydantic import FilePath
 from typer import Argument, Context, Option, Typer
 from typer.testing import CliRunner, Result
@@ -56,13 +55,8 @@ class TestTyper:
                 ),
             ],
             log_level: Annotated[
-                str,
-                Option(
-                    click_type=Choice(
-                        value_objects.LogLevel._member_names_,
-                        case_sensitive=False,
-                    ),
-                ),
+                Literal[*value_objects.LogLevel._member_names_],
+                Option(case_sensitive=False),
             ] = value_objects.LogLevel.INFO.name,
         ) -> None:
             set_logging_config(value_objects.LogLevel[log_level])

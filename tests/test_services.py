@@ -15,7 +15,7 @@ from anyio import Path
 from duckdb import DuckDBPyConnection
 from google.cloud.bigquery import Client
 from google.oauth2.service_account import Credentials
-from pydantic import AnyUrl, BaseModel, validate_call
+from pydantic import AnyUrl, BaseModel, DirectoryPath, FilePath, validate_call
 from pydantic.dataclasses import dataclass
 from sqlalchemy import Engine
 from sqlalchemy.dialects.postgresql import JSONB
@@ -59,7 +59,7 @@ def mock_bigquery(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def mock_httpx(test_files_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def mock_httpx(test_files_dir: DirectoryPath, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "voxrow.core.adapters.ports.httpx.get",
         lambda *args, **kwargs: MagicMock(  # noqa: ARG005
@@ -105,11 +105,16 @@ class FakeTransformDuckDB(AbstractDuckDB):
 
 
 class TestHandlersEtl:
-    def test_bigquery(self, test_files_dir: Path, mock_bigquery: Callable) -> None:  # noqa: ARG002
+    def test_bigquery(
+        self,
+        fake_google_project_id: str,
+        fake_google_service_account_file: FilePath,
+        mock_bigquery: Callable,  # noqa: ARG002
+    ) -> None:
         uow: bigquery.BigqueryDataUnitOfWork = bigquery.BigqueryDataUnitOfWork(
             get_client(
-                "project-id",
-                test_files_dir / "google" / "service_account.json",
+                fake_google_project_id,
+                fake_google_service_account_file,
             )
         )
 
