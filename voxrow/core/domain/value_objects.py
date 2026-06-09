@@ -27,12 +27,14 @@ from pydantic import (
 from pydantic.dataclasses import dataclass
 from pydantic_core import CoreSchema, core_schema
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from rich.console import Console
 
 # Constants
 CONFIG_DICT = ConfigDict(arbitrary_types_allowed=True)
 DATE_FMT: str = "%Y-%m-%d"
 DEFAULT_SCHEMA: str = "main"
 ENCODING: str = "utf-8"
+LOG_TIME_FMT: str = f"[{DATE_FMT} %H:%M:%S]"
 TIME_ZONE: ZoneInfo = ZoneInfo("Asia/Jakarta")
 
 
@@ -48,6 +50,8 @@ class LogLevel(IntEnum):
 
 
 class Settings(BaseSettings):
+    console: Console
+
     model_config: SettingsConfigDict = SettingsConfigDict(
         env_nested_delimiter="__",
         frozen=True,
