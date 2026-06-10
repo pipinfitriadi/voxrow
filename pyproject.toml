@@ -36,6 +36,7 @@ dependencies = [
     'pandas',
     'pydantic',
     'pydantic-settings',
+    'rich',
 ]
 dynamic = ['version']
 
