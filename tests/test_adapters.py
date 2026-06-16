@@ -17,8 +17,8 @@ from google.oauth2.service_account import Credentials
 from pydantic import FilePath
 from sqlalchemy import Engine
 
-from voxrow.core.adapters.database import duckdb, sqlmodel
-from voxrow.core.adapters.storage import boto3, gcs
+from voxrow.core.adapters.utils.database import duckdb, sqlmodel
+from voxrow.core.adapters.utils.storage import boto3, gcs
 from voxrow.core.domain import value_objects
 
 
@@ -29,7 +29,7 @@ def mock_gcs(fake_bucket: str, monkeypatch: pytest.MonkeyPatch) -> None:
 
     mock_blob.configure_mock(name="directory/file.txt", bucket=fake_bucket)
     monkeypatch.setattr(
-        "voxrow.core.adapters.storage.gcs.Client",
+        "voxrow.core.adapters.utils.storage.gcs.Client",
         lambda *args, **kwargs: MagicMock(  # noqa: ARG005
             spec=Client,
             list_blobs=MagicMock(
@@ -39,7 +39,7 @@ def mock_gcs(fake_bucket: str, monkeypatch: pytest.MonkeyPatch) -> None:
         ),
     )
     monkeypatch.setattr(
-        "voxrow.core.adapters.storage.gcs.Credentials.from_service_account_file",
+        "voxrow.core.adapters.utils.storage.gcs.Credentials.from_service_account_file",
         lambda *args, **kwargs: MagicMock(spec=Credentials),  # noqa: ARG005
     )
 

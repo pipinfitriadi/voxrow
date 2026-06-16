@@ -9,7 +9,7 @@
 from duckdb import DuckDBPyConnection
 from pydantic import validate_call
 
-from ...adapters.ports import duckdb
+from ...adapters.data import duckdb
 from ...domain import value_objects
 from . import AbstractDataUnitOfWork
 
@@ -24,7 +24,7 @@ class DuckDBDataUnitOfWork(AbstractDataUnitOfWork):
         *,
         as_iterator: bool = False,
     ) -> None:
-        self.data = duckdb.DuckDBDataPort(
+        self.data = duckdb.DuckDBDataAdapter(
             connection,
             view_name,
             fetch_size,

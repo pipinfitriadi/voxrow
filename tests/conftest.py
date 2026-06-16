@@ -15,7 +15,7 @@ from duckdb import DuckDBPyConnection, connect
 from pydantic import AnyUrl, DirectoryPath, FilePath
 from sqlalchemy import Engine
 
-from voxrow.core.adapters.database import sqlmodel
+from voxrow.core.adapters.utils.database import sqlmodel
 from voxrow.core.domain import value_objects
 
 
@@ -23,7 +23,7 @@ from voxrow.core.domain import value_objects
 @pytest.fixture
 def mock_boto3(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "voxrow.core.adapters.storage.boto3.boto3.client",
+        "voxrow.core.adapters.utils.storage.boto3.boto3.client",
         lambda *args, **kwargs: MagicMock(  # noqa: ARG005
             spec=BaseClient,
             copy_object=MagicMock(),

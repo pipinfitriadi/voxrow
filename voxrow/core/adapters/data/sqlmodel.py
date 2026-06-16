@@ -13,7 +13,7 @@ from pydantic.dataclasses import dataclass
 from sqlalchemy.dialects.postgresql import insert as insert_postgres
 from sqlalchemy.dialects.sqlite import insert as insert_sqlite
 
-from ...adapters.database.sqlmodel import AbstractSQLModel
+from ...adapters.utils.database.sqlmodel import AbstractSQLModel
 from ...domain import value_objects
 from . import AbstractDataPort
 
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(config=value_objects.CONFIG_DICT)
-class SQLModelDataPort(AbstractSQLModel, AbstractDataPort):
+class SQLModelDataAdapter(AbstractSQLModel, AbstractDataPort):
     @validate_call
     def extract(
         self,

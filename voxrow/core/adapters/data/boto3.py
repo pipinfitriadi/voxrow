@@ -15,7 +15,7 @@ from . import AbstractDataPort
 
 
 @dataclass(config=value_objects.CONFIG_DICT, frozen=True)
-class Boto3DataPort(AbstractDataPort):
+class Boto3DataAdapter(AbstractDataPort):
     client: BaseClient
     scheme: value_objects.Boto3Scheme
 

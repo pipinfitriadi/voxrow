@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(config=value_objects.CONFIG_DICT, frozen=True)
-class BigqueryDataPort(AbstractDataPort):
+class BigqueryDataAdapter(AbstractDataPort):
     client: Client
 
     @validate_call
