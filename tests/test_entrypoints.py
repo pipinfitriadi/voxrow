@@ -92,7 +92,6 @@ class TestTyper:
 
         assert log_file.is_file()
 
-        test_record: int = 1
         test_date: str = "2026-01-01"
         test_log_message: str = f"{fake_log_msg}: {test_date}"
         result = self.runner.invoke(
@@ -100,7 +99,7 @@ class TestTyper:
             ["--log-file", log_file, env_file, "command", "--date", test_date],
         )
 
-        assert len(caplog.records) == test_record
+        assert len(caplog.records) == 1
 
         for record in caplog.records:
             assert record.levelno == logging.INFO
