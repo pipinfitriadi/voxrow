@@ -6,7 +6,7 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 29 January 2026
 
-from ...adapters.ports import httpx
+from ...adapters.data import httpx
 from . import AbstractDataUnitOfWork
 
 

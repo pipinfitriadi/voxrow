@@ -11,7 +11,7 @@ from typing import Self
 from pydantic import validate_call
 from sqlmodel import Session
 
-from ...adapters.ports.sqlmodel import SQLModelDataPort
+from ...adapters.data.sqlmodel import SQLModelDataPort
 from ...adapters.utils.database import sqlmodel
 from ...domain import value_objects
 from ...services import unit_of_work

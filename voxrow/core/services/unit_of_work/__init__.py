@@ -12,7 +12,7 @@ from typing import Self
 
 from pydantic import validate_call
 
-from ...adapters import ports
+from ...adapters.data import AbstractDataPort
 from ...domain.value_objects import CONFIG_DICT, Destination, Source
 
 
@@ -59,7 +59,7 @@ class AbstractUnitOfWork:  # pragma: no cover
 
 
 class AbstractDataUnitOfWork(AbstractUnitOfWork):
-    data: ports.AbstractDataPort | None = None
+    data: AbstractDataPort | None = None
     destination: Destination | None = None
     source: Source | None = None
 

@@ -9,7 +9,7 @@
 from google.cloud.bigquery import Client
 from pydantic import validate_call
 
-from ...adapters.ports.bigquery import BigqueryDataPort
+from ...adapters.data.bigquery import BigqueryDataPort
 from ...domain import value_objects
 from ...services import unit_of_work
 

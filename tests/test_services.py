@@ -21,7 +21,7 @@ from sqlalchemy import Engine
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, MetaData, Session, select, text
 
-from voxrow.core.adapters.ports.duckdb import AbstractDuckDB
+from voxrow.core.adapters.data.duckdb import AbstractDuckDB
 from voxrow.core.adapters.utils.database.bigquery import get_client
 from voxrow.core.adapters.utils.database.sqlmodel import PydanticJSON, SQLModelEntity
 from voxrow.core.domain import domain_services, value_objects
@@ -61,7 +61,7 @@ def mock_bigquery(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.fixture
 def mock_httpx(test_files_dir: DirectoryPath, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "voxrow.core.adapters.ports.httpx.get",
+        "voxrow.core.adapters.data.httpx.get",
         lambda *args, **kwargs: MagicMock(  # noqa: ARG005
             json=MagicMock(
                 return_value=domain_services.loads_from_json(
