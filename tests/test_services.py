@@ -21,9 +21,9 @@ from sqlalchemy import Engine
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, MetaData, Session, select, text
 
-from voxrow.core.adapters.database.bigquery import get_client
-from voxrow.core.adapters.database.sqlmodel import PydanticJSON, SQLModelEntity
 from voxrow.core.adapters.ports.duckdb import AbstractDuckDB
+from voxrow.core.adapters.utils.database.bigquery import get_client
+from voxrow.core.adapters.utils.database.sqlmodel import PydanticJSON, SQLModelEntity
 from voxrow.core.domain import domain_services, value_objects
 from voxrow.core.services import handlers
 from voxrow.core.services.unit_of_work import (
@@ -40,7 +40,7 @@ from voxrow.core.services.unit_of_work import (
 @pytest.fixture
 def mock_bigquery(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "voxrow.core.adapters.database.bigquery.Client",
+        "voxrow.core.adapters.utils.database.bigquery.Client",
         lambda *args, **kwargs: MagicMock(  # noqa: ARG005
             spec=Client,
             query=MagicMock(
@@ -53,7 +53,7 @@ def mock_bigquery(monkeypatch: pytest.MonkeyPatch) -> None:
         ),
     )
     monkeypatch.setattr(
-        "voxrow.core.adapters.database.bigquery.Credentials.from_service_account_file",
+        "voxrow.core.adapters.utils.database.bigquery.Credentials.from_service_account_file",
         lambda *args, **kwargs: MagicMock(spec=Credentials),  # noqa: ARG005
     )
 
