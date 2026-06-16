@@ -20,7 +20,7 @@ from ...domain.value_objects import (
 from . import AbstractDataPort
 
 
-class HttpxDataPort(AbstractDataPort):
+class HttpxDataAdapter(AbstractDataPort):
     @validate_call
     def extract(self, *, source: HttpxSource) -> Data:
         methods: dict = {

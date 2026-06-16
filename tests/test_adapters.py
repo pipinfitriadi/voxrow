@@ -11,8 +11,8 @@ from collections.abc import Callable
 from duckdb import DuckDBPyConnection
 from sqlalchemy import Engine
 
-from voxrow.core.adapters.database import duckdb, sqlmodel
-from voxrow.core.adapters.storage import boto3
+from voxrow.core.adapters.utils.database import duckdb, sqlmodel
+from voxrow.core.adapters.utils.storage import boto3
 from voxrow.core.domain import value_objects
 
 

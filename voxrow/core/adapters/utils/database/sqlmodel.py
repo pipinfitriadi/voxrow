@@ -17,7 +17,7 @@ from sqlalchemy.schema import CreateSchema
 from sqlalchemy.sql.type_api import _T
 from sqlmodel import DateTime, Field, Session, SQLModel, create_engine
 
-from ...domain import domain_services, entity, value_objects
+from ....domain import domain_services, entity, value_objects
 
 
 class SQLModelDomain(value_objects.Domain, SQLModel):

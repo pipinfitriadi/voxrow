@@ -6,10 +6,10 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 29 January 2026
 
-from ...adapters.ports import pathlib
+from ...adapters.data import pathlib
 from . import AbstractDataUnitOfWork
 
 
 class PathDataUnitOfWork(AbstractDataUnitOfWork):
     def __init__(self) -> None:
-        self.data = pathlib.PathDataPort()
+        self.data = pathlib.PathDataAdapter()

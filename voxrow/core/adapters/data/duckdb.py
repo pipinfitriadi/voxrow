@@ -53,7 +53,7 @@ class AbstractDuckDB:
                 yield dict(zip(columns, row, strict=True))
 
 
-class DuckDBDataPort(AbstractDataPort, AbstractDuckDB):
+class DuckDBDataAdapter(AbstractDataPort, AbstractDuckDB):
     @validate_call
     def extract(self, *, source: value_objects.DuckDBSource) -> value_objects.Data:
         data: DuckDBPyRelation = self.connection.query(

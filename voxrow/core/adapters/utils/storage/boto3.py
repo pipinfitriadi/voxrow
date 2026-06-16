@@ -14,7 +14,7 @@ import boto3
 from botocore.client import BaseClient
 from pydantic import validate_call
 
-from ...domain import value_objects
+from ....domain import value_objects
 
 if TYPE_CHECKING:
     from collections.abc import Callable

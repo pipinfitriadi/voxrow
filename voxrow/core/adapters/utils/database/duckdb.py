@@ -9,7 +9,7 @@
 from duckdb import DuckDBPyConnection
 from pydantic import PostgresDsn, validate_call
 
-from ...domain import value_objects
+from ....domain import value_objects
 
 
 @validate_call(config=value_objects.CONFIG_DICT)
