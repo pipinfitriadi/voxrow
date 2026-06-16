@@ -24,7 +24,7 @@ class DuckDBDataUnitOfWork(AbstractDataUnitOfWork):
         *,
         as_iterator: bool = False,
     ) -> None:
-        self.data = duckdb.DuckDBDataPort(
+        self.data = duckdb.DuckDBDataAdapter(
             connection,
             view_name,
             fetch_size,

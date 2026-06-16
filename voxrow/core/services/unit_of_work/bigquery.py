@@ -9,7 +9,7 @@
 from google.cloud.bigquery import Client
 from pydantic import validate_call
 
-from ...adapters.data.bigquery import BigqueryDataPort
+from ...adapters.data import bigquery
 from ...domain import value_objects
 from ...services import unit_of_work
 
@@ -17,4 +17,4 @@ from ...services import unit_of_work
 class BigqueryDataUnitOfWork(unit_of_work.AbstractDataUnitOfWork):
     @validate_call(config=value_objects.CONFIG_DICT)
     def __init__(self, client: Client) -> None:
-        self.data = BigqueryDataPort(client)
+        self.data = bigquery.BigqueryDataAdapter(client)

@@ -12,4 +12,4 @@ from . import AbstractDataUnitOfWork
 
 class HttpxDataUnitOfWork(AbstractDataUnitOfWork):
     def __init__(self) -> None:
-        self.data = httpx.HttpxDataPort()
+        self.data = httpx.HttpxDataAdapter()

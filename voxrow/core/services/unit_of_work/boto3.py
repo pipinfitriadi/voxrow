@@ -21,4 +21,4 @@ class Boto3DataUnitOfWork(AbstractDataUnitOfWork):
         credential: value_objects.Boto3Credential,
         scheme: value_objects.Boto3Scheme,
     ) -> None:
-        self.data = boto3.Boto3DataPort(storage_boto3.get_client(credential), scheme)
+        self.data = boto3.Boto3DataAdapter(storage_boto3.get_client(credential), scheme)

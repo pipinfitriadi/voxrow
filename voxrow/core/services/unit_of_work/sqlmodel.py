@@ -11,15 +11,15 @@ from typing import Self
 from pydantic import validate_call
 from sqlmodel import Session
 
-from ...adapters.data.sqlmodel import SQLModelDataPort
-from ...adapters.utils.database import sqlmodel
+from ...adapters.data import sqlmodel
+from ...adapters.utils.database.sqlmodel import AbstractSQLModel
 from ...domain import value_objects
 from ...services import unit_of_work
 
 
 # Abstracts
 class AbstractSQLModelUnitOfWork(
-    sqlmodel.AbstractSQLModel,
+    AbstractSQLModel,
     unit_of_work.AbstractUnitOfWork,
 ):
     @validate_call(config=value_objects.CONFIG_DICT)
@@ -47,4 +47,4 @@ class SQLModelDataUnitOfWork(
     def __init__(self, session: Session) -> None:
         super().__init__(session)
 
-        self.data = SQLModelDataPort(self.session)
+        self.data = sqlmodel.SQLModelDataAdapter(self.session)

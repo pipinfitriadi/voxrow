@@ -12,4 +12,4 @@ from . import AbstractDataUnitOfWork
 
 class PathDataUnitOfWork(AbstractDataUnitOfWork):
     def __init__(self) -> None:
-        self.data = pathlib.PathDataPort()
+        self.data = pathlib.PathDataAdapter()

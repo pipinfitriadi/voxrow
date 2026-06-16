@@ -17,7 +17,7 @@ from ...domain.value_objects import (
 from . import AbstractDataPort
 
 
-class PathDataPort(AbstractDataPort):
+class PathDataAdapter(AbstractDataPort):
     @validate_call
     def extract(self, *, source: PathSource) -> Data:
         return (
