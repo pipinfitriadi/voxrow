@@ -6,7 +6,6 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 2 March 2026
 
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
@@ -47,7 +46,7 @@ def mock_boto3(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.fixture
 def test_files_dir() -> DirectoryPath:
-    return Path("tests") / "files"
+    return DirectoryPath("tests") / "files"
 
 
 @pytest.fixture
@@ -70,7 +69,7 @@ def fake_duckdb_conn() -> DuckDBPyConnection:
 
 
 @pytest.fixture
-def fake_db_dsn(tmp_path: Path) -> value_objects.DatabaseType:
+def fake_db_dsn(tmp_path: DirectoryPath) -> value_objects.DatabaseType:
     return AnyUrl(f"sqlite:///{tmp_path}/database.sqlite3")
 
 
