@@ -158,7 +158,7 @@ class TestHandlersEtl:
             assert len(uow.data.extract(source=uow.source)) == fake_user_total
 
     @pytest.mark.asyncio
-    async def test_pathlib(self, tmp_path: Path) -> None:
+    async def test_pathlib(self, tmp_path: DirectoryPath) -> None:
         data: str = "Test"
         data_bytes: bytes = data.encode()
         uow: pathlib.PathDataUnitOfWork = pathlib.PathDataUnitOfWork()

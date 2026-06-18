@@ -7,11 +7,10 @@
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 21 May 2026
 
 import logging
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from pydantic import FilePath
+from pydantic import DirectoryPath, FilePath
 from typer import Context, Typer
 from typer.testing import CliRunner, Result
 
@@ -23,7 +22,7 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def fake_env_file(tmp_path: Path) -> FilePath:
+def fake_env_file(tmp_path: DirectoryPath) -> FilePath:
     env_file: FilePath = tmp_path / ".env"
 
     env_file.write_text(data="")
@@ -75,7 +74,7 @@ class TestTyper:
         caplog: pytest.LogCaptureFixture,
         fake_env_file: FilePath,
         fake_log_msg: str,
-        tmp_path: Path,
+        tmp_path: DirectoryPath,
     ) -> None:
         env_file: str = fake_env_file.as_posix()
         result: Result = self.runner.invoke(
