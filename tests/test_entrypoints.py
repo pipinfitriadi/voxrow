@@ -67,7 +67,21 @@ class TestTyper:
         ) -> None:
             logger.info("%s: %s", fake_log_msg, date.date())
 
-        typer.add_tasks(self.app, command)
+        async def async_generator_func(
+            *,
+            settings: value_objects.Settings,  # noqa: ARG001
+        ) -> value_objects.Data:
+            yield 1
+
+        async def async_command(*, settings: value_objects.Settings) -> None:
+            async for i in async_generator_func(settings=settings):
+                logger.info("%s", i)
+
+        typer.add_tasks(
+            self.app,
+            command,
+            async_command,
+        )
 
     def test_command(
         self,
@@ -112,3 +126,18 @@ class TestTyper:
             strict=True,
         ):
             assert test_word in log_line
+
+    def test_async_command(
+        self,
+        caplog: pytest.LogCaptureFixture,
+        fake_env_file: FilePath,
+    ) -> None:
+        result: Result = self.runner.invoke(
+            self.app,
+            [fake_env_file.as_posix(), "async_command"],
+        )
+
+        assert len(caplog.records) == 1
+        assert caplog.records[0].levelno == logging.INFO
+        assert caplog.records[0].message == "1"
+        assert result.exit_code == 0
