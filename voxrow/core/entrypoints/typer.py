@@ -6,9 +6,15 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 21 May 2026
 
+import asyncio
 from datetime import datetime, timedelta
 from functools import wraps
-from inspect import Parameter, Signature, signature
+from inspect import (
+    Parameter,
+    Signature,
+    iscoroutinefunction,
+    signature,
+)
 from pathlib import Path
 from typing import Annotated, Literal, TypeAlias
 from zoneinfo import ZoneInfo
@@ -79,7 +85,12 @@ def inject_settings(task: Task) -> Task:
         settings: value_objects.Settings = context.obj
 
         settings.console.log(Rule(f"Start: {task.__name__}"))
-        result: any = task(*args, settings=settings, **kwargs)
+        result: any = (
+            asyncio.run(task(*args, settings=settings, **kwargs))
+            if iscoroutinefunction(task)
+            else task(*args, settings=settings, **kwargs)
+        )
+
         settings.console.log(Rule(f"Finish: {task.__name__}"))
 
         return result
