@@ -76,6 +76,6 @@ class BigqueryDataAdapter(AbstractDataPort):
         )
 
         job.result()
-        logger.debug("Loaded to %s: %s rows", table_ref, job.output_rows)
+        logger.info("Loaded into BigQuery %s: % rows", table_ref, job.output_rows)
 
         return table_ref
