@@ -53,7 +53,6 @@ class BigqueryDataAdapter(AbstractDataPort):
         table_ref: str = (
             f"{destination.project_id}.{destination.dataset_id}.{destination.table_id}"
         )
-
         job: LoadJob = self.client.load_table_from_json(
             data,
             Table(
@@ -76,6 +75,14 @@ class BigqueryDataAdapter(AbstractDataPort):
         )
 
         job.result()
-        logger.info("Loaded into BigQuery %s: %s row(s)", table_ref, job.output_rows)
+
+        rows: int = job.output_rows or 0
+
+        logger.info(
+            "Loaded into BigQuery %s: %s row%s",
+            table_ref,
+            f"{rows:,}",
+            "s" if rows > 1 else "",
+        )
 
         return table_ref
