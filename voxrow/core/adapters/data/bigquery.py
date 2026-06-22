@@ -49,7 +49,7 @@ class BigqueryDataAdapter(AbstractDataPort):
         data: value_objects.Data,
         *,
         destination: value_objects.BigqueryDestination,
-    ) -> value_objects.ResourceLocation:  # pragma: no cover
+    ) -> value_objects.ResourceLocation:
         table_ref: str = (
             f"{destination.project}.{destination.dataset}.{destination.table}"
         )
