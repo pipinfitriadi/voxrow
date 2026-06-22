@@ -6,9 +6,17 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 18 May 2026
 
+from logging import Logger, getLogger
 from typing import TYPE_CHECKING
 
-from google.cloud.bigquery import Client, QueryJob
+from google.cloud.bigquery import (
+    Client,
+    LoadJob,
+    LoadJobConfig,
+    QueryJob,
+    SchemaField,
+    Table,
+)
 from pydantic import validate_call
 from pydantic.dataclasses import dataclass
 
@@ -17,6 +25,8 @@ from . import AbstractDataPort
 
 if TYPE_CHECKING:
     from google.cloud.bigquery.table import RowIterator, _EmptyRowIterator
+
+logger: Logger = getLogger(__name__)
 
 
 @dataclass(config=value_objects.CONFIG_DICT, frozen=True)
@@ -38,6 +48,34 @@ class BigqueryDataAdapter(AbstractDataPort):
         self,
         data: value_objects.Data,
         *,
-        destination: value_objects.Destination,
+        destination: value_objects.BigqueryDestination,
     ) -> value_objects.ResourceLocation:  # pragma: no cover
-        pass
+        table_ref: str = (
+            f"{destination.project_id}.{destination.dataset_id}.{destination.table_id}"
+        )
+
+        job: LoadJob = self.client.load_table_from_json(
+            data,
+            Table(
+                table_ref,
+                schema=(
+                    tuple(
+                        SchemaField(
+                            field.name,
+                            field.field_type,
+                            field.mode,
+                            fields=field.fields,
+                        )
+                        for field in destination.schema
+                    )
+                    if destination.schema
+                    else None
+                ),
+            ),
+            job_config=LoadJobConfig(write_disposition=destination.write_disposition),
+        )
+
+        job.result()
+        logger.debug("Loaded to %s: %s rows", table_ref, job.output_rows)
+
+        return table_ref
