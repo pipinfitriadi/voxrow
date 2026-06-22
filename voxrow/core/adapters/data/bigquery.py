@@ -51,7 +51,7 @@ class BigqueryDataAdapter(AbstractDataPort):
         destination: value_objects.BigqueryDestination,
     ) -> value_objects.ResourceLocation:  # pragma: no cover
         table_ref: str = (
-            f"{destination.project_id}.{destination.dataset_id}.{destination.table_id}"
+            f"{destination.project}.{destination.dataset}.{destination.table}"
         )
         job: LoadJob = self.client.load_table_from_json(
             data,

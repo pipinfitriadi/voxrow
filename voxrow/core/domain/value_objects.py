@@ -157,9 +157,9 @@ class BigquerySource(Source):
 
 @dataclass(frozen=True)
 class BigqueryDestination(Destination):
-    table_id: str
-    dataset_id: str
-    project_id: str
+    project: str
+    dataset: str
+    table: str
     schema: Sequence[BigqquerySchemaField] | None = None
     write_disposition: Literal[
         "WRITE_APPEND",
