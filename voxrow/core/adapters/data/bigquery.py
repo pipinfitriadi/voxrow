@@ -55,8 +55,8 @@ class BigqueryDataAdapter(AbstractDataPort):
         )
         job: LoadJob = self.client.load_table_from_json(
             data,
-            Table(
-                table_ref,
+            Table(table_ref),
+            job_config=LoadJobConfig(
                 schema=(
                     tuple(
                         SchemaField(
@@ -70,8 +70,8 @@ class BigqueryDataAdapter(AbstractDataPort):
                     if destination.schema
                     else None
                 ),
+                write_disposition=destination.write_disposition,
             ),
-            job_config=LoadJobConfig(write_disposition=destination.write_disposition),
         )
 
         job.result()
