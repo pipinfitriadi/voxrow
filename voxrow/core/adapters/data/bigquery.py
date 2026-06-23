@@ -14,13 +14,13 @@ from google.cloud.bigquery import (
     LoadJob,
     LoadJobConfig,
     QueryJob,
-    SchemaField,
     Table,
 )
 from pydantic import validate_call
 from pydantic.dataclasses import dataclass
 
 from ...domain import value_objects
+from ..utils.database import bigquery
 from . import AbstractDataPort
 
 if TYPE_CHECKING:
@@ -59,12 +59,7 @@ class BigqueryDataAdapter(AbstractDataPort):
             job_config=LoadJobConfig(
                 schema=(
                     tuple(
-                        SchemaField(
-                            field.name,
-                            field.field_type,
-                            field.mode,
-                            fields=field.fields,
-                        )
+                        bigquery.schema_field_mapper(field)
                         for field in destination.schema
                     )
                     if destination.schema
