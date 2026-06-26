@@ -46,8 +46,9 @@ def get_env_file_type(typer_help: str | None = None) -> type[Path]:
 
 @validate_call
 def get_date_type(
-    delta_days: NonNegativeInt = 0,
     tz: ZoneInfo = value_objects.TIME_ZONE,
+    *,
+    delta_days: NonNegativeInt = 0,
 ) -> type[datetime]:
     return Annotated[
         datetime,
