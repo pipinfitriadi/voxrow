@@ -87,9 +87,9 @@ def inject_settings(task: Task) -> Task:
 
         settings.console.log(Rule(f"Start: {task.__name__}"))
         result: any = (
-            asyncio.run(task(*args, settings=settings, **kwargs))
+            asyncio.run(task(settings, *args, **kwargs))
             if iscoroutinefunction(task)
-            else task(*args, settings=settings, **kwargs)
+            else task(settings, *args, **kwargs)
         )
 
         settings.console.log(Rule(f"Finish: {task.__name__}"))
