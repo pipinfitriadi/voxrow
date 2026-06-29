@@ -12,7 +12,7 @@ from datetime import date
 import pytest
 
 from voxrow.core.domain import domain_services
-from voxrow.core.domain.value_objects import ENCODING
+from voxrow.core.domain.value_objects import ENCODING, CaseInsensitiveStrEnum
 
 # Constants
 TEST_DATA: tuple = (1, 2, 3)
@@ -42,3 +42,18 @@ class TestDomainServices:
     def test_json(self) -> None:
         assert domain_services.dumps_to_json(*(TEST_DATA,)) == TEST_DATA_JSON
         assert tuple(domain_services.loads_from_json(TEST_DATA_JSON)) == TEST_DATA
+
+
+class TestValueObjects:
+    def test_case_insentive_str_enum(self) -> None:
+        class FakeEnum(CaseInsensitiveStrEnum):
+            A = "a"
+
+        FakeEnum("A")
+
+        with pytest.raises(
+            ValueError,
+            match="'b' is not a valid "
+            r"TestValueObjects.test_case_insentive_str_enum.<locals>.FakeEnum",
+        ):
+            FakeEnum("b")
