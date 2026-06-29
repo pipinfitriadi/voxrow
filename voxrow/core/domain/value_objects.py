@@ -13,7 +13,7 @@ from enum import IntEnum, StrEnum
 from http import HTTPMethod
 from pathlib import Path
 from ssl import SSLContext
-from typing import Any, Literal
+from typing import Any, Literal, Self
 from zoneinfo import ZoneInfo
 
 from pydantic import (
@@ -23,6 +23,7 @@ from pydantic import (
     HttpUrl,
     PostgresDsn,
     SecretStr,
+    validate_call,
 )
 from pydantic.dataclasses import dataclass
 from pydantic_core import CoreSchema, core_schema
@@ -36,6 +37,18 @@ DEFAULT_SCHEMA: str = "main"
 ENCODING: str = "utf-8"
 LOG_TIME_FMT: str = f"[{DATE_FMT} %H:%M:%S]"
 TIME_ZONE: ZoneInfo = ZoneInfo("Asia/Jakarta")
+
+
+class CaseInsensitiveStrEnum(StrEnum):
+    @classmethod
+    @validate_call
+    def _missing_(cls, value: Any) -> Self | None:  # noqa: ANN401
+        if isinstance(value, str):
+            for member in cls:
+                if member.value == value.lower():
+                    return member
+
+        return None
 
 
 class LogLevel(IntEnum):
