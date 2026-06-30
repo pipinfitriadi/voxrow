@@ -65,6 +65,7 @@ def get_console(log_file: Path | None = None) -> Console:
 
     if log_file:
         console_kwargs["file"] = log_file.open("a", encoding=value_objects.ENCODING)
+        console_kwargs["width"] = 200
 
     return Console(**console_kwargs)
 
