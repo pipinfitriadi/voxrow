@@ -6,6 +6,7 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 21 January 2026
 
+import logging
 from collections.abc import Callable
 from typing import ClassVar
 from unittest.mock import MagicMock
@@ -43,6 +44,7 @@ def mock_bigquery(monkeypatch: pytest.MonkeyPatch) -> None:
         "voxrow.core.adapters.utils.database.bigquery.Client",
         lambda *args, **kwargs: MagicMock(  # noqa: ARG005
             spec=Client,
+            load_table_from_json=MagicMock(return_value=MagicMock(output_rows=1)),
             query=MagicMock(
                 return_value=MagicMock(
                     result=MagicMock(
@@ -105,8 +107,10 @@ class FakeTransformDuckDB(AbstractDuckDB):
 
 
 class TestHandlersEtl:
-    def test_bigquery(
+    @pytest.mark.asyncio
+    async def test_bigquery(
         self,
+        caplog: pytest.LogCaptureFixture,
         fake_google_project_id: str,
         fake_google_service_account_file: FilePath,
         mock_bigquery: Callable,  # noqa: ARG002
@@ -117,9 +121,32 @@ class TestHandlersEtl:
                 fake_google_service_account_file,
             )
         )
+        fake_dataset: str = "dataset"
+        fake_table: str = "table"
 
         with uow(source=value_objects.BigquerySource("SELECT 1 a;")):
-            assert tuple(uow.data.extract(source=uow.source)) == (dict(a=1),)
+            result: tuple = tuple(uow.data.extract(source=uow.source))
+
+            assert result == (dict(a=1),)
+
+        await handlers.etl(
+            source=result,
+            destination=uow(
+                destination=value_objects.BigqueryDestination(
+                    fake_google_project_id,
+                    fake_dataset,
+                    fake_table,
+                    schema=[value_objects.BigqquerySchemaField("a", "INTEGER")],
+                ),
+            ),
+        )
+
+        assert len(caplog.records) == 1
+        assert caplog.records[0].levelno == logging.INFO
+        assert (
+            caplog.records[0].message
+            == f"Loaded into BigQuery {fake_google_project_id}.{fake_dataset}.{fake_table}: 1 row"  # noqa: E501
+        )
 
     @pytest.mark.asyncio
     async def test_boto3(

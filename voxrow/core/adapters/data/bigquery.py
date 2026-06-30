@@ -6,17 +6,27 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 18 May 2026
 
+from logging import Logger, getLogger
 from typing import TYPE_CHECKING
 
-from google.cloud.bigquery import Client, QueryJob
+from google.cloud.bigquery import (
+    Client,
+    LoadJob,
+    LoadJobConfig,
+    QueryJob,
+    Table,
+)
 from pydantic import validate_call
 from pydantic.dataclasses import dataclass
 
 from ...domain import value_objects
+from ..utils.database import bigquery
 from . import AbstractDataPort
 
 if TYPE_CHECKING:
     from google.cloud.bigquery.table import RowIterator, _EmptyRowIterator
+
+logger: Logger = getLogger(__name__)
 
 
 @dataclass(config=value_objects.CONFIG_DICT, frozen=True)
@@ -38,6 +48,36 @@ class BigqueryDataAdapter(AbstractDataPort):
         self,
         data: value_objects.Data,
         *,
-        destination: value_objects.Destination,
-    ) -> value_objects.ResourceLocation:  # pragma: no cover
-        pass
+        destination: value_objects.BigqueryDestination,
+    ) -> value_objects.ResourceLocation:
+        table_ref: str = (
+            f"{destination.project}.{destination.dataset}.{destination.table}"
+        )
+        job: LoadJob = self.client.load_table_from_json(
+            data,
+            Table(table_ref),
+            job_config=LoadJobConfig(
+                schema=(
+                    tuple(
+                        bigquery.schema_field_mapper(field)
+                        for field in destination.schema
+                    )
+                    if destination.schema
+                    else None
+                ),
+                write_disposition=destination.write_disposition,
+            ),
+        )
+
+        job.result()
+
+        rows: int = job.output_rows or 0
+
+        logger.info(
+            "Loaded into BigQuery %s: %s row%s",
+            table_ref,
+            f"{rows:,}",
+            "s" if rows > 1 else "",
+        )
+
+        return table_ref

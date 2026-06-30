@@ -7,13 +7,13 @@
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 13 January 2026
 
 import logging
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import KW_ONLY
 from enum import IntEnum, StrEnum
 from http import HTTPMethod
 from pathlib import Path
 from ssl import SSLContext
-from typing import Any, Self
+from typing import Any, Literal, Self
 from zoneinfo import ZoneInfo
 
 from pydantic import (
@@ -131,9 +131,55 @@ class Source: ...
 
 
 @dataclass(frozen=True)
+class BigqquerySchemaField:
+    name: str
+    field_type: Literal[
+        "STRING",
+        "BYTES",
+        "INTEGER",
+        "INT64",
+        "FLOAT",
+        "FLOAT64",
+        "BOOLEAN",
+        "BOOL",
+        "TIMESTAMP",
+        "DATE",
+        "TIME",
+        "DATETIME",
+        "GEOGRAPHY",
+        "NUMERIC",
+        "BIGNUMERIC",
+        "JSON",
+        "RECORD",
+        "STRUCT",
+        "RANGE",
+    ]
+    mode: Literal[
+        "NULLABLE",
+        "REQUIRED",
+        "REPEATED",
+    ] = "NULLABLE"
+    fields: Iterable["BigqquerySchemaField"] = ()
+
+
+@dataclass(frozen=True)
 class BigquerySource(Source):
     query: str
     page_size: int | None = None
+
+
+@dataclass(frozen=True)
+class BigqueryDestination(Destination):
+    project: str
+    dataset: str
+    table: str
+    schema: Sequence[BigqquerySchemaField] | None = None
+    write_disposition: Literal[
+        "WRITE_APPEND",
+        "WRITE_TRUNCATE",
+        "WRITE_TRUNCATE_DATA",
+        "WRITE_EMPTY",
+    ] = "WRITE_APPEND"
 
 
 @dataclass(frozen=True)
