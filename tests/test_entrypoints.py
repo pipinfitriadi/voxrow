@@ -10,7 +10,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import pytest
-from pydantic import DirectoryPath, FilePath
+from pydantic import DirectoryPath, FilePath, PositiveInt
 from typer import Context, Typer
 from typer.testing import CliRunner, Result
 
@@ -53,8 +53,12 @@ class TestTyper:
             ),
             log_level: typer.LogLevelType = value_objects.LogLevel.INFO.name,
             log_file: typer.get_log_file_type() = None,
+            log_width: PositiveInt | None = None,
         ) -> None:
             console: Console = get_console(log_file)
+
+            if log_width:
+                console.width = log_width
 
             set_logging_config(value_objects.LogLevel[log_level], console=console)
 
@@ -75,10 +79,14 @@ class TestTyper:
             async for i in async_generator_func(settings=settings):
                 logger.info("%s", i)
 
+        def command_shouldbe_failed(settings: value_objects.Settings) -> float:  # noqa: ARG001
+            return 1 / 0
+
         typer.add_tasks(
             self.app,
             command,
             async_command,
+            command_shouldbe_failed,
         )
 
     def test_command(
@@ -143,3 +151,17 @@ class TestTyper:
         assert caplog.records[0].levelno == logging.INFO
         assert caplog.records[0].message == "1"
         assert result.exit_code == 0
+
+    def test_command_shouldbe_failed(
+        self,
+        caplog: pytest.LogCaptureFixture,
+        fake_env_file: FilePath,
+    ) -> None:
+        caplog.set_level(logging.ERROR)
+        self.runner.invoke(
+            self.app,
+            ["--log-width", "100", fake_env_file.as_posix(), "command_shouldbe_failed"],
+        )
+
+        assert caplog.records[0].levelno == logging.ERROR
+        assert caplog.records[0].message == "Task failed!"

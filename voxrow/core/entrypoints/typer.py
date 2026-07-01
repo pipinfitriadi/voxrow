@@ -7,6 +7,7 @@
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 21 May 2026
 
 import asyncio
+import logging
 from datetime import datetime, timedelta
 from functools import wraps
 from inspect import (
@@ -84,13 +85,18 @@ def inject_settings(task: Task) -> Task:
         kwargs.pop(keyword, None)
 
         settings: value_objects.Settings = context.obj
+        logger: logging.Logger = logging.getLogger(__name__)
 
         settings.console.log(Rule(f"Start: {task.__name__}"))
-        result: any = (
-            asyncio.run(task(settings, *args, **kwargs))
-            if iscoroutinefunction(task)
-            else task(settings, *args, **kwargs)
-        )
+
+        try:
+            result: any = (
+                asyncio.run(task(settings, *args, **kwargs))
+                if iscoroutinefunction(task)
+                else task(settings, *args, **kwargs)
+            )
+        except Exception:
+            logger.exception("Task failed!")
 
         settings.console.log(Rule(f"Finish: {task.__name__}"))
 
