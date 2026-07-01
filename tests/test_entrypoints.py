@@ -57,7 +57,7 @@ class TestTyper:
         ) -> None:
             console: Console = get_console(log_file)
 
-            if log_width:
+            if log_width and log_width > 0:
                 console.width = log_width
 
             set_logging_config(value_objects.LogLevel[log_level], console=console)
