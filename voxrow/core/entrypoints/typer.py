@@ -93,9 +93,9 @@ def inject_settings(task: Task) -> Task:
 
         try:
             result: any = (
-                asyncio.run(task(*args, settings, **kwargs))
+                asyncio.run(task(settings, *args, **kwargs))
                 if iscoroutinefunction(task)
-                else task(*args, settings, **kwargs)
+                else task(settings, *args, **kwargs)
             )
         except Exception:
             logger.exception("Task failed!")

@@ -78,9 +78,13 @@ class TestTyper:
             yield 1
 
         @validate_call
-        async def async_command(settings: value_objects.Settings) -> None:
+        async def async_command(
+            settings: value_objects.Settings,
+            a: int,
+            b: int,
+        ) -> None:
             async for i in async_generator_func(settings):
-                logger.info("%s", i)
+                logger.info("%s, %s, %s", a, i, b)
 
         @validate_call
         def command_shouldbe_failed(settings: value_objects.Settings) -> float:  # noqa: ARG001
@@ -148,12 +152,12 @@ class TestTyper:
 
         result: Result = self.runner.invoke(
             self.app,
-            [fake_env_file.as_posix(), "async_command"],
+            [fake_env_file.as_posix(), "async_command", "2", "3"],
         )
 
         assert len(caplog.records) == 1
         assert caplog.records[0].levelno == logging.INFO
-        assert caplog.records[0].message == "1"
+        assert caplog.records[0].message == "2, 1, 3"
         assert result.exit_code == 0
 
     def test_command_shouldbe_failed(
