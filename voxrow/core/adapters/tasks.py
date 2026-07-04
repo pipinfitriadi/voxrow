@@ -6,18 +6,16 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 21 May 2026
 
-from typing import ParamSpec, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from ..domain import value_objects
 
-P: ParamSpec = ParamSpec("P")
-
 
 @runtime_checkable
-class Task(Protocol[P]):
+class Task(Protocol[value_objects.Param]):
     def __call__(
         self,
         settings: value_objects.Settings,
-        *args: P.args,
-        **kwargs: P.kwargs,
+        *args: value_objects.Param.args,
+        **kwargs: value_objects.Param.kwargs,
     ) -> any: ...

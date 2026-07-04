@@ -13,7 +13,7 @@ from enum import IntEnum, StrEnum
 from http import HTTPMethod
 from pathlib import Path
 from ssl import SSLContext
-from typing import Any, Literal, Self
+from typing import Any, Literal, ParamSpec, Self
 from zoneinfo import ZoneInfo
 
 from pydantic import (
@@ -37,6 +37,8 @@ DEFAULT_SCHEMA: str = "main"
 ENCODING: str = "utf-8"
 LOG_TIME_FMT: str = f"[{DATE_FMT} %H:%M:%S]"
 TIME_ZONE: ZoneInfo = ZoneInfo("Asia/Jakarta")
+
+Param: ParamSpec = ParamSpec("Param")
 
 
 class CaseInsensitiveStrEnum(StrEnum):
