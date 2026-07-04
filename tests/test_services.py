@@ -147,7 +147,7 @@ class TestHandlersEtl:
         assert caplog.records[0].levelno == logging.INFO
         assert (
             caplog.records[0].message
-            == f"Loaded into BigQuery {fake_google_project_id}.{fake_dataset}.{fake_table}: 1 row"  # noqa: E501
+            == f"Loaded into Google BigQuery {fake_google_project_id}.{fake_dataset}.{fake_table}: 1 row"  # noqa: E501
         )
 
     @pytest.mark.asyncio
