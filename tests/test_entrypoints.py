@@ -10,7 +10,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import pytest
-from pydantic import DirectoryPath, FilePath, PositiveInt
+from pydantic import DirectoryPath, FilePath, PositiveInt, validate_call
 from typer import Context, Typer
 from typer.testing import CliRunner, Result
 
@@ -62,23 +62,29 @@ class TestTyper:
 
             set_logging_config(value_objects.LogLevel[log_level], console=console)
 
-            context.obj = value_objects.Settings(_env_file=env_file, console=console)
+            context.obj = dict(
+                settings=value_objects.Settings(_env_file=env_file, console=console),
+            )
 
+        @validate_call
         def command(
             settings: value_objects.Settings,  # noqa: ARG001
             date: typer.get_date_type(),
         ) -> None:
             logger.info("%s: %s", fake_log_msg, date.date())
 
+        @validate_call
         async def async_generator_func(
             settings: value_objects.Settings,  # noqa: ARG001
         ) -> value_objects.Data:
             yield 1
 
+        @validate_call
         async def async_command(settings: value_objects.Settings) -> None:
-            async for i in async_generator_func(settings=settings):
+            async for i in async_generator_func(settings):
                 logger.info("%s", i)
 
+        @validate_call
         def command_shouldbe_failed(settings: value_objects.Settings) -> float:  # noqa: ARG001
             return 1 / 0
 
