@@ -21,8 +21,11 @@ from ..domain import value_objects
 
 
 class DeltaRichHandler(RichHandler):
-    @validate_call
-    def __init__(self, *args, **kwargs) -> None:  # noqa: ANN002,ANN003
+    def __init__(
+        self,
+        *args: value_objects.Param.args,
+        **kwargs: value_objects.Param.kwargs,
+    ) -> None:
         super().__init__(*args, **kwargs)
         self._last: dict = {}
 
