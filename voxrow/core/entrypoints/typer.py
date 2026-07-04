@@ -80,11 +80,15 @@ def inject_settings(task: Task) -> Task:
         *args,  # noqa: ANN002
         **kwargs,  # noqa: ANN003
     ) -> any:  # pragma: no cover
-        args = tuple(arg for arg in args if not isinstance(arg, value_objects.Settings))
+        args = tuple(
+            arg
+            for i, arg in enumerate(args)
+            if not (i == 0 and isinstance(arg, value_objects.Settings))
+        )
         kwargs = {
             key: value
             for key, value in kwargs.items()
-            if key != "settings" and not isinstance(value, value_objects.Settings)
+            if not (key == "settings" and isinstance(value, value_objects.Settings))
         }
         settings: value_objects.Settings = context.obj
         logger: logging.Logger = logging.getLogger(__name__)
