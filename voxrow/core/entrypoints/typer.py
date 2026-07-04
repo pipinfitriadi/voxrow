@@ -80,23 +80,22 @@ def inject_settings(task: Task) -> Task:
         *args,  # noqa: ANN002
         **kwargs,  # noqa: ANN003
     ) -> any:  # pragma: no cover
-        kwargs.pop("settings", None)
-
-        args: list = list(args)
-
-        if len(args) >= 1 and isinstance(args[0], value_objects.Settings):
-            args.pop(0)
-
-        settings: value_objects.Settings = context.obj["settings"]
+        args = tuple(arg for arg in args if not isinstance(arg, value_objects.Settings))
+        kwargs = {
+            key: value
+            for key, value in kwargs.items()
+            if key != "settings" and not isinstance(value, value_objects.Settings)
+        }
+        settings: value_objects.Settings = context.obj
         logger: logging.Logger = logging.getLogger(__name__)
 
         settings.console.log(Rule(f"Start: {task.__name__}"))
 
         try:
             result: any = (
-                asyncio.run(task(settings, *args, **kwargs))
+                asyncio.run(task(*args, settings, **kwargs))
                 if iscoroutinefunction(task)
-                else task(settings, *args, **kwargs)
+                else task(*args, settings, **kwargs)
             )
         except Exception:
             logger.exception("Task failed!")

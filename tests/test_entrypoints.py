@@ -62,9 +62,7 @@ class TestTyper:
 
             set_logging_config(value_objects.LogLevel[log_level], console=console)
 
-            context.obj = dict(
-                settings=value_objects.Settings(_env_file=env_file, console=console),
-            )
+            context.obj = value_objects.Settings(_env_file=env_file, console=console)
 
         @validate_call
         def command(

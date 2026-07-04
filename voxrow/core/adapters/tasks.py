@@ -17,7 +17,7 @@ P: ParamSpec = ParamSpec("P")
 class Task(Protocol[P]):
     def __call__(
         self,
-        settings: value_objects.Settings,
         *args: P.args,
+        settings: value_objects.Settings,
         **kwargs: P.kwargs,
     ) -> any: ...
