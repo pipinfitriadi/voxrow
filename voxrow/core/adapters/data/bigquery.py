@@ -74,7 +74,7 @@ class BigqueryDataAdapter(AbstractDataPort):
         rows: int = job.output_rows or 0
 
         logger.info(
-            "Loaded into Google BigQuery %s: %s row%s",
+            "Loaded into Google BigQuery '%s': %s row%s",
             table_ref,
             f"{rows:,}",
             "s" if rows > 1 else "",
