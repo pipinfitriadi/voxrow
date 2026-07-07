@@ -13,7 +13,7 @@ from enum import IntEnum, StrEnum
 from http import HTTPMethod
 from pathlib import Path
 from ssl import SSLContext
-from typing import Any, Literal, ParamSpec, Self
+from typing import Any, Literal, ParamSpec
 from zoneinfo import ZoneInfo
 
 from pydantic import (
@@ -43,8 +43,8 @@ Param: ParamSpec = ParamSpec("Param")
 
 class CaseInsensitiveStrEnum(StrEnum):
     @classmethod
-    @validate_call
-    def _missing_(cls, value: Any) -> Self | None:  # noqa: ANN401
+    @validate_call(validate_return=True)
+    def _missing_(cls, value: Any) -> StrEnum | None:  # noqa: ANN401
         if isinstance(value, str):
             for member in cls:
                 if member.value == value.lower():
