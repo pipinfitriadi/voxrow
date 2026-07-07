@@ -42,14 +42,14 @@ class TestTyper:
     @pytest.fixture(autouse=True)
     def setup(self, fake_log_msg: str) -> None:
         self.runner = CliRunner()
-        self.app = Typer()
+        self.app = Typer(no_args_is_help=True, rich_markup_mode="markdown")
         logger: logging.Logger = logging.getLogger(__name__)
 
         @self.app.callback()
         def callback(
             context: Context,
             env_file: typer.get_env_file_type(
-                "Example: https://github.com/pipinfitriadi/voxrow/blob/main/template.env"
+                "Example `.env` file content: https://github.com/pipinfitriadi/voxrow/blob/main/template.env"
             ),
             log_level: typer.LogLevelType = value_objects.LogLevel.INFO.name,
             log_file: typer.get_log_file_type() = None,
