@@ -72,7 +72,7 @@ class PydanticJSON(TypeDecorator):
         return value if value is None else self._adapter.validate_python(value)
 
 
-@validate_call(config=value_objects.CONFIG_DICT)
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
 def get_schema(engine: Engine, schema: str = value_objects.DEFAULT_SCHEMA) -> str:
     if engine.dialect.name == value_objects.DbDialect.postgresql:  # pragma: no cover
         with engine.begin() as conn:
@@ -83,7 +83,7 @@ def get_schema(engine: Engine, schema: str = value_objects.DEFAULT_SCHEMA) -> st
     return schema
 
 
-@validate_call
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
 def get_db_engine(db_dsn: value_objects.DatabaseType) -> Engine:
     return create_engine(
         str(db_dsn),

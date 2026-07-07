@@ -13,7 +13,7 @@ from pydantic import FilePath, validate_call
 from ....domain import value_objects
 
 
-@validate_call
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
 def get_client(project: str, service_account_file: FilePath) -> Client:
     return Client(
         project,
@@ -21,7 +21,7 @@ def get_client(project: str, service_account_file: FilePath) -> Client:
     )
 
 
-@validate_call
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
 def schema_field_mapper(
     schema_field: value_objects.BigqquerySchemaField,
 ) -> SchemaField:

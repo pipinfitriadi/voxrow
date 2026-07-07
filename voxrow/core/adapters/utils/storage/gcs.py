@@ -10,8 +10,10 @@ from google.cloud.storage import Client
 from google.oauth2.service_account import Credentials
 from pydantic import FilePath, validate_call
 
+from ....domain import value_objects
 
-@validate_call
+
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
 def get_client(project: str, service_account_file: FilePath) -> Client:
     return Client(
         project,

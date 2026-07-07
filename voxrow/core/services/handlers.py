@@ -13,7 +13,7 @@ from ..domain.value_objects import CONFIG_DICT, Data, ResourceLocation
 from .unit_of_work import AbstractDataUnitOfWork
 
 
-@validate_call(config=CONFIG_DICT)
+@validate_call(config=CONFIG_DICT, validate_return=True)
 async def etl(
     *,
     source: Data | AbstractDataUnitOfWork,

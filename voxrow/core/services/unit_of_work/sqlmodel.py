@@ -22,7 +22,7 @@ class AbstractSQLModelUnitOfWork(
     AbstractSQLModel,
     unit_of_work.AbstractUnitOfWork,
 ):
-    @validate_call(config=value_objects.CONFIG_DICT)
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def __init__(self, session: Session) -> None:
         self.session = session
 
@@ -43,7 +43,7 @@ class SQLModelDataUnitOfWork(
     AbstractSQLModelUnitOfWork,
     unit_of_work.AbstractDataUnitOfWork,
 ):
-    @validate_call(config=value_objects.CONFIG_DICT)
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def __init__(self, session: Session) -> None:
         super().__init__(session)
 

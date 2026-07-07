@@ -26,7 +26,7 @@ class AbstractDuckDB:
     _: KW_ONLY
     as_iterator: bool
 
-    @validate_call
+    @validate_call(validate_return=True)
     def register(self, data: value_objects.Data) -> None:
         if not isinstance(data, DuckDBPyConnection) and not isinstance(
             data,
@@ -36,7 +36,7 @@ class AbstractDuckDB:
         elif isinstance(data, DuckDBPyRelation):
             data.create_view(self.view_name)
 
-    @validate_call(config=value_objects.CONFIG_DICT)
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def get_data(
         self,
         cursor: DuckDBPyConnection | DuckDBPyRelation,
@@ -54,7 +54,7 @@ class AbstractDuckDB:
 
 
 class DuckDBDataAdapter(AbstractDataPort, AbstractDuckDB):
-    @validate_call
+    @validate_call(validate_return=True)
     def extract(self, *, source: value_objects.DuckDBSource) -> value_objects.Data:
         data: DuckDBPyRelation = self.connection.query(
             query=source.query,
@@ -64,7 +64,7 @@ class DuckDBDataAdapter(AbstractDataPort, AbstractDuckDB):
 
         return self.get_data(data) if self.as_iterator else data
 
-    @validate_call
+    @validate_call(validate_return=True)
     async def load(
         self,
         data: value_objects.Data,

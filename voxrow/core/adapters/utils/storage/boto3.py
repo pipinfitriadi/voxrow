@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-@validate_call
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
 def get_client(credential: value_objects.Boto3Credential) -> BaseClient:
     return boto3.client(
         service_name=credential.service_name,
@@ -31,7 +31,7 @@ def get_client(credential: value_objects.Boto3Credential) -> BaseClient:
     )
 
 
-@validate_call
+@validate_call(validate_return=True)
 def all_location(
     credential: value_objects.Boto3Credential,
     bucket: str,
@@ -48,7 +48,7 @@ def all_location(
     )
 
 
-@validate_call(config=value_objects.CONFIG_DICT)
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
 def move(
     client: BaseClient,
     bucket: str,
@@ -68,7 +68,7 @@ def move(
     client.delete_object(**source)
 
 
-@validate_call
+@validate_call(validate_return=True)
 def moves(
     credential: value_objects.Boto3Credential,
     bucket: str,

@@ -21,7 +21,7 @@ from . import AbstractDataPort
 
 
 class HttpxDataAdapter(AbstractDataPort):
-    @validate_call
+    @validate_call(validate_return=True)
     def extract(self, *, source: HttpxSource) -> Data:
         methods: dict = {
             HTTPMethod.GET: get,
@@ -39,7 +39,7 @@ class HttpxDataAdapter(AbstractDataPort):
 
         return resp.json()
 
-    @validate_call
+    @validate_call(validate_return=True)
     async def load(
         self,
         data: Data,

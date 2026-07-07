@@ -29,7 +29,7 @@ class DeltaRichHandler(RichHandler):
         super().__init__(*args, **kwargs)
         self._last: dict = {}
 
-    @validate_call(config=value_objects.CONFIG_DICT)
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def render(
         self,
         record: logging.LogRecord,
@@ -59,7 +59,7 @@ class DeltaRichHandler(RichHandler):
         )
 
 
-@validate_call
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
 def get_console(log_file: Path | None = None) -> Console:
     console_kwargs: dict = dict(
         log_path=False,
@@ -73,7 +73,7 @@ def get_console(log_file: Path | None = None) -> Console:
     return Console(**console_kwargs)
 
 
-@validate_call(config=value_objects.CONFIG_DICT)
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
 def set_logging_config(
     level: value_objects.LogLevel = logging.INFO,
     fmt: str = "%(message)s",

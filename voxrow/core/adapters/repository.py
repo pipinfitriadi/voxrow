@@ -15,7 +15,7 @@ from pydantic import validate_call
 
 class AbstractRepository(ABC):  # pragma: no cover
     @abstractmethod
-    @validate_call
+    @validate_call(validate_return=True)
     def add(self, value: Any) -> any:  # noqa: ANN401
         pass
 
@@ -24,6 +24,6 @@ class AbstractRepository(ABC):  # pragma: no cover
         pass
 
     @abstractmethod
-    @validate_call
+    @validate_call(validate_return=True)
     def get(self, identity: Any) -> Any | None:  # noqa: ANN401
         pass

@@ -64,20 +64,20 @@ class TestTyper:
 
             context.obj = value_objects.Settings(_env_file=env_file, console=console)
 
-        @validate_call
+        @validate_call(validate_return=True)
         def command(
             settings: value_objects.Settings,  # noqa: ARG001
             date: typer.get_date_type(),
         ) -> None:
             logger.info("%s: %s", fake_log_msg, date.date())
 
-        @validate_call
+        @validate_call(validate_return=True)
         async def async_generator_func(
             settings: value_objects.Settings,  # noqa: ARG001
         ) -> value_objects.Data:
             yield 1
 
-        @validate_call
+        @validate_call(validate_return=True)
         async def async_command(
             settings: value_objects.Settings,
             a: int,
@@ -86,7 +86,7 @@ class TestTyper:
             async for i in async_generator_func(settings):
                 logger.info("%s, %s, %s", a, i, b)
 
-        @validate_call
+        @validate_call(validate_return=True)
         def command_shouldbe_failed(settings: value_objects.Settings) -> float:  # noqa: ARG001
             return 1 / 0
 

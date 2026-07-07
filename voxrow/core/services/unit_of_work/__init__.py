@@ -20,7 +20,7 @@ class AbstractUnitOfWork:  # pragma: no cover
     def __enter__(self) -> Self:
         return self
 
-    @validate_call(config=CONFIG_DICT)
+    @validate_call(config=CONFIG_DICT, validate_return=True)
     def exc_handle(
         self,
         exc_type: type[BaseException],  # noqa: ARG002
@@ -35,7 +35,7 @@ class AbstractUnitOfWork:  # pragma: no cover
     def rollback(self) -> None:
         pass
 
-    @validate_call(config=CONFIG_DICT)
+    @validate_call(config=CONFIG_DICT, validate_return=True)
     def __exit__(
         self,
         exc_type: type[BaseException] | None = None,
@@ -83,7 +83,7 @@ class AbstractDataUnitOfWork(AbstractUnitOfWork):
 
         return super().__enter__()
 
-    @validate_call(config=CONFIG_DICT)
+    @validate_call(config=CONFIG_DICT, validate_return=True)
     def __exit__(
         self,
         exc_type: type[BaseException] | None = None,

@@ -97,7 +97,7 @@ class FakeTable(FakeSQLModel, table=True):
 
 @dataclass(config=value_objects.CONFIG_DICT, frozen=True)
 class FakeTransformDuckDB(AbstractDuckDB):
-    @validate_call
+    @validate_call(validate_return=True)
     def __call__(self, data: value_objects.Data) -> value_objects.Data:
         self.register(data)
 

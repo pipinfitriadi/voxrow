@@ -15,7 +15,7 @@ from . import AbstractDataUnitOfWork
 
 
 class Boto3DataUnitOfWork(AbstractDataUnitOfWork):
-    @validate_call
+    @validate_call(validate_return=True)
     def __init__(
         self,
         credential: value_objects.Boto3Credential,

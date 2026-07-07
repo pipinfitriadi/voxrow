@@ -72,7 +72,7 @@ def get_log_file_type(
     return Annotated[Path | None, Option(help=typer_help)]
 
 
-@validate_call(config=value_objects.CONFIG_DICT)
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
 def inject_settings(task: Task) -> Task:
     @wraps(task)
     def wrapper(
@@ -126,7 +126,7 @@ def inject_settings(task: Task) -> Task:
     return wrapper
 
 
-@validate_call(config=value_objects.CONFIG_DICT)
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
 def add_tasks(app: Typer, *tasks: Task) -> None:
     for task in tasks:
         app.command(task.__name__)(inject_settings(task))

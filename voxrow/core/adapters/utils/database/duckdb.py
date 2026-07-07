@@ -12,7 +12,7 @@ from pydantic import PostgresDsn, validate_call
 from ....domain import value_objects
 
 
-@validate_call(config=value_objects.CONFIG_DICT)
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
 def connect_to_r2(
     conn: DuckDBPyConnection,
     credential: value_objects.Boto3Credential,
@@ -29,7 +29,7 @@ def connect_to_r2(
     )
 
 
-@validate_call(config=value_objects.CONFIG_DICT)
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
 def get_schema(
     conn: DuckDBPyConnection,
     db_dsn: value_objects.DatabaseType,

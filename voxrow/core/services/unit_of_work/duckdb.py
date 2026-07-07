@@ -15,7 +15,7 @@ from . import AbstractDataUnitOfWork
 
 
 class DuckDBDataUnitOfWork(AbstractDataUnitOfWork):
-    @validate_call(config=value_objects.CONFIG_DICT)
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def __init__(
         self,
         connection: DuckDBPyConnection,

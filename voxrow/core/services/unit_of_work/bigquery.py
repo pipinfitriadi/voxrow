@@ -15,6 +15,6 @@ from ...services import unit_of_work
 
 
 class BigqueryDataUnitOfWork(unit_of_work.AbstractDataUnitOfWork):
-    @validate_call(config=value_objects.CONFIG_DICT)
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def __init__(self, client: Client) -> None:
         self.data = bigquery.BigqueryDataAdapter(client)

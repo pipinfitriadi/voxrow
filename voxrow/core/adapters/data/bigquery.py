@@ -33,7 +33,7 @@ logger: Logger = getLogger(__name__)
 class BigqueryDataAdapter(AbstractDataPort):
     client: Client
 
-    @validate_call
+    @validate_call(validate_return=True)
     def extract(self, *, source: value_objects.BigquerySource) -> value_objects.Data:
         query_job: QueryJob = self.client.query(source.query)  # API request
         rows: RowIterator | _EmptyRowIterator = query_job.result(
@@ -43,7 +43,7 @@ class BigqueryDataAdapter(AbstractDataPort):
         for row in rows:
             yield dict(row)
 
-    @validate_call
+    @validate_call(validate_return=True)
     async def load(
         self,
         data: value_objects.Data,
