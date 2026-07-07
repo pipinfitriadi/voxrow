@@ -67,7 +67,7 @@ def get_date_type(
 
 @validate_call
 def get_log_file_type(
-    typer_help: str | None = "Example: file.log",
+    typer_help: str | None = "Example: `file.log`",
 ) -> type[Path] | None:
     return Annotated[Path | None, Option(help=typer_help)]
 
