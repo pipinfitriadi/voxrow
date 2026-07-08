@@ -92,11 +92,12 @@ def inject_settings(task: Task) -> Task:
         }
         settings: value_objects.Settings = context.obj
         logger: logging.Logger = logging.getLogger(__name__)
+        result: any = None
 
         settings.console.log(Rule(f"Start: {task.__name__}"))
 
         try:
-            result: any = (
+            result = (
                 asyncio.run(task(settings, *args, **kwargs))
                 if iscoroutinefunction(task)
                 else task(settings, *args, **kwargs)
