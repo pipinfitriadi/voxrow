@@ -11,13 +11,13 @@ from typing import Literal
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.utils import Buffer
-from pydantic import Field, validate_call
+from pydantic import Field, PositiveInt, validate_call
 from pydantic.dataclasses import dataclass
 
 from ....domain import value_objects
 
 # Constants
-CHUNK_SIZE: int = 8 * (1_024**2)  # 8 MB
+CHUNK_SIZE: PositiveInt = 8 * (1_024**2)  # 8 MB
 
 
 @dataclass(config=value_objects.CONFIG_DICT)
@@ -29,7 +29,7 @@ class AbstractAesGcmEncryption:
     nonce_length: int = field(default=8, init=False)
     to_bytes_length: int = field(default=4, init=False)
     _: KW_ONLY
-    chunk_size: int = CHUNK_SIZE
+    chunk_size: PositiveInt = CHUNK_SIZE
 
     def __post_init__(self) -> None:
         self.aesgcm = AESGCM(self.key)
