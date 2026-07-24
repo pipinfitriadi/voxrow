@@ -289,7 +289,8 @@ class HttpxSource(Source):
 class EncryptionSource(Source, ReadableStream): ...
 
 
-class EncryptionDestination(Destination, WritableStream):
+@dataclass(config=CONFIG_DICT, frozen=True)
+class EncryptionDestination(Destination):
     file: WritableStream
     _: KW_ONLY
     chunk_size: PositiveInt = CHUNK_SIZE
