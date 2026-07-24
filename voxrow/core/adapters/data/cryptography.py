@@ -60,10 +60,10 @@ class AesGcmEncryptionDataAdapter(
             counter: int = 0
             nonce: bytes = urandom(self.urandom_size)
 
-            destination.write(nonce)  # Store nonce first at destination file
+            destination.file.write(nonce)  # Store nonce first at destination file
 
             while True:
-                chunk: bytes | str | any = data.read(self.chunk_size)
+                chunk: bytes | str | any = data.read(destination.chunk_size)
 
                 if not chunk:
                     break
@@ -78,12 +78,12 @@ class AesGcmEncryptionDataAdapter(
                 )
 
                 # Stored ciphertext length
-                destination.write(
+                destination.file.write(
                     len(encrypted).to_bytes(self.to_bytes_length, self.byteorder)
                 )
 
-                destination.write(encrypted)
+                destination.file.write(encrypted)
 
                 counter += 1
 
-        return destination
+        return destination.file

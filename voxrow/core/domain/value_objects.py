@@ -21,6 +21,7 @@ from pydantic import (
     ConfigDict,
     GetCoreSchemaHandler,
     HttpUrl,
+    PositiveInt,
     PostgresDsn,
     SecretStr,
     validate_call,
@@ -31,7 +32,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from rich.console import Console
 
 # Constants
-CONFIG_DICT = ConfigDict(arbitrary_types_allowed=True)
+CHUNK_SIZE: PositiveInt = 8 * (1_024**2)  # 8 MB
+CONFIG_DICT: ConfigDict = ConfigDict(arbitrary_types_allowed=True)
 DATE_FMT: str = "%Y-%m-%d"
 DEFAULT_SCHEMA: str = "main"
 ENCODING: str = "utf-8"
@@ -287,4 +289,7 @@ class HttpxSource(Source):
 class EncryptionSource(Source, ReadableStream): ...
 
 
-class EncryptionDestination(Destination, WritableStream): ...
+class EncryptionDestination(Destination, WritableStream):
+    file: WritableStream
+    _: KW_ONLY
+    chunk_size: PositiveInt = CHUNK_SIZE
