@@ -6,54 +6,19 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 1 March 2026
 
-from dataclasses import KW_ONLY
-from typing import Any
+from typing import TYPE_CHECKING
 
-from duckdb import DuckDBPyConnection, DuckDBPyRelation
-from pandas import DataFrame
 from pydantic import validate_call
-from pydantic.dataclasses import dataclass
 
 from ...domain import value_objects
+from ..utils.database import duckdb
 from . import AbstractDataPort
 
-
-@dataclass(config=value_objects.CONFIG_DICT, frozen=True)
-class AbstractDuckDB:
-    connection: DuckDBPyConnection
-    view_name: str
-    fetch_size: int
-    _: KW_ONLY
-    as_iterator: bool
-
-    @validate_call(validate_return=True)
-    def register(self, data: value_objects.Data) -> None:
-        if not isinstance(data, DuckDBPyConnection) and not isinstance(
-            data,
-            DuckDBPyRelation,
-        ):
-            self.connection.register(self.view_name, DataFrame(data))
-        elif isinstance(data, DuckDBPyRelation):
-            data.create_view(self.view_name)
-
-    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
-    def get_data(
-        self,
-        cursor: DuckDBPyConnection | DuckDBPyRelation,
-    ) -> value_objects.Data:
-        columns: tuple[str, ...] = tuple(col[0] for col in cursor.description)
-
-        while True:
-            rows: list[tuple[Any, ...]] = cursor.fetchmany(self.fetch_size)
-
-            if not rows:
-                break
-
-            for row in rows:
-                yield dict(zip(columns, row, strict=True))
+if TYPE_CHECKING:
+    from duckdb import DuckDBPyRelation
 
 
-class DuckDBDataAdapter(AbstractDataPort, AbstractDuckDB):
+class DuckDBDataAdapter(duckdb.AbstractDuckDB, AbstractDataPort):
     @validate_call(validate_return=True)
     def extract(self, *, source: value_objects.DuckDBSource) -> value_objects.Data:
         data: DuckDBPyRelation = self.connection.query(
