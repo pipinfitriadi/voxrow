@@ -22,8 +22,8 @@ from sqlalchemy import Engine
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, MetaData, Session, select, text
 
-from voxrow.core.adapters.data.duckdb import AbstractDuckDB
 from voxrow.core.adapters.utils.database.bigquery import get_client
+from voxrow.core.adapters.utils.database.duckdb import AbstractDuckDB
 from voxrow.core.adapters.utils.database.sqlmodel import PydanticJSON, SQLModelEntity
 from voxrow.core.domain import domain_services, value_objects
 from voxrow.core.services import handlers

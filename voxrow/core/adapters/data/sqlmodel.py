@@ -9,7 +9,6 @@
 from typing import TYPE_CHECKING
 
 from pydantic import validate_call
-from pydantic.dataclasses import dataclass
 from sqlalchemy.dialects.postgresql import insert as insert_postgres
 from sqlalchemy.dialects.sqlite import insert as insert_sqlite
 
@@ -21,7 +20,6 @@ if TYPE_CHECKING:
     from sqlalchemy import Engine
 
 
-@dataclass(config=value_objects.CONFIG_DICT)
 class SQLModelDataAdapter(AbstractSQLModel, AbstractDataPort):
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def extract(
