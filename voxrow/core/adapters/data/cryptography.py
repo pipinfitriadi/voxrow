@@ -36,7 +36,8 @@ class AesGcmEncryptionDataAdapter(
 
             data.write(
                 self.aesgcm.decrypt(
-                    nonce[: self.nonce_length] + counter.to_bytes(
+                    nonce[: self.nonce_length]
+                    + counter.to_bytes(
                         self.to_bytes_length, self.byteorder
                     ),  # Chunk Nonce: 12 == 8 + 4,
                     source.read(
