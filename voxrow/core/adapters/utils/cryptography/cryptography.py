@@ -30,5 +30,5 @@ class AbstractAesGcmEncryption:
 
     @classmethod
     @validate_call(validate_return=True)
-    def generate_key(cls, bit_length: Literal[128, 192, 256]) -> bytes:
+    def generate_key(cls, bit_length: Literal[128, 192, 256] = 256) -> bytes:
         return AESGCM.generate_key(bit_length)
