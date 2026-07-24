@@ -16,7 +16,7 @@ from pydantic.dataclasses import dataclass
 from ....domain import value_objects
 
 
-@dataclass(config=value_objects.CONFIG_DICT, frozen=True)
+@dataclass(config=value_objects.CONFIG_DICT)
 class AbstractAesGcmEncryption:
     key: Annotated[Buffer, Field(exclude=True)]
     byteorder: Literal["little", "big"]
