@@ -12,6 +12,7 @@ from httpx import Response, get, post
 from pydantic import validate_call
 
 from ...domain.value_objects import (
+    CONFIG_DICT,
     Data,
     Destination,
     HttpxSource,
@@ -21,7 +22,7 @@ from . import AbstractDataPort
 
 
 class HttpxDataAdapter(AbstractDataPort):
-    @validate_call(validate_return=True)
+    @validate_call(config=CONFIG_DICT, validate_return=True)
     def extract(self, *, source: HttpxSource) -> Data:
         methods: dict = {
             HTTPMethod.GET: get,
@@ -39,7 +40,7 @@ class HttpxDataAdapter(AbstractDataPort):
 
         return resp.json()
 
-    @validate_call(validate_return=True)
+    @validate_call(config=CONFIG_DICT, validate_return=True)
     async def load(
         self,
         data: Data,

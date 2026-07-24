@@ -6,44 +6,35 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 23 July 2026
 
-import os
-from io import TextIOWrapper
+from dataclasses import KW_ONLY, field
 from typing import Literal
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.utils import Buffer
-from pydantic import validate_call
+from pydantic import Field, validate_call
+from pydantic.dataclasses import dataclass
 
 from ....domain import value_objects
 
+# Constants
+CHUNK_SIZE: int = 8 * (1_024**2)  # 8 MB
 
-@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
-def encrypt_aesgcm(
-    source: TextIOWrapper,
-    destination: TextIOWrapper,
-    key: Buffer,
-    byteorder: Literal["little", "big"] = "big",
-    *,
-    chunk_size: int = 8 * 1024 * 1024,  # 8 MB
-) -> None:
-    aesgcm: AESGCM = AESGCM(key)
-    nonce: bytes = os.urandom(12)
-    counter: int = 0
 
-    with source, destination:
-        destination.write(nonce)  # Store nonce first at destination file
+@dataclass(config=value_objects.CONFIG_DICT)
+class AbstractAesGcmEncryption:
+    key: Buffer = Field(exclude=True)
+    byteorder: Literal["little", "big"] = "big"
+    aesgcm: AESGCM = field(default=None, init=False)
+    urandom_size: int = field(default=12, init=False)
+    nonce_length: int = field(default=8, init=False)
+    to_bytes_length: int = field(default=4, init=False)
+    _: KW_ONLY
+    chunk_size: int = CHUNK_SIZE
 
-        while True:
-            chunk: bytes | str | any = source.read(chunk_size)
+    def __post_init__(self) -> None:
+        self.aesgcm = AESGCM(self.key)
 
-            if not chunk:
-                break
-
-            chunk_nonce: bytes = nonce[:8] + counter.to_bytes(
-                4, byteorder
-            )  # 12 == 8 + 4
-            encrypted: bytes = aesgcm.encrypt(chunk_nonce, chunk, None)
-
-            destination.write(encrypted)
-
-            counter += 1
+    @classmethod
+    @validate_call(validate_return=True)
+    def generate_key(cls, bit_length: Literal[128, 192, 256]) -> bytes:
+        return AESGCM.generate_key(bit_length)

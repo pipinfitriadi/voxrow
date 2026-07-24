@@ -13,7 +13,7 @@ from enum import IntEnum, StrEnum
 from http import HTTPMethod
 from pathlib import Path
 from ssl import SSLContext
-from typing import Any, Literal, ParamSpec
+from typing import Any, Literal, ParamSpec, Protocol, runtime_checkable
 from zoneinfo import ZoneInfo
 
 from pydantic import (
@@ -76,6 +76,18 @@ class Settings(BaseSettings):
 type DatabaseType = PostgresDsn | AnyUrl
 
 
+@runtime_checkable
+class ReadableStream(Protocol):
+    @validate_call(validate_return=True)
+    def read(self, size: int = -1) -> bytes: ...
+
+
+@runtime_checkable
+class WritableStream(Protocol):
+    @validate_call(validate_return=True)
+    def write(self, data: bytes) -> int: ...
+
+
 class Domain:
     pass
 
@@ -86,7 +98,7 @@ class Table:
     schema: str
 
 
-type ResourceLocation = Table | HttpUrl | AnyUrl | Path | Any
+type ResourceLocation = Table | HttpUrl | AnyUrl | Path | WritableStream | Any
 type Row = dict[Any, Any]
 
 
@@ -105,7 +117,7 @@ class Rows(Iterator[Row]):
         )
 
 
-type Data = Rows | bytes | str | Any
+type Data = Rows | bytes | str | ReadableStream | Any
 
 
 class ContentEncoding(StrEnum):
@@ -270,3 +282,9 @@ class HttpxSource(Source):
     json: Any | None = None
     timeout: float | None = None
     verify: SSLContext | str | bool = True
+
+
+class EncryptionSource(Source, ReadableStream): ...
+
+
+class EncryptionDestination(Destination, WritableStream): ...
