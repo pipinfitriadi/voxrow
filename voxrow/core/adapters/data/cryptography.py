@@ -10,14 +10,12 @@ from io import BytesIO
 from os import urandom
 
 from pydantic import validate_call
-from pydantic.dataclasses import dataclass
 
 from ...domain import value_objects
 from ..utils.cryptography import cryptography
 from . import AbstractDataPort
 
 
-@dataclass(config=value_objects.CONFIG_DICT)
 class AesGcmEncryptionDataAdapter(
     cryptography.AbstractAesGcmEncryption,
     AbstractDataPort,

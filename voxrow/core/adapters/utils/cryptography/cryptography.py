@@ -20,7 +20,7 @@ from ....domain import value_objects
 CHUNK_SIZE: PositiveInt = 8 * (1_024**2)  # 8 MB
 
 
-@dataclass(config=value_objects.CONFIG_DICT)
+@dataclass(config=value_objects.CONFIG_DICT, frozen=True)
 class AbstractAesGcmEncryption:
     key: Buffer = Field(exclude=True)
     byteorder: Literal["little", "big"] = "big"
