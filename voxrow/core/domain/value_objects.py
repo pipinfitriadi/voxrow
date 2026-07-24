@@ -79,7 +79,7 @@ type DatabaseType = PostgresDsn | AnyUrl
 @runtime_checkable
 class ReadableStream(Protocol):
     @validate_call(validate_return=True)
-    def read(self, size: int = -1) -> bytes | str | any: ...
+    def read(self, size: int = -1) -> bytes | str | Any: ...  # noqa: ANN401
 
 
 @runtime_checkable
