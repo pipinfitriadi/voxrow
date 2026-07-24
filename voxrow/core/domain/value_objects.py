@@ -31,7 +31,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from rich.console import Console
 
 # Constants
-CONFIG_DICT = ConfigDict(arbitrary_types_allowed=True)
+CONFIG_DICT: ConfigDict = ConfigDict(arbitrary_types_allowed=True)
 DATE_FMT: str = "%Y-%m-%d"
 DEFAULT_SCHEMA: str = "main"
 ENCODING: str = "utf-8"
