@@ -105,8 +105,12 @@ ignore = [
     'TID252',
 ]
 
+[tool.ruff.lint.flake8-copyright]
+notice-rgx = "(?i)Copyright \\(C\\)"
+
 [tool.ruff.lint.per-file-ignores]
 'tests/*.py' = ['S101']
+'*.ipynb' = ['CPY001']
 
 [tool.setuptools.packages.find]
 include = ['voxrow.core.*']
