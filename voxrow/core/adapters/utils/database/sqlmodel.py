@@ -20,6 +20,11 @@ from sqlmodel import DateTime, Field, Session, SQLModel, create_engine
 from ....domain import domain_services, entity, value_objects
 
 
+@dataclass(config=value_objects.CONFIG_DICT, frozen=True)
+class AbstractSQLModel:
+    session: Session
+
+
 class SQLModelDomain(value_objects.Domain, SQLModel):
     pass
 
@@ -39,11 +44,6 @@ class SQLModelEntity(SQLModelDomain, entity.Entity):
 
     def delete(self) -> None:
         self.deleted_at = domain_services.now()
-
-
-@dataclass(config=value_objects.CONFIG_DICT)
-class AbstractSQLModel:
-    session: Session
 
 
 class PydanticJSON(TypeDecorator):

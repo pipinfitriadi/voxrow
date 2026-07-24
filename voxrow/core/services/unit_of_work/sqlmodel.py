@@ -12,16 +12,12 @@ from pydantic import validate_call
 from sqlmodel import Session
 
 from ...adapters.data import sqlmodel
-from ...adapters.utils.database.sqlmodel import AbstractSQLModel
 from ...domain import value_objects
 from ...services import unit_of_work
 
 
 # Abstracts
-class AbstractSQLModelUnitOfWork(
-    AbstractSQLModel,
-    unit_of_work.AbstractUnitOfWork,
-):
+class AbstractSQLModelUnitOfWork(unit_of_work.AbstractUnitOfWork):
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def __init__(self, session: Session) -> None:
         self.session = session
