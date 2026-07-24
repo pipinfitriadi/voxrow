@@ -16,11 +16,13 @@ from ...domain import value_objects
 from ...services import unit_of_work
 
 
-# Abstracts
-class AbstractSQLModelUnitOfWork(unit_of_work.AbstractUnitOfWork):
+class SQLModelDataUnitOfWork(unit_of_work.AbstractDataUnitOfWork):
+    session: Session
+
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def __init__(self, session: Session) -> None:
         self.session = session
+        self.data = sqlmodel.SQLModelDataAdapter(self.session)
 
     def __enter__(self) -> Self:
         self.session.begin()
@@ -32,15 +34,3 @@ class AbstractSQLModelUnitOfWork(unit_of_work.AbstractUnitOfWork):
 
     def rollback(self) -> None:  # pragma: no cover
         self.session.rollback()
-
-
-# Implementation
-class SQLModelDataUnitOfWork(
-    AbstractSQLModelUnitOfWork,
-    unit_of_work.AbstractDataUnitOfWork,
-):
-    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
-    def __init__(self, session: Session) -> None:
-        super().__init__(session)
-
-        self.data = sqlmodel.SQLModelDataAdapter(self.session)
