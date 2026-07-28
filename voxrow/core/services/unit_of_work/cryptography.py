@@ -7,6 +7,7 @@
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 24 July 2026
 
 from contextlib import ExitStack
+from dataclasses import replace
 from types import TracebackType
 from typing import Literal, Self
 
@@ -35,12 +36,18 @@ class AesGcmEncryptionDataUnitOfWork(AbstractDataUnitOfWork):
         self._stack = ExitStack()
 
         try:
-            if hasattr(self.source, "__enter__"):
-                self.source = self._stack.enter_context(self.source)
+            if self.source and hasattr(self.source.file, "__enter__"):
+                self.source = replace(
+                    self.source,
+                    file=self._stack.enter_context(self.source.file),
+                )
 
-            if hasattr(self.destination, "__enter__"):
-                self.destination = self._stack.enter_context(self.destination)
-        except Exception:
+            if self.destination and hasattr(self.destination.file, "__enter__"):
+                self.destination = replace(
+                    self.destination,
+                    file=self._stack.enter_context(self.destination.file),
+                )
+        except Exception:  # pragma: no cover
             self._stack.close()
             raise
 

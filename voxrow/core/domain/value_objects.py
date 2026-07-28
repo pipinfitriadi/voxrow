@@ -113,7 +113,7 @@ class Rows(Iterator[Row]):
     ) -> CoreSchema:
         return core_schema.chain_schema(
             [
-                core_schema.is_instance_schema(Iterator),
+                core_schema.is_instance_schema(Rows),
                 core_schema.generator_schema(handler.generate_schema(Row)),
             ],
         )

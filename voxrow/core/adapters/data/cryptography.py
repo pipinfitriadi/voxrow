@@ -47,6 +47,8 @@ class AesGcmEncryptionDataAdapter(
 
             counter += 1
 
+        data.seek(0)
+
         return data
 
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
