@@ -286,7 +286,9 @@ class HttpxSource(Source):
     verify: SSLContext | str | bool = True
 
 
-class EncryptionSource(Source, ReadableStream): ...
+@dataclass(config=CONFIG_DICT, frozen=True)
+class EncryptionSource(Source):
+    file: ReadableStream
 
 
 @dataclass(config=CONFIG_DICT, frozen=True)

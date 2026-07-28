@@ -23,11 +23,11 @@ class AesGcmEncryptionDataAdapter(
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def extract(self, *, source: value_objects.EncryptionSource) -> value_objects.Data:
         counter: int = 0
-        nonce: bytes | str | any = source.read(self.urandom_size)
+        nonce: bytes | str | any = source.file.read(self.urandom_size)
         data: bytes = BytesIO()
 
         while True:
-            bytes_length: bytes | str | any = source.read(self.to_bytes_length)
+            bytes_length: bytes | str | any = source.file.read(self.to_bytes_length)
 
             if not bytes_length:
                 break
@@ -38,7 +38,7 @@ class AesGcmEncryptionDataAdapter(
                     + counter.to_bytes(
                         self.to_bytes_length, self.byteorder
                     ),  # Chunk Nonce: 12 == 8 + 4,
-                    source.read(
+                    source.file.read(
                         int.from_bytes(bytes_length, self.byteorder)  # Encrypted length
                     ),  # Encrypted
                     None,
