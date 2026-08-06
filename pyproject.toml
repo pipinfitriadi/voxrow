@@ -34,6 +34,7 @@ classifiers = [
 ]
 dependencies = [
     'pandas',
+    'pyarrow',
     'pydantic',
     'pydantic-settings',
     'rich',

@@ -176,9 +176,14 @@ class ContentEncoding(StrEnum):
 
 
 class ContentType(StrEnum):
+    binary = "application/octet-stream"
+    csv = "text/csv"
+    excel = "application/vnd.ms-excel"
     html = "text/html"
     json = "application/json"
+    parquet = "application/vnd.apache.parquet"
     svg = "image/svg+xml"
+    text = "text/plain"
     xml = "application/xml"
 
 
@@ -281,6 +286,14 @@ class HttpxSource(Source):
     json: Any | None = None
     timeout: float | None = None
     verify: SSLContext | str | bool = True
+
+
+@dataclass(frozen=True)
+class ObsSource(Source):
+    bucket_name: str
+    object_key: str
+    content_type: ContentType | None = None
+    content_encoding: ContentEncoding | None = None
 
 
 @dataclass(frozen=True)

@@ -8,14 +8,18 @@
 
 import logging
 from collections.abc import Callable
+from io import BytesIO
 from typing import ClassVar
 from unittest.mock import MagicMock
 
+import pandas as pd
 import pytest
 from anyio import Path
 from duckdb import DuckDBPyConnection
-from google.cloud.bigquery import Client
+from google.cloud.bigquery import Client as BigqueryClient
 from google.oauth2.service_account import Credentials
+from obs import ObsClient
+from pandas.testing import assert_frame_equal
 from pydantic import (
     AnyUrl,
     BaseModel,
@@ -30,9 +34,14 @@ from sqlalchemy import Engine
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, MetaData, Session, select, text
 
-from voxrow.core.adapters.utils.database.bigquery import get_client
+from voxrow.core.adapters.utils.database.bigquery import (
+    get_client as bigquery_get_client,
+)
 from voxrow.core.adapters.utils.database.duckdb import AbstractDuckDB
 from voxrow.core.adapters.utils.database.sqlmodel import PydanticJSON, SQLModelEntity
+from voxrow.core.adapters.utils.storage.obs import (
+    get_client as obs_get_client,
+)
 from voxrow.core.domain import domain_services, value_objects
 from voxrow.core.services import handlers
 from voxrow.core.services.unit_of_work import (
@@ -52,7 +61,7 @@ def mock_bigquery(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "voxrow.core.adapters.utils.database.bigquery.Client",
         lambda *args, **kwargs: MagicMock(  # noqa: ARG005
-            spec=Client,
+            spec=BigqueryClient,
             load_table_from_json=MagicMock(return_value=MagicMock(output_rows=1)),
             query=MagicMock(
                 return_value=MagicMock(
@@ -79,6 +88,44 @@ def mock_httpx(test_files_dir: DirectoryPath, monkeypatch: pytest.MonkeyPatch) -
                     (
                         test_files_dir / "jsonplaceholder" / "users" / "get.json"
                     ).read_text()
+                ),
+            ),
+        ),
+    )
+
+
+@pytest.fixture
+def fake_pandas_dataframe() -> pd.DataFrame:
+    return pd.DataFrame({"Name": ["Alice", "Bob"], "Age": [25, 30]})
+
+
+@pytest.fixture
+def fake_parquet_bytes(fake_pandas_dataframe: pd.DataFrame) -> BytesIO:
+    buffer: BytesIO = BytesIO()
+
+    fake_pandas_dataframe.to_parquet(buffer, engine="pyarrow", index=False)
+    buffer.seek(0)
+
+    return buffer
+
+
+@pytest.fixture
+def mock_obs(fake_parquet_bytes: BytesIO, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "voxrow.core.adapters.utils.storage.obs.ObsClient",
+        lambda *args, **kwargs: MagicMock(  # noqa: ARG005
+            spec=ObsClient,
+            getObject=MagicMock(
+                return_value=MagicMock(
+                    status=200,
+                    **{
+                        "body.response.read.side_effect": (
+                            BytesIO(b"Test").read(),
+                            None,
+                            fake_parquet_bytes.read(),
+                            None,
+                        ),
+                    },
                 ),
             ),
         ),
@@ -127,7 +174,7 @@ class TestHandlersEtl:
         caplog.set_level(logging.INFO)
 
         uow: bigquery.BigqueryDataUnitOfWork = bigquery.BigqueryDataUnitOfWork(
-            get_client(
+            bigquery_get_client(
                 fake_google_project_id,
                 fake_google_service_account_file,
             )
@@ -241,13 +288,48 @@ class TestHandlersEtl:
     @pytest.mark.filterwarnings(
         "ignore:ssl.PROTOCOL_TLS is deprecated:DeprecationWarning"
     )
+    @pytest.mark.filterwarnings(
+        "ignore:datetime.datetime.utcnow\\(\\):DeprecationWarning:obs.client"
+    )
     @pytest.mark.asyncio
-    async def test_obs(self) -> None:
-        obs.ObsDataUnitOfWork(
-            SecretStr("AccessKeyID"),
-            SecretStr("SecretAccessKey"),
-            HttpUrl("https://obs.ap-southeast-1.myhuaweicloud.com"),
+    async def test_obs(
+        self,
+        fake_pandas_dataframe: pd.DataFrame,
+        mock_obs: Callable,  # noqa: ARG002
+    ) -> None:
+        uow: obs.ObsDataUnitOfWork = obs.ObsDataUnitOfWork(
+            obs_get_client(
+                SecretStr("AccessKeyID"),
+                SecretStr("SecretAccessKey"),
+                HttpUrl("https://obs.ap-southeast-1.myhuaweicloud.com"),
+            )
         )
+        bucket_name: str = "examplebucket"
+
+        with uow(
+            source=value_objects.ObsSource(
+                bucket_name,
+                "file.txt",
+                value_objects.ContentType.text,
+            ),
+        ):
+            assert (
+                uow.data.extract(source=uow.source)
+                .read()
+                .decode(value_objects.ENCODING)
+            ) == "Test"
+
+        with uow(
+            source=value_objects.ObsSource(
+                bucket_name,
+                "file.parquet",
+                value_objects.ContentType.parquet,
+            ),
+        ):
+            assert_frame_equal(
+                fake_pandas_dataframe,
+                pd.read_parquet(uow.data.extract(source=uow.source)),
+            )
 
     @pytest.mark.asyncio
     async def test_pathlib(self, tmp_path: DirectoryPath) -> None:

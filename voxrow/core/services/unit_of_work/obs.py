@@ -6,21 +6,19 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 6 August 2026
 
-from pydantic import HttpUrl, SecretStr, validate_call
+from obs import ObsClient
+from pydantic import validate_call
 
 from ...adapters.data import obs
-from ...adapters.utils.storage.obs import get_client
+from ...domain import value_objects
 from . import AbstractDataUnitOfWork
 
 
 class ObsDataUnitOfWork(AbstractDataUnitOfWork):
-    @validate_call(validate_return=True)
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def __init__(
         self,
-        access_key_id: SecretStr,
-        secret_access_key: SecretStr,
-        server: HttpUrl,
+        client: ObsClient,
+        chunk_size: int = value_objects.CHUNK_SIZE,
     ) -> None:
-        self.data = obs.ObsDataAdapter(
-            get_client(access_key_id, secret_access_key, server)
-        )
+        self.data = obs.ObsDataAdapter(client, chunk_size)
