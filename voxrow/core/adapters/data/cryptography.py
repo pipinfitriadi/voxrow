@@ -88,4 +88,6 @@ class AesGcmEncryptionDataAdapter(
 
                 counter += 1
 
+            data.close()
+
         return destination.file

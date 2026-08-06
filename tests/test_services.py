@@ -195,14 +195,17 @@ class TestHandlersEtl:
             destination=uow(
                 destination=value_objects.EncryptionDestination(
                     destination_file.open("wb")
-                )
+                ),
             ),
         )
 
-        with uow(
-            source=value_objects.EncryptionSource(destination_file.open("rb")),
+        with (
+            uow(
+                source=value_objects.EncryptionSource(destination_file.open("rb")),
+            ),
+            uow.data.extract(source=uow.source) as data,
         ):
-            assert uow.data.extract(source=uow.source).read() == content
+            assert data.read() == content
 
     @pytest.mark.asyncio
     async def test_bigquery(
