@@ -57,6 +57,7 @@ not_supported_by_vercel = [
 ]
 storage = [
     'boto3',
+    'esdk-obs-python==3.26.6',
     'google-cloud-storage',
 ]
 
