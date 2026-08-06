@@ -106,7 +106,9 @@ def fake_parquet_bytes(fake_pandas_dataframe: pd.DataFrame) -> BytesIO:
     fake_pandas_dataframe.to_parquet(buffer, engine="pyarrow", index=False)
     buffer.seek(0)
 
-    return buffer
+    yield buffer
+
+    buffer.close()
 
 
 @pytest.fixture
@@ -306,15 +308,17 @@ class TestHandlersEtl:
         )
         bucket_name: str = "examplebucket"
 
-        with uow(
-            source=value_objects.ObsSource(
-                bucket_name,
-                "file.txt",
-                value_objects.ContentType.text,
+        with (
+            uow(
+                source=value_objects.ObsSource(
+                    bucket_name,
+                    "file.txt",
+                    value_objects.ContentType.text,
+                ),
             ),
+            BytesIO() as value,
         ):
             data: value_objects.Data = uow.data.extract(source=uow.source)
-            value: BytesIO = BytesIO()
 
             while True:
                 chunk: any | None = data.read()
@@ -329,15 +333,17 @@ class TestHandlersEtl:
 
             assert value.read().decode(value_objects.ENCODING) == "Test"
 
-        with uow(
-            source=value_objects.ObsSource(
-                bucket_name,
-                "file.parquet",
-                value_objects.ContentType.parquet,
+        with (
+            uow(
+                source=value_objects.ObsSource(
+                    bucket_name,
+                    "file.parquet",
+                    value_objects.ContentType.parquet,
+                ),
             ),
+            BytesIO() as value,
         ):
             data: value_objects.Data = uow.data.extract(source=uow.source)
-            value: BytesIO = BytesIO()
 
             while True:
                 chunk: any | None = data.read()
