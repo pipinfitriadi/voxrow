@@ -16,7 +16,15 @@ from anyio import Path
 from duckdb import DuckDBPyConnection
 from google.cloud.bigquery import Client
 from google.oauth2.service_account import Credentials
-from pydantic import AnyUrl, BaseModel, DirectoryPath, FilePath, validate_call
+from pydantic import (
+    AnyUrl,
+    BaseModel,
+    DirectoryPath,
+    FilePath,
+    HttpUrl,
+    SecretStr,
+    validate_call,
+)
 from pydantic.dataclasses import dataclass
 from sqlalchemy import Engine
 from sqlalchemy.dialects.postgresql import JSONB
@@ -34,6 +42,7 @@ from voxrow.core.services.unit_of_work import (
     cryptography,
     duckdb,
     httpx,
+    obs,
     pathlib,
     sqlmodel,
 )
@@ -257,6 +266,17 @@ class TestHandlersEtl:
             ),
         ):
             assert tuple(uow.data.extract(source=uow.source)) == data
+
+    @pytest.mark.filterwarnings(
+        "ignore:ssl.PROTOCOL_TLS is deprecated:DeprecationWarning"
+    )
+    @pytest.mark.asyncio
+    async def test_obs(self) -> None:
+        obs.ObsDataUnitOfWork(
+            SecretStr("AccessKeyID"),
+            SecretStr("SecretAccessKey"),
+            HttpUrl("https://obs.ap-southeast-1.myhuaweicloud.com"),
+        )
 
     @pytest.mark.asyncio
     async def test_pathlib(self, tmp_path: DirectoryPath) -> None:
