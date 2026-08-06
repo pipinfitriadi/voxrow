@@ -22,6 +22,7 @@ from sqlalchemy import Engine
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, MetaData, Session, select, text
 
+from voxrow.core.adapters.data.cryptography import AesGcmEncryptionDataAdapter
 from voxrow.core.adapters.utils.database.bigquery import get_client
 from voxrow.core.adapters.utils.database.duckdb import AbstractDuckDB
 from voxrow.core.adapters.utils.database.sqlmodel import PydanticJSON, SQLModelEntity
@@ -30,6 +31,7 @@ from voxrow.core.services import handlers
 from voxrow.core.services.unit_of_work import (
     bigquery,
     boto3,
+    cryptography,
     duckdb,
     httpx,
     pathlib,
@@ -107,6 +109,33 @@ class FakeTransformDuckDB(AbstractDuckDB):
 
 
 class TestHandlersEtl:
+    @pytest.mark.asyncio
+    async def test_aes_gcm_encryption(self, tmp_path: DirectoryPath) -> None:
+        uow: cryptography.AesGcmEncryptionDataUnitOfWork = (
+            cryptography.AesGcmEncryptionDataUnitOfWork(
+                AesGcmEncryptionDataAdapter.generate_key()
+            )
+        )
+        destination_file: FilePath = tmp_path / "destination.enc"
+        source_file: FilePath = tmp_path / "source.txt"
+        content: bytes = b"Hello world!"
+
+        source_file.write_bytes(content)
+
+        await handlers.etl(
+            source=source_file.open("rb"),
+            destination=uow(
+                destination=value_objects.EncryptionDestination(
+                    destination_file.open("wb")
+                )
+            ),
+        )
+
+        with uow(
+            source=value_objects.EncryptionSource(destination_file.open("rb")),
+        ):
+            assert uow.data.extract(source=uow.source).read() == content
+
     @pytest.mark.asyncio
     async def test_bigquery(
         self,
@@ -187,6 +216,49 @@ class TestHandlersEtl:
             assert len(uow.data.extract(source=uow.source)) == fake_user_total
 
     @pytest.mark.asyncio
+    async def test_duckdb(self, fake_duckdb_conn: DuckDBPyConnection) -> None:
+        data: tuple[dict, ...] = (dict(b=2),)
+        destination_table: str = "destination"
+        uow: duckdb.DuckDBDataUnitOfWork = duckdb.DuckDBDataUnitOfWork(
+            fake_duckdb_conn,
+            as_iterator=True,
+        )
+        table: value_objects.Table = await handlers.etl(
+            source=fake_duckdb_conn.query("SELECT 1 a;"),
+            destination=uow(
+                destination=value_objects.DuckDBDestination(
+                    f"""
+                    CREATE TABLE
+                        {destination_table}
+                    AS
+                    SELECT
+                        *
+                    FROM
+                        source
+                    ;
+                    """,  # noqa: S608
+                    table=value_objects.Table(
+                        destination_table,
+                        "main",
+                    ),
+                ),
+            ),
+            transform=FakeTransformDuckDB(
+                fake_duckdb_conn,
+                "fake_table",
+                fetch_size=5,
+                as_iterator=True,
+            ),
+        )
+
+        with uow(
+            source=value_objects.DuckDBSource(
+                f"SELECT * FROM {table.schema}.{table.name};",  # noqa: S608
+            ),
+        ):
+            assert tuple(uow.data.extract(source=uow.source)) == data
+
+    @pytest.mark.asyncio
     async def test_pathlib(self, tmp_path: DirectoryPath) -> None:
         data: str = "Test"
         data_bytes: bytes = data.encode()
@@ -232,49 +304,6 @@ class TestHandlersEtl:
             uow(),
         ):
             pass  # pragma: no cover
-
-    @pytest.mark.asyncio
-    async def test_duckdb(self, fake_duckdb_conn: DuckDBPyConnection) -> None:
-        data: tuple[dict, ...] = (dict(b=2),)
-        destination_table: str = "destination"
-        uow: duckdb.DuckDBDataUnitOfWork = duckdb.DuckDBDataUnitOfWork(
-            fake_duckdb_conn,
-            as_iterator=True,
-        )
-        table: value_objects.Table = await handlers.etl(
-            source=fake_duckdb_conn.query("SELECT 1 a;"),
-            destination=uow(
-                destination=value_objects.DuckDBDestination(
-                    f"""
-                    CREATE TABLE
-                        {destination_table}
-                    AS
-                    SELECT
-                        *
-                    FROM
-                        source
-                    ;
-                    """,  # noqa: S608
-                    table=value_objects.Table(
-                        destination_table,
-                        "main",
-                    ),
-                ),
-            ),
-            transform=FakeTransformDuckDB(
-                fake_duckdb_conn,
-                "fake_table",
-                fetch_size=5,
-                as_iterator=True,
-            ),
-        )
-
-        with uow(
-            source=value_objects.DuckDBSource(
-                f"SELECT * FROM {table.schema}.{table.name};",  # noqa: S608
-            ),
-        ):
-            assert tuple(uow.data.extract(source=uow.source)) == data
 
     @pytest.mark.asyncio
     async def test_sqlmodel(self, fake_db_engine: Engine) -> None:

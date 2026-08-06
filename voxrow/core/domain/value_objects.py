@@ -284,3 +284,15 @@ class HttpxSource(Source):
     json: Any | None = None
     timeout: float | None = None
     verify: SSLContext | str | bool = True
+
+
+@dataclass(config=CONFIG_DICT, frozen=True)
+class EncryptionSource(Source):
+    file: ReadableStream
+
+
+@dataclass(config=CONFIG_DICT, frozen=True)
+class EncryptionDestination(Destination):
+    file: WritableStream
+    _: KW_ONLY
+    chunk_size: PositiveInt = CHUNK_SIZE
