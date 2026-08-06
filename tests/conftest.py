@@ -91,3 +91,8 @@ def fake_google_service_account_file(test_files_dir: DirectoryPath) -> FilePath:
 @pytest.fixture
 def fake_message() -> str:
     return "Test"
+
+
+@pytest.fixture
+def fake_message_bytes(fake_message: str) -> bytes:
+    return fake_message.encode()

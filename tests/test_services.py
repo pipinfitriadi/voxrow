@@ -115,7 +115,7 @@ def fake_parquet_bytes(fake_pandas_dataframe: pd.DataFrame) -> BytesIO:
 
 @pytest.fixture
 def mock_obs(
-    fake_message: str,
+    fake_message_bytes: bytes,
     fake_parquet_bytes: BytesIO,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -131,7 +131,7 @@ def mock_obs(
                     status=200,
                     **{
                         "body.response.read.side_effect": (
-                            fake_message.encode(),
+                            fake_message_bytes,
                             None,
                             fake_parquet_bytes.read(),
                             None,
@@ -178,7 +178,11 @@ class FakeTransformDuckDB(AbstractDuckDB):
 
 class TestHandlersEtl:
     @pytest.mark.asyncio
-    async def test_aes_gcm_encryption(self, tmp_path: DirectoryPath) -> None:
+    async def test_aes_gcm_encryption(
+        self,
+        fake_message_bytes: bytes,
+        tmp_path: DirectoryPath,
+    ) -> None:
         uow: cryptography.AesGcmEncryptionDataUnitOfWork = (
             cryptography.AesGcmEncryptionDataUnitOfWork(
                 AesGcmEncryptionDataAdapter.generate_key()
@@ -186,9 +190,8 @@ class TestHandlersEtl:
         )
         destination_file: FilePath = tmp_path / "destination.enc"
         source_file: FilePath = tmp_path / "source.txt"
-        content: bytes = b"Hello world!"
 
-        source_file.write_bytes(content)
+        source_file.write_bytes(fake_message_bytes)
 
         await handlers.etl(
             source=source_file.open("rb"),
@@ -205,7 +208,7 @@ class TestHandlersEtl:
             ),
             uow.data.extract(source=uow.source) as data,
         ):
-            assert data.read() == content
+            assert data.read() == fake_message_bytes
 
     @pytest.mark.asyncio
     async def test_bigquery(
@@ -339,6 +342,7 @@ class TestHandlersEtl:
     async def test_obs(
         self,
         fake_message: str,
+        fake_message_bytes: bytes,
         fake_pandas_dataframe: pd.DataFrame,
         tmp_path: DirectoryPath,
         mock_obs: Callable,  # noqa: ARG002
@@ -407,7 +411,7 @@ class TestHandlersEtl:
         object_key: str = "file.mp4"
         fake_file: FilePath = tmp_path / object_key
 
-        fake_file.write_bytes(fake_message.encode())
+        fake_file.write_bytes(fake_message_bytes)
 
         assert await handlers.etl(
             source=fake_file.open(mode="rb"),
@@ -421,8 +425,12 @@ class TestHandlersEtl:
         ) == AnyUrl(f"{value_objects.Boto3Scheme.obs}://{bucket_name}/{object_key}")
 
     @pytest.mark.asyncio
-    async def test_pathlib(self, fake_message: str, tmp_path: DirectoryPath) -> None:
-        data_bytes: bytes = fake_message.encode()
+    async def test_pathlib(
+        self,
+        fake_message: str,
+        fake_message_bytes: bytes,
+        tmp_path: DirectoryPath,
+    ) -> None:
         uow: pathlib.PathDataUnitOfWork = pathlib.PathDataUnitOfWork()
 
         with (tmp_path / "file.txt").open(mode="w+") as temp_file:
@@ -438,7 +446,7 @@ class TestHandlersEtl:
 
         with (tmp_path / "file.dat").open(mode="wb+") as temp_file:
             file: Path = await handlers.etl(
-                source=data_bytes,
+                source=fake_message_bytes,
                 destination=uow(
                     destination=value_objects.PathDestination(
                         temp_file.name,
@@ -455,7 +463,7 @@ class TestHandlersEtl:
                     is_bytes=True,
                 ),
             ):
-                assert uow.data.extract(source=uow.source) == data_bytes
+                assert uow.data.extract(source=uow.source) == fake_message_bytes
 
         with (
             pytest.raises(
