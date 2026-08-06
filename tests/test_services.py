@@ -112,7 +112,11 @@ def fake_parquet_bytes(fake_pandas_dataframe: pd.DataFrame) -> BytesIO:
 
 
 @pytest.fixture
-def mock_obs(fake_parquet_bytes: BytesIO, monkeypatch: pytest.MonkeyPatch) -> None:
+def mock_obs(
+    fake_message: str,
+    fake_parquet_bytes: BytesIO,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(
         "voxrow.core.adapters.utils.storage.obs.ObsClient",
         lambda *args, **kwargs: MagicMock(  # noqa: ARG005
@@ -122,7 +126,7 @@ def mock_obs(fake_parquet_bytes: BytesIO, monkeypatch: pytest.MonkeyPatch) -> No
                     status=200,
                     **{
                         "body.response.read.side_effect": (
-                            b"Test",
+                            fake_message.encode(),
                             None,
                             fake_parquet_bytes.read(),
                             None,
@@ -296,6 +300,7 @@ class TestHandlersEtl:
     @pytest.mark.asyncio
     async def test_obs(
         self,
+        fake_message: str,
         fake_pandas_dataframe: pd.DataFrame,
         mock_obs: Callable,  # noqa: ARG002
     ) -> None:
@@ -331,7 +336,7 @@ class TestHandlersEtl:
             data.close()
             value.seek(0)
 
-            assert value.read().decode(value_objects.ENCODING) == "Test"
+            assert value.read().decode(value_objects.ENCODING) == fake_message
 
         with (
             uow(
@@ -361,21 +366,20 @@ class TestHandlersEtl:
             )
 
     @pytest.mark.asyncio
-    async def test_pathlib(self, tmp_path: DirectoryPath) -> None:
-        data: str = "Test"
-        data_bytes: bytes = data.encode()
+    async def test_pathlib(self, fake_message: str, tmp_path: DirectoryPath) -> None:
+        data_bytes: bytes = fake_message.encode()
         uow: pathlib.PathDataUnitOfWork = pathlib.PathDataUnitOfWork()
 
         with (tmp_path / "file.txt").open(mode="w+") as temp_file:
             file: Path = await handlers.etl(
-                source=data,
+                source=fake_message,
                 destination=uow(
                     destination=value_objects.PathDestination(temp_file.name)
                 ),
             )
 
             assert file == Path(temp_file.name)
-            assert file.read_text() == data
+            assert file.read_text() == fake_message
 
         with (tmp_path / "file.dat").open(mode="wb+") as temp_file:
             file: Path = await handlers.etl(

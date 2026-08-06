@@ -86,3 +86,8 @@ def fake_google_project_id() -> str:
 @pytest.fixture
 def fake_google_service_account_file(test_files_dir: DirectoryPath) -> FilePath:
     return test_files_dir / "google" / "service_account.json"
+
+
+@pytest.fixture
+def fake_message() -> str:
+    return "Test"
