@@ -313,11 +313,21 @@ class TestHandlersEtl:
                 value_objects.ContentType.text,
             ),
         ):
-            assert (
-                uow.data.extract(source=uow.source)
-                .read()
-                .decode(value_objects.ENCODING)
-            ) == "Test"
+            data: value_objects.Data = uow.data.extract(source=uow.source)
+            value: BytesIO = BytesIO()
+
+            while True:
+                chunk: any | None = data.read()
+
+                if not chunk:
+                    break
+
+                value.write(chunk)
+
+            data.close()
+            value.seek(0)
+
+            assert value.read().decode(value_objects.ENCODING) == "Test"
 
         with uow(
             source=value_objects.ObsSource(
@@ -326,9 +336,22 @@ class TestHandlersEtl:
                 value_objects.ContentType.parquet,
             ),
         ):
+            data: value_objects.Data = uow.data.extract(source=uow.source)
+            value: BytesIO = BytesIO()
+
+            while True:
+                chunk: any | None = data.read()
+
+                if not chunk:
+                    break
+
+                value.write(chunk)
+
+            data.close()
+            value.seek(0)
             assert_frame_equal(
                 fake_pandas_dataframe,
-                pd.read_parquet(uow.data.extract(source=uow.source)),
+                pd.read_parquet(value),
             )
 
     @pytest.mark.asyncio
