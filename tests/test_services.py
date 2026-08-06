@@ -122,7 +122,7 @@ def mock_obs(fake_parquet_bytes: BytesIO, monkeypatch: pytest.MonkeyPatch) -> No
                     status=200,
                     **{
                         "body.response.read.side_effect": (
-                            BytesIO(b"Test").read(),
+                            b"Test",
                             None,
                             fake_parquet_bytes.read(),
                             None,
