@@ -298,6 +298,18 @@ class DuckDBSource(Source, DuckDBQuery):
 
 
 @dataclass(config=CONFIG_DICT, frozen=True)
+class EncryptionDestination(Destination):
+    file: WritableStream
+    _: KW_ONLY
+    chunk_size: PositiveInt = CHUNK_SIZE
+
+
+@dataclass(config=CONFIG_DICT, frozen=True)
+class EncryptionSource(Source):
+    file: ReadableStream
+
+
+@dataclass(config=CONFIG_DICT, frozen=True)
 class HttpxSource(Source):
     url: HttpUrl
     method: HTTPMethod = HTTPMethod.GET

@@ -45,6 +45,9 @@ dynamic = ['version']
 cli = [
     'typer',
 ]
+cryptography = [
+    'cryptography',
+]
 database = [
     'google-cloud-bigquery',
     'sqlmodel',
