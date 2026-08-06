@@ -64,7 +64,16 @@ type Row = dict[Any, Any]
 @runtime_checkable
 class ReadableStream(Protocol):
     @validate_call(validate_return=True)
-    def read(self, size: int = -1) -> bytes | str | Any: ...  # noqa: ANN401
+    def read(self, size: int | None = -1, /) -> bytes | str | Any: ...  # noqa: ANN401
+
+    @validate_call(validate_return=True)
+    def seek(self, pos: int, whence: int = 0, /) -> int: ...
+
+    @validate_call(validate_return=True)
+    def tell(self) -> int: ...
+
+    @validate_call(validate_return=True)
+    def close(self) -> Any: ...  # noqa: ANN401
 
 
 class Rows(Iterator[Row]):
@@ -155,6 +164,7 @@ class Boto3Domain:
 
 class Boto3Scheme(StrEnum):
     gs = "gs"
+    obs = "obs"
     r2 = "r2"
     s3 = "s3"
 
@@ -181,6 +191,7 @@ class ContentType(StrEnum):
     excel = "application/vnd.ms-excel"
     html = "text/html"
     json = "application/json"
+    mp4 = "video/mp4"
     parquet = "application/vnd.apache.parquet"
     svg = "image/svg+xml"
     text = "text/plain"
@@ -212,6 +223,14 @@ class LogLevel(IntEnum):
     INFO = logging.INFO
     DEBUG = logging.DEBUG
     NOTSET = logging.NOTSET
+
+
+@dataclass(frozen=True)
+class ObsDomain:
+    bucket_name: str
+    object_key: str
+    content_type: ContentType | None = None
+    content_encoding: ContentEncoding | None = None
 
 
 @dataclass(frozen=True)
@@ -289,11 +308,14 @@ class HttpxSource(Source):
 
 
 @dataclass(frozen=True)
-class ObsSource(Source):
-    bucket_name: str
-    object_key: str
-    content_type: ContentType | None = None
-    content_encoding: ContentEncoding | None = None
+class ObsDestination(Destination, ObsDomain):
+    _: KW_ONLY
+    chunk_size: int = CHUNK_SIZE
+
+
+@dataclass(frozen=True)
+class ObsSource(Source, ObsDomain):
+    pass
 
 
 @dataclass(frozen=True)

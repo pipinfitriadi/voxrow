@@ -5,12 +5,15 @@
 # Unauthorized copying of this file, via any medium is strictly prohibited
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 6 August 2026
-
-import logging
 from typing import TYPE_CHECKING
 
-from obs import GetObjectRequest, ObsClient
-from pydantic import validate_call
+from obs import (
+    CompleteMultipartUploadRequest,
+    CompletePart,
+    GetObjectRequest,
+    ObsClient,
+)
+from pydantic import AnyUrl, validate_call
 from pydantic.dataclasses import dataclass
 
 from ...domain import value_objects
@@ -21,8 +24,6 @@ if TYPE_CHECKING:
 
 # Constants
 FAILED_STATUS: int = 300
-
-logger: logging.Logger = logging.getLogger(__name__)
 
 
 @dataclass(config=value_objects.CONFIG_DICT, frozen=True)
@@ -42,16 +43,7 @@ class ObsDataAdapter(AbstractDataPort):
         )
 
         if result.status >= FAILED_STATUS:  # pragma: no cover
-            error_message: str = "\n".join(
-                (
-                    f"OBS's getObject failed: {result.errorCode}",
-                    f"OBS's Request ID: {result.requestId}",
-                    f"OBS's Error Code: {result.errorCode}",
-                    f"OBS's Error Message: {result.errorMessage}",
-                )
-            )
-
-            raise RuntimeError(error_message)
+            raise RuntimeError(result.errorMessage)
 
         return result.body.response
 
@@ -60,6 +52,67 @@ class ObsDataAdapter(AbstractDataPort):
         self,
         data: value_objects.Data,
         *,
-        destination: value_objects.Destination,
+        destination: value_objects.ObsDestination,
     ) -> value_objects.ResourceLocation:
-        pass
+        if isinstance(data, value_objects.ReadableStream):
+            init_result: GetResult | any = self.client.initiateMultipartUpload(
+                bucketName=destination.bucket_name,
+                objectKey=destination.object_key,
+                contentType=destination.content_type,
+                encoding_type=destination.content_encoding,
+            )
+
+            if init_result.status >= FAILED_STATUS:  # pragma: no cover
+                raise RuntimeError(init_result.errorMessage)
+
+            upload_id: any = init_result.body.uploadId
+            parts: list = []
+            part_number: int = 1
+
+            try:
+                while True:
+                    chunk: bytes | str | any = data.read(destination.chunk_size)
+
+                    if not chunk:
+                        break
+
+                    parts.append(
+                        CompletePart(
+                            partNum=part_number,
+                            etag=self.client.uploadPart(
+                                bucketName=destination.bucket_name,
+                                objectKey=destination.object_key,
+                                partNumber=part_number,
+                                uploadId=upload_id,
+                                object=chunk,
+                            ).body.etag,
+                        )
+                    )
+
+                    part_number += 1
+
+                result: GetResult | any = self.client.completeMultipartUpload(
+                    bucketName=destination.bucket_name,
+                    objectKey=destination.object_key,
+                    uploadId=upload_id,
+                    completeMultipartUploadRequest=CompleteMultipartUploadRequest(
+                        parts
+                    ),
+                )
+
+                if result.status >= FAILED_STATUS:  # pragma: no cover
+                    raise RuntimeError(result.errorMessage)  # noqa: TRY301
+            except Exception:  # pragma: no cover
+                self.client.abortMultipartUpload(
+                    bucketName=destination.bucket_name,
+                    objectKey=destination.object_key,
+                    uploadId=upload_id,
+                )
+
+                raise
+            finally:
+                data.close()
+
+        return AnyUrl(
+            f"{value_objects.Boto3Scheme.obs}://{destination.bucket_name}/{destination.object_key}"
+        )

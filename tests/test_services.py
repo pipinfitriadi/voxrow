@@ -121,6 +121,9 @@ def mock_obs(
         "voxrow.core.adapters.utils.storage.obs.ObsClient",
         lambda *args, **kwargs: MagicMock(  # noqa: ARG005
             spec=ObsClient,
+            completeMultipartUpload=MagicMock(
+                **{"return_value.status": 200},
+            ),
             getObject=MagicMock(
                 return_value=MagicMock(
                     status=200,
@@ -133,6 +136,9 @@ def mock_obs(
                         ),
                     },
                 ),
+            ),
+            initiateMultipartUpload=MagicMock(
+                **{"return_value.status": 200},
             ),
         ),
     )
@@ -302,6 +308,7 @@ class TestHandlersEtl:
         self,
         fake_message: str,
         fake_pandas_dataframe: pd.DataFrame,
+        tmp_path: DirectoryPath,
         mock_obs: Callable,  # noqa: ARG002
     ) -> None:
         uow: obs.ObsDataUnitOfWork = obs.ObsDataUnitOfWork(
@@ -364,6 +371,22 @@ class TestHandlersEtl:
                 fake_pandas_dataframe,
                 pd.read_parquet(value),
             )
+
+        object_key: str = "file.mp4"
+        fake_file: FilePath = tmp_path / object_key
+
+        fake_file.write_bytes(fake_message.encode())
+
+        assert await handlers.etl(
+            source=fake_file.open(mode="rb"),
+            destination=uow(
+                destination=value_objects.ObsDestination(
+                    bucket_name,
+                    object_key,
+                    value_objects.ContentType.mp4,
+                ),
+            ),
+        ) == AnyUrl(f"{value_objects.Boto3Scheme.obs}://{bucket_name}/{object_key}")
 
     @pytest.mark.asyncio
     async def test_pathlib(self, fake_message: str, tmp_path: DirectoryPath) -> None:
