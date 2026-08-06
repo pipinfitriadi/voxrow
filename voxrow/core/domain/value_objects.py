@@ -273,6 +273,16 @@ class DuckDBSource(Source, DuckDBQuery):
     pass
 
 
+@dataclass(config=CONFIG_DICT, frozen=True)
+class HttpxSource(Source):
+    url: HttpUrl
+    method: HTTPMethod = HTTPMethod.GET
+    headers: dict | None = None
+    json: Any | None = None
+    timeout: float | None = None
+    verify: SSLContext | str | bool = True
+
+
 @dataclass(frozen=True)
 class PathDestination(Destination, PathDomain):
     newline: str | None = None
@@ -291,13 +301,3 @@ class SQLModelDestination(Destination):
 @dataclass(frozen=True)
 class SQLModelSource(Source):
     query: Any
-
-
-@dataclass(config=CONFIG_DICT, frozen=True)
-class HttpxSource(Source):
-    url: HttpUrl
-    method: HTTPMethod = HTTPMethod.GET
-    headers: dict | None = None
-    json: Any | None = None
-    timeout: float | None = None
-    verify: SSLContext | str | bool = True
