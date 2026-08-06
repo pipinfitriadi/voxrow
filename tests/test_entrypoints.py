@@ -30,17 +30,12 @@ def fake_env_file(tmp_path: DirectoryPath) -> FilePath:
     return env_file
 
 
-@pytest.fixture
-def fake_log_msg() -> str:
-    return "Test"
-
-
 class TestTyper:
     app: Typer
     runner: CliRunner
 
     @pytest.fixture(autouse=True)
-    def setup(self, fake_log_msg: str) -> None:
+    def setup(self, fake_message: str) -> None:
         self.runner = CliRunner()
         self.app = Typer(no_args_is_help=True, rich_markup_mode="markdown")
         logger: logging.Logger = logging.getLogger(__name__)
@@ -69,7 +64,7 @@ class TestTyper:
             settings: value_objects.Settings,  # noqa: ARG001
             date: typer.get_date_type(),
         ) -> None:
-            logger.info("%s: %s", fake_log_msg, date.date())
+            logger.info("%s: %s", fake_message, date.date())
 
         @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
         async def async_generator_func(
@@ -101,7 +96,7 @@ class TestTyper:
         self,
         caplog: pytest.LogCaptureFixture,
         fake_env_file: FilePath,
-        fake_log_msg: str,
+        fake_message: str,
         tmp_path: DirectoryPath,
     ) -> None:
         caplog.set_level(logging.INFO)
@@ -122,7 +117,7 @@ class TestTyper:
         assert log_file.is_file()
 
         test_date: str = "2026-01-01"
-        test_log_message: str = f"{fake_log_msg}: {test_date}"
+        test_log_message: str = f"{fake_message}: {test_date}"
         result = self.runner.invoke(
             self.app,
             ["--log-file", log_file, env_file, "command", "--date", test_date],
