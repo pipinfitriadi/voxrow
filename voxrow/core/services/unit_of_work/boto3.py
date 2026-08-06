@@ -9,7 +9,7 @@
 from pydantic import validate_call
 
 from ...adapters.data import boto3
-from ...adapters.utils.storage import boto3 as storage_boto3
+from ...adapters.utils.storage.boto3 import get_client
 from ...domain import value_objects
 from . import AbstractDataUnitOfWork
 
@@ -21,4 +21,4 @@ class Boto3DataUnitOfWork(AbstractDataUnitOfWork):
         credential: value_objects.Boto3Credential,
         scheme: value_objects.Boto3Scheme,
     ) -> None:
-        self.data = boto3.Boto3DataAdapter(storage_boto3.get_client(credential), scheme)
+        self.data = boto3.Boto3DataAdapter(get_client(credential), scheme)
