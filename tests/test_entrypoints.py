@@ -71,7 +71,7 @@ class TestTyper:
         ) -> None:
             logger.info("%s: %s", fake_log_msg, date.date())
 
-        @validate_call(validate_return=True)
+        @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
         async def async_generator_func(
             settings: value_objects.Settings,  # noqa: ARG001
         ) -> value_objects.Data:

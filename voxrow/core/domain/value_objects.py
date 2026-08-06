@@ -13,7 +13,7 @@ from enum import IntEnum, StrEnum
 from http import HTTPMethod
 from pathlib import Path
 from ssl import SSLContext
-from typing import Any, Literal, ParamSpec
+from typing import Any, Literal, ParamSpec, Protocol, runtime_checkable
 from zoneinfo import ZoneInfo
 
 from pydantic import (
@@ -21,6 +21,7 @@ from pydantic import (
     ConfigDict,
     GetCoreSchemaHandler,
     HttpUrl,
+    PositiveInt,
     PostgresDsn,
     SecretStr,
     validate_call,
@@ -31,6 +32,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from rich.console import Console
 
 # Constants
+CHUNK_SIZE: PositiveInt = 8 * (1_024**2)  # 8 MB
 CONFIG_DICT: ConfigDict = ConfigDict(arbitrary_types_allowed=True)
 DATE_FMT: str = "%Y-%m-%d"
 DEFAULT_SCHEMA: str = "main"
@@ -76,6 +78,18 @@ class Settings(BaseSettings):
 type DatabaseType = PostgresDsn | AnyUrl
 
 
+@runtime_checkable
+class ReadableStream(Protocol):
+    @validate_call(validate_return=True)
+    def read(self, size: int = -1) -> bytes | str | Any: ...  # noqa: ANN401
+
+
+@runtime_checkable
+class WritableStream(Protocol):
+    @validate_call(validate_return=True)
+    def write(self, data: bytes) -> int: ...
+
+
 class Domain:
     pass
 
@@ -86,7 +100,7 @@ class Table:
     schema: str
 
 
-type ResourceLocation = Table | HttpUrl | AnyUrl | Path | Any
+type ResourceLocation = Table | HttpUrl | AnyUrl | Path | WritableStream | Any
 type Row = dict[Any, Any]
 
 
@@ -99,13 +113,13 @@ class Rows(Iterator[Row]):
     ) -> CoreSchema:
         return core_schema.chain_schema(
             [
-                core_schema.is_instance_schema(Iterator),
+                core_schema.is_instance_schema(Rows),
                 core_schema.generator_schema(handler.generate_schema(Row)),
             ],
         )
 
 
-type Data = Rows | bytes | str | Any
+type Data = Rows | bytes | str | ReadableStream | Any
 
 
 class ContentEncoding(StrEnum):

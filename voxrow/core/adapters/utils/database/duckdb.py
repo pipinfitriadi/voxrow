@@ -25,7 +25,7 @@ class AbstractDuckDB:
     _: KW_ONLY
     as_iterator: bool
 
-    @validate_call(validate_return=True)
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def register(self, data: value_objects.Data) -> None:
         if not isinstance(data, DuckDBPyConnection) and not isinstance(
             data,

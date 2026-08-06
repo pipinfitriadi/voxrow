@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 
 class DuckDBDataAdapter(duckdb.AbstractDuckDB, AbstractDataPort):
-    @validate_call(validate_return=True)
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def extract(self, *, source: value_objects.DuckDBSource) -> value_objects.Data:
         data: DuckDBPyRelation = self.connection.query(
             query=source.query,
@@ -29,7 +29,7 @@ class DuckDBDataAdapter(duckdb.AbstractDuckDB, AbstractDataPort):
 
         return self.get_data(data) if self.as_iterator else data
 
-    @validate_call(validate_return=True)
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     async def load(
         self,
         data: value_objects.Data,
