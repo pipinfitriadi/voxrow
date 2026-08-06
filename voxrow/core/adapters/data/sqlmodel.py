@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 class SQLModelDataAdapter(AbstractSQLModel, AbstractDataPort):
-    @validate_call(validate_return=True)
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def extract(
         self,
         *,
@@ -29,7 +29,7 @@ class SQLModelDataAdapter(AbstractSQLModel, AbstractDataPort):
     ) -> value_objects.Data:
         return self.session.execute(source.query).mappings()
 
-    @validate_call(validate_return=True)
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     async def load(
         self,
         data: value_objects.Data,

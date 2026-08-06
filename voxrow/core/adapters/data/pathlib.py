@@ -9,6 +9,7 @@
 from pydantic import validate_call
 
 from ...domain.value_objects import (
+    CONFIG_DICT,
     Data,
     PathDestination,
     PathSource,
@@ -18,7 +19,7 @@ from . import AbstractDataPort
 
 
 class PathDataAdapter(AbstractDataPort):
-    @validate_call(validate_return=True)
+    @validate_call(config=CONFIG_DICT, validate_return=True)
     def extract(self, *, source: PathSource) -> Data:
         return (
             source.file.read_bytes()
@@ -29,7 +30,7 @@ class PathDataAdapter(AbstractDataPort):
             )
         )
 
-    @validate_call(validate_return=True)
+    @validate_call(config=CONFIG_DICT, validate_return=True)
     async def load(
         self,
         data: Data,

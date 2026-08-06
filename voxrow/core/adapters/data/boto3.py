@@ -19,7 +19,7 @@ class Boto3DataAdapter(AbstractDataPort):
     client: BaseClient
     scheme: value_objects.Boto3Scheme
 
-    @validate_call(validate_return=True)
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def extract(self, *, source: value_objects.Boto3Source) -> value_objects.Data:
         response: any = self.client.get_object(
             Bucket=source.bucket,
@@ -34,7 +34,7 @@ class Boto3DataAdapter(AbstractDataPort):
             else data
         )
 
-    @validate_call(validate_return=True)
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     async def load(
         self,
         data: value_objects.Data,
