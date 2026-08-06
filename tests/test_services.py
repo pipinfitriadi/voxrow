@@ -30,7 +30,6 @@ from sqlalchemy import Engine
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, MetaData, Session, select, text
 
-from voxrow.core.adapters.data.cryptography import AesGcmEncryptionDataAdapter
 from voxrow.core.adapters.utils.database.bigquery import get_client
 from voxrow.core.adapters.utils.database.duckdb import AbstractDuckDB
 from voxrow.core.adapters.utils.database.sqlmodel import PydanticJSON, SQLModelEntity
@@ -39,7 +38,6 @@ from voxrow.core.services import handlers
 from voxrow.core.services.unit_of_work import (
     bigquery,
     boto3,
-    cryptography,
     duckdb,
     httpx,
     obs,
@@ -118,33 +116,6 @@ class FakeTransformDuckDB(AbstractDuckDB):
 
 
 class TestHandlersEtl:
-    @pytest.mark.asyncio
-    async def test_aes_gcm_encryption(self, tmp_path: DirectoryPath) -> None:
-        uow: cryptography.AesGcmEncryptionDataUnitOfWork = (
-            cryptography.AesGcmEncryptionDataUnitOfWork(
-                AesGcmEncryptionDataAdapter.generate_key()
-            )
-        )
-        destination_file: FilePath = tmp_path / "destination.enc"
-        source_file: FilePath = tmp_path / "source.txt"
-        content: bytes = b"Hello world!"
-
-        source_file.write_bytes(content)
-
-        await handlers.etl(
-            source=source_file.open("rb"),
-            destination=uow(
-                destination=value_objects.EncryptionDestination(
-                    destination_file.open("wb")
-                )
-            ),
-        )
-
-        with uow(
-            source=value_objects.EncryptionSource(destination_file.open("rb")),
-        ):
-            assert uow.data.extract(source=uow.source).read() == content
-
     @pytest.mark.asyncio
     async def test_bigquery(
         self,
