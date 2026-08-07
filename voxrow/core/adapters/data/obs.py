@@ -7,7 +7,12 @@
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 6 August 2026
 
 import logging
-from concurrent.futures import Future, ThreadPoolExecutor, as_completed
+from concurrent.futures import (
+    FIRST_COMPLETED,
+    ThreadPoolExecutor,
+    as_completed,
+    wait,
+)
 from typing import TYPE_CHECKING, Any
 
 from obs import (
@@ -103,7 +108,7 @@ class ObsDataAdapter(AbstractDataPort):
             upload_id: any = init_result.body.uploadId
             parts: list[CompletePart] = []
             part_number: int = 1
-            futures: dict[Future, int] = {}
+            futures: dict = {}
 
             try:
                 with ThreadPoolExecutor(
@@ -130,11 +135,15 @@ class ObsDataAdapter(AbstractDataPort):
                         if (
                             len(futures) >= destination.max_workers_thread_pool_executor
                         ):  # pragma: no cover
-                            done: Future = next(as_completed(futures))
+                            done, _ = wait(
+                                futures,
+                                return_when=FIRST_COMPLETED,
+                            )
 
-                            parts.append(done.result())
+                            for future in done:
+                                parts.append(future.result())
 
-                            del futures[done]
+                                del futures[future]
 
                     parts.extend(done.result() for done in as_completed(futures))
                     parts.sort(key=lambda part: part.partNum)
