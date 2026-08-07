@@ -323,6 +323,7 @@ class HttpxSource(Source):
 class ObsDestination(Destination, ObsDomain):
     _: KW_ONLY
     chunk_size: int = CHUNK_SIZE
+    max_workers_thread_pool_executor: int | None = 5
 
 
 @dataclass(frozen=True)
