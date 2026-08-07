@@ -88,13 +88,12 @@ class ObsDataAdapter(AbstractDataPort):
                             partNum=part_number,
                             etag=(
                                 await asyncio.to_thread(
-                                    self.client.uploadPart(
-                                        bucketName=destination.bucket_name,
-                                        objectKey=destination.object_key,
-                                        partNumber=part_number,
-                                        uploadId=upload_id,
-                                        object=chunk,
-                                    )
+                                    self.client.uploadPart,
+                                    bucketName=destination.bucket_name,
+                                    objectKey=destination.object_key,
+                                    partNumber=part_number,
+                                    uploadId=upload_id,
+                                    object=chunk,
                                 )
                             ).body.etag,
                         )
