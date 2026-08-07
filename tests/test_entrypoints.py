@@ -99,8 +99,6 @@ class TestTyper:
         fake_message: str,
         tmp_path: DirectoryPath,
     ) -> None:
-        caplog.set_level(logging.INFO)
-
         env_file: str = fake_env_file.as_posix()
         result: Result = self.runner.invoke(
             self.app,
@@ -143,8 +141,6 @@ class TestTyper:
         caplog: pytest.LogCaptureFixture,
         fake_env_file: FilePath,
     ) -> None:
-        caplog.set_level(logging.INFO)
-
         result: Result = self.runner.invoke(
             self.app,
             [fake_env_file.as_posix(), "async_command", "2", "3"],
@@ -160,7 +156,6 @@ class TestTyper:
         caplog: pytest.LogCaptureFixture,
         fake_env_file: FilePath,
     ) -> None:
-        caplog.set_level(logging.ERROR)
         self.runner.invoke(
             self.app,
             ["--log-width", "100", fake_env_file.as_posix(), "command_shouldbe_failed"],

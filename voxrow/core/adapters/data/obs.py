@@ -5,6 +5,9 @@
 # Unauthorized copying of this file, via any medium is strictly prohibited
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 6 August 2026
+
+import asyncio
+import logging
 from typing import TYPE_CHECKING
 
 from obs import (
@@ -24,6 +27,8 @@ if TYPE_CHECKING:
 
 # Constants
 FAILED_STATUS: int = 300
+
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @dataclass(config=value_objects.CONFIG_DICT, frozen=True)
@@ -62,6 +67,8 @@ class ObsDataAdapter(AbstractDataPort):
                 encoding_type=destination.content_encoding,
             )
 
+            logger.debug("Initiated OBS's Multipart Upload: %s", destination.object_key)
+
             if init_result.status >= FAILED_STATUS:  # pragma: no cover
                 raise RuntimeError(init_result.errorMessage)
 
@@ -79,14 +86,24 @@ class ObsDataAdapter(AbstractDataPort):
                     parts.append(
                         CompletePart(
                             partNum=part_number,
-                            etag=self.client.uploadPart(
-                                bucketName=destination.bucket_name,
-                                objectKey=destination.object_key,
-                                partNumber=part_number,
-                                uploadId=upload_id,
-                                object=chunk,
+                            etag=(
+                                await asyncio.to_thread(
+                                    self.client.uploadPart(
+                                        bucketName=destination.bucket_name,
+                                        objectKey=destination.object_key,
+                                        partNumber=part_number,
+                                        uploadId=upload_id,
+                                        object=chunk,
+                                    )
+                                )
                             ).body.etag,
                         )
+                    )
+
+                    logger.debug(
+                        "Uploaded part-%d OBS's Multipart Upload: %s",
+                        part_number,
+                        destination.object_key,
                     )
 
                     part_number += 1
@@ -98,6 +115,11 @@ class ObsDataAdapter(AbstractDataPort):
                     completeMultipartUploadRequest=CompleteMultipartUploadRequest(
                         parts
                     ),
+                )
+
+                logger.debug(
+                    "Completed OBS's Multipart Upload: %s",
+                    destination.object_key,
                 )
 
                 if result.status >= FAILED_STATUS:  # pragma: no cover

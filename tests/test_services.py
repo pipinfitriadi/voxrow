@@ -218,8 +218,6 @@ class TestHandlersEtl:
         fake_google_service_account_file: FilePath,
         mock_bigquery: Callable,  # noqa: ARG002
     ) -> None:
-        caplog.set_level(logging.INFO)
-
         uow: bigquery.BigqueryDataUnitOfWork = bigquery.BigqueryDataUnitOfWork(
             bigquery_get_client(
                 fake_google_project_id,
