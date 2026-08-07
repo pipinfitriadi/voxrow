@@ -6,7 +6,7 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 18 May 2026
 
-from logging import Logger, getLogger
+import logging
 from typing import TYPE_CHECKING
 
 from google.cloud.bigquery import (
@@ -26,7 +26,7 @@ from . import AbstractDataPort
 if TYPE_CHECKING:
     from google.cloud.bigquery.table import RowIterator, _EmptyRowIterator
 
-logger: Logger = getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @dataclass(config=value_objects.CONFIG_DICT, frozen=True)

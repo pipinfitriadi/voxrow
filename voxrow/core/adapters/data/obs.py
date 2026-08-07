@@ -5,7 +5,15 @@
 # Unauthorized copying of this file, via any medium is strictly prohibited
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 6 August 2026
-from typing import TYPE_CHECKING
+
+import logging
+from concurrent.futures import (
+    FIRST_COMPLETED,
+    ThreadPoolExecutor,
+    as_completed,
+    wait,
+)
+from typing import TYPE_CHECKING, Any
 
 from obs import (
     CompleteMultipartUploadRequest,
@@ -24,6 +32,8 @@ if TYPE_CHECKING:
 
 # Constants
 FAILED_STATUS: int = 300
+
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @dataclass(config=value_objects.CONFIG_DICT, frozen=True)
@@ -48,6 +58,34 @@ class ObsDataAdapter(AbstractDataPort):
         return result.body.response
 
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
+    def get_complete_part(
+        self,
+        *,
+        destination: value_objects.ObsDestination,
+        part_number: int,
+        upload_id: Any,  # noqa: ANN401
+        chunk: Any | None = None,  # noqa: ANN401
+    ) -> CompletePart:
+        part: CompletePart = CompletePart(
+            partNum=part_number,
+            etag=self.client.uploadPart(
+                bucketName=destination.bucket_name,
+                objectKey=destination.object_key,
+                partNumber=part_number,
+                uploadId=upload_id,
+                object=chunk,
+            ).body.etag,
+        )
+
+        logger.debug(
+            "Uploaded part-%d OBS's Multipart Upload: %s",
+            part_number,
+            destination.object_key,
+        )
+
+        return part
+
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     async def load(
         self,
         data: value_objects.Data,
@@ -62,34 +100,53 @@ class ObsDataAdapter(AbstractDataPort):
                 encoding_type=destination.content_encoding,
             )
 
+            logger.debug("Initiated OBS's Multipart Upload: %s", destination.object_key)
+
             if init_result.status >= FAILED_STATUS:  # pragma: no cover
                 raise RuntimeError(init_result.errorMessage)
 
             upload_id: any = init_result.body.uploadId
-            parts: list = []
+            parts: list[CompletePart] = []
             part_number: int = 1
+            futures: dict = {}
 
             try:
-                while True:
-                    chunk: bytes | str | any = data.read(destination.chunk_size)
+                with ThreadPoolExecutor(
+                    max_workers=destination.max_workers_thread_pool_executor,
+                ) as executor:
+                    while True:
+                        chunk: bytes | str | any = data.read(destination.chunk_size)
 
-                    if not chunk:
-                        break
+                        if not chunk:
+                            break
 
-                    parts.append(
-                        CompletePart(
-                            partNum=part_number,
-                            etag=self.client.uploadPart(
-                                bucketName=destination.bucket_name,
-                                objectKey=destination.object_key,
-                                partNumber=part_number,
-                                uploadId=upload_id,
-                                object=chunk,
-                            ).body.etag,
-                        )
-                    )
+                        futures[
+                            executor.submit(
+                                self.get_complete_part,
+                                destination=destination,
+                                part_number=part_number,
+                                upload_id=upload_id,
+                                chunk=chunk,
+                            )
+                        ] = part_number
 
-                    part_number += 1
+                        part_number += 1
+
+                        if (
+                            len(futures) >= destination.max_workers_thread_pool_executor
+                        ):  # pragma: no cover
+                            done, _ = wait(
+                                futures,
+                                return_when=FIRST_COMPLETED,
+                            )
+
+                            for future in done:
+                                parts.append(future.result())
+
+                                del futures[future]
+
+                    parts.extend(done.result() for done in as_completed(futures))
+                    parts.sort(key=lambda part: part.partNum)
 
                 result: GetResult | any = self.client.completeMultipartUpload(
                     bucketName=destination.bucket_name,
@@ -98,6 +155,11 @@ class ObsDataAdapter(AbstractDataPort):
                     completeMultipartUploadRequest=CompleteMultipartUploadRequest(
                         parts
                     ),
+                )
+
+                logger.debug(
+                    "Completed OBS's Multipart Upload: %s",
+                    destination.object_key,
                 )
 
                 if result.status >= FAILED_STATUS:  # pragma: no cover
