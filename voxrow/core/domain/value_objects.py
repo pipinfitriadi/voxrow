@@ -242,6 +242,17 @@ class PathDomain:
     is_bytes: bool = False
 
 
+# ================================== Content & Status ==================================
+
+
+@dataclass(frozen=True)
+class Message: ...
+
+
+@dataclass(frozen=True)
+class Status: ...
+
+
 # ================================ Destination & Source ================================
 
 

@@ -13,6 +13,7 @@ from typing import Self
 from pydantic import validate_call
 
 from ...adapters.data import AbstractDataPort
+from ...adapters.message import AbstractMessagePort
 from ...domain.value_objects import CONFIG_DICT, Destination, Source
 
 
@@ -59,9 +60,9 @@ class AbstractUnitOfWork:  # pragma: no cover
 
 
 class AbstractDataUnitOfWork(AbstractUnitOfWork):
-    data: AbstractDataPort | None = None
-    destination: Destination | None = None
-    source: Source | None = None
+    data: AbstractDataPort
+    destination: Destination
+    source: Source
 
     @validate_call
     def __call__(
@@ -94,3 +95,7 @@ class AbstractDataUnitOfWork(AbstractUnitOfWork):
         self.destination = None
 
         return super().__exit__(exc_type, exc_value, exc_traceback)
+
+
+class AbstractMessageUnitOfWork(AbstractUnitOfWork):
+    message: AbstractMessagePort
