@@ -19,6 +19,7 @@ from zoneinfo import ZoneInfo
 from pydantic import (
     AnyUrl,
     ConfigDict,
+    EmailStr,
     Field,
     GetCoreSchemaHandler,
     HttpUrl,
@@ -260,6 +261,13 @@ class PathDomain:
     is_bytes: bool = False
 
 
+# ================================ Destination & Source ================================
+
+
+@dataclass(frozen=True)
+class Destination: ...
+
+
 # ================================== Content & Status ==================================
 
 
@@ -271,11 +279,23 @@ class Message: ...
 class Status: ...
 
 
-# ================================ Destination & Source ================================
+# --------------------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
-class Destination: ...
+class SmtpDestination(Destination):
+    from_sender: EmailStr
+    to_recipients: tuple[EmailStr, ...]
+
+
+@dataclass(frozen=True)
+class SmtpMessage(Message):
+    type: Literal["html", "plain"]
+    content: str
+    subject: str | None = None
+
+
+# ======================================= Source =======================================
 
 
 @dataclass(frozen=True)

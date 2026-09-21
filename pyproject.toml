@@ -35,7 +35,7 @@ classifiers = [
 dependencies = [
     'pandas',
     'pyarrow',
-    'pydantic',
+    'pydantic[email]',
     'pydantic-settings',
     'rich',
 ]

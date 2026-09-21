@@ -10,11 +10,16 @@ from abc import ABC, abstractmethod
 
 from pydantic import validate_call
 
-from ...domain.value_objects import CONFIG_DICT, Destination, Message, Status
+from ...domain import value_objects
 
 
 class AbstractMessagePort(ABC):  # pragma: no cover
     @abstractmethod
-    @validate_call(config=CONFIG_DICT, validate_return=True)
-    def send(self, message: Message, *, destination: Destination) -> Status:
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
+    def send(
+        self,
+        message: value_objects.Message,
+        *,
+        destination: value_objects.Destination,
+    ) -> value_objects.Status:
         pass
