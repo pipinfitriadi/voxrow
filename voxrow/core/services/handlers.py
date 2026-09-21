@@ -10,7 +10,7 @@ from pydantic import validate_call
 
 from ..domain.domain_services import Transform
 from ..domain.value_objects import CONFIG_DICT, Data, ResourceLocation
-from .unit_of_work import AbstractDataUnitOfWork
+from .unit_of_work.data import AbstractDataUnitOfWork
 
 
 @validate_call(config=CONFIG_DICT, validate_return=True)

@@ -14,8 +14,8 @@ from typing import Literal, Self
 from cryptography.utils import Buffer
 from pydantic import validate_call
 
-from ...adapters.data import cryptography
-from ...domain import value_objects
+from ....adapters.data import cryptography
+from ....domain import value_objects
 from . import AbstractDataUnitOfWork
 
 

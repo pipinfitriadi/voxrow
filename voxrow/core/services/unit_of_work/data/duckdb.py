@@ -9,8 +9,8 @@
 from duckdb import DuckDBPyConnection
 from pydantic import validate_call
 
-from ...adapters.data import duckdb
-from ...domain import value_objects
+from ....adapters.data import duckdb
+from ....domain import value_objects
 from . import AbstractDataUnitOfWork
 
 

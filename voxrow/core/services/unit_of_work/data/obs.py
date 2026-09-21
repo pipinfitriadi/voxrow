@@ -9,8 +9,8 @@
 from obs import ObsClient
 from pydantic import validate_call
 
-from ...adapters.data import obs
-from ...domain import value_objects
+from ....adapters.data import obs
+from ....domain import value_objects
 from . import AbstractDataUnitOfWork
 
 

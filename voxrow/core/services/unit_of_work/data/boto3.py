@@ -8,9 +8,9 @@
 
 from pydantic import validate_call
 
-from ...adapters.data import boto3
-from ...adapters.utils.storage.boto3 import get_client
-from ...domain import value_objects
+from ....adapters.data import boto3
+from ....adapters.utils.storage.boto3 import get_client
+from ....domain import value_objects
 from . import AbstractDataUnitOfWork
 
 

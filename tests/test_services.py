@@ -45,7 +45,7 @@ from voxrow.core.adapters.utils.storage.obs import (
 )
 from voxrow.core.domain import domain_services, value_objects
 from voxrow.core.services import handlers
-from voxrow.core.services.unit_of_work import (
+from voxrow.core.services.unit_of_work.data import (
     bigquery,
     boto3,
     cryptography,
