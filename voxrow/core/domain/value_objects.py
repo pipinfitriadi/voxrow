@@ -54,6 +54,10 @@ type Host = Annotated[
     IPvAnyAddress | DomainName,
     Field(union_mode="left_to_right"),
 ]
+type NetworkPort = Annotated[
+    PositiveInt,
+    Field(le=65_535, description="Valid network port"),
+]
 Param: ParamSpec = ParamSpec("Param")
 
 
