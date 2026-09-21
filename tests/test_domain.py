@@ -10,9 +10,10 @@ import gzip
 from datetime import date
 
 import pytest
+from pydantic import TypeAdapter, ValidationError
 
 from voxrow.core.domain import domain_services
-from voxrow.core.domain.value_objects import ENCODING, CaseInsensitiveStrEnum
+from voxrow.core.domain.value_objects import ENCODING, CaseInsensitiveStrEnum, Host
 
 # Constants
 TEST_DATA: tuple = (1, 2, 3)
@@ -45,6 +46,10 @@ class TestDomainServices:
 
 
 class TestValueObjects:
+    @pytest.fixture(scope="class", autouse=True)
+    def host(self) -> TypeAdapter:
+        return TypeAdapter(Host)
+
     def test_case_insentive_str_enum(self) -> None:
         class FakeEnum(CaseInsensitiveStrEnum):
             A = "a"
@@ -57,3 +62,27 @@ class TestValueObjects:
             r"TestValueObjects.test_case_insentive_str_enum.<locals>.FakeEnum",
         ):
             FakeEnum("b")
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            "127.0.0.1",
+            "2001:db8::1",
+            "example.com",
+            "localhost",
+        ],
+    )
+    def test_host_valid(self, host: TypeAdapter, value: str) -> None:
+        assert str(host.validate_python(value)) == value.lower()
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            "example..com",
+            "-leading-dash.com",
+            "invalid_ip.34.2.1",
+        ],
+    )
+    def test_host_invalid(self, host: TypeAdapter, value: str) -> None:
+        with pytest.raises(ValidationError):
+            host.validate_python(value)
