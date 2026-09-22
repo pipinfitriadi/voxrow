@@ -19,6 +19,7 @@ class AbstractMessagePort(ABC):  # pragma: no cover
     def send(
         self,
         message: value_objects.Message,
+        /,
         *,
         destination: value_objects.Destination,
     ) -> value_objects.Status:

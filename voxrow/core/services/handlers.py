@@ -8,27 +8,38 @@
 
 from pydantic import validate_call
 
-from ..domain.domain_services import Transform
-from ..domain.value_objects import CONFIG_DICT, Data, ResourceLocation
-from .unit_of_work.data import AbstractDataUnitOfWork
+from ..domain import domain_services, value_objects
+from .unit_of_work import data, message
 
 
-@validate_call(config=CONFIG_DICT, validate_return=True)
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
 async def etl(
     *,
-    source: Data | AbstractDataUnitOfWork,
-    destination: AbstractDataUnitOfWork,
-    transform: Transform | None = None,
-) -> ResourceLocation:
+    source: value_objects.Data | data.AbstractDataUnitOfWork,
+    destination: data.AbstractDataUnitOfWork,
+    transform: domain_services.Transform | None = None,
+) -> value_objects.ResourceLocation:
     """Extract, Transform, Load."""
-    if isinstance(source, AbstractDataUnitOfWork):
+    if isinstance(source, data.AbstractDataUnitOfWork):
         with source as uow:
             source = uow.data.extract(source=uow.source)
 
     with destination as uow:
-        resource_location: ResourceLocation = await uow.data.load(
+        resource_location: value_objects.ResourceLocation = await uow.data.load(
             data=source if transform is None else transform(source),
             destination=uow.destination,
         )
 
     return resource_location
+
+
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
+def send_message(
+    uow: message.AbstractMessageUnitOfWork,
+    /,
+    *,
+    message: value_objects.Message,
+    destination: value_objects.Destination,
+) -> value_objects.Status:
+    with uow:
+        return uow.message.send(message, destination=destination)

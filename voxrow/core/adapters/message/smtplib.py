@@ -24,9 +24,10 @@ class SmtpMessageAdapter(AbstractMessagePort):
     def send(
         self,
         message: value_objects.SmtpMessage,
+        /,
         *,
         destination: value_objects.SmtpDestination,
-    ) -> value_objects.Status:
+    ) -> value_objects.SmtpStatus:
         msg: MIMEText = MIMEText(message.content, message.type)
 
         msg["From"] = destination.from_sender
@@ -35,4 +36,9 @@ class SmtpMessageAdapter(AbstractMessagePort):
         if message.subject:
             msg["Subject"] = message.subject
 
-        self.smtp.send_message(msg)
+        failed_recipients: dict = self.smtp.send_message(msg)
+
+        return value_objects.SmtpStatus(
+            not failed_recipients,
+            failed_recipients or None,
+        )

@@ -28,7 +28,7 @@ class SmtpMessageUnitOfWork(AbstractMessageUnitOfWork):
         local_hostname: str | None = None,
         timeout: NonNegativeFloat | None = None,
     ) -> None:
-        self.smtp = SMTP(host, port, local_hostname, timeout)
+        self.smtp = SMTP(str(host), port, local_hostname, timeout)
         self.message = smtplib.SmtpMessageAdapter(self.smtp)
 
     def __enter__(self) -> Self:
@@ -45,7 +45,7 @@ class SmtpMessageUnitOfWork(AbstractMessageUnitOfWork):
     ) -> bool | None:
         try:
             self.smtp.__exit__(exc_type, exc_value, exc_traceback)
-        except SMTPException as error:
+        except SMTPException as error:  # pragma: no cover
             exc_type = type(error)
             exc_value = error
             exc_traceback = error.__traceback__

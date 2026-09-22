@@ -276,7 +276,9 @@ class Message: ...
 
 
 @dataclass(frozen=True)
-class Status: ...
+class Status:
+    success: bool
+    details: object | None = None
 
 
 # --------------------------------------------------------------------------------------
@@ -293,6 +295,11 @@ class SmtpMessage(Message):
     type: Literal["html", "plain"]
     content: str
     subject: str | None = None
+
+
+@dataclass(frozen=True)
+class SmtpStatus(Status):
+    details: dict[EmailStr, tuple[int, bytes]] | None = None
 
 
 # ======================================= Source =======================================
