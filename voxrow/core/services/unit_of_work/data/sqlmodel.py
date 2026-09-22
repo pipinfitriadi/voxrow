@@ -11,12 +11,12 @@ from typing import Self
 from pydantic import validate_call
 from sqlmodel import Session
 
-from ...adapters.data import sqlmodel
-from ...domain import value_objects
-from ...services import unit_of_work
+from ....adapters.data import sqlmodel
+from ....domain import value_objects
+from . import AbstractDataUnitOfWork
 
 
-class SQLModelDataUnitOfWork(unit_of_work.AbstractDataUnitOfWork):
+class SQLModelDataUnitOfWork(AbstractDataUnitOfWork):
     session: Session
 
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)

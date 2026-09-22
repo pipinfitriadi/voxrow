@@ -9,6 +9,7 @@
 import logging
 from collections.abc import Callable
 from io import BytesIO
+from smtplib import SMTP
 from typing import ClassVar
 from unittest.mock import MagicMock
 
@@ -24,6 +25,7 @@ from pydantic import (
     AnyUrl,
     BaseModel,
     DirectoryPath,
+    EmailStr,
     FilePath,
     HttpUrl,
     SecretStr,
@@ -45,7 +47,7 @@ from voxrow.core.adapters.utils.storage.obs import (
 )
 from voxrow.core.domain import domain_services, value_objects
 from voxrow.core.services import handlers
-from voxrow.core.services.unit_of_work import (
+from voxrow.core.services.unit_of_work.data import (
     bigquery,
     boto3,
     cryptography,
@@ -55,6 +57,7 @@ from voxrow.core.services.unit_of_work import (
     pathlib,
     sqlmodel,
 )
+from voxrow.core.services.unit_of_work.message import smtplib
 
 
 # Mocks
@@ -97,23 +100,6 @@ def mock_httpx(test_files_dir: DirectoryPath, monkeypatch: pytest.MonkeyPatch) -
 
 
 @pytest.fixture
-def fake_pandas_dataframe() -> pd.DataFrame:
-    return pd.DataFrame({"Name": ["Alice", "Bob"], "Age": [25, 30]})
-
-
-@pytest.fixture
-def fake_parquet_bytes(fake_pandas_dataframe: pd.DataFrame) -> BytesIO:
-    buffer: BytesIO = BytesIO()
-
-    fake_pandas_dataframe.to_parquet(buffer, engine="pyarrow", index=False)
-    buffer.seek(0)
-
-    yield buffer
-
-    buffer.close()
-
-
-@pytest.fixture
 def mock_obs(
     fake_message_bytes: bytes,
     fake_parquet_bytes: BytesIO,
@@ -144,6 +130,39 @@ def mock_obs(
             ),
         ),
     )
+
+
+@pytest.fixture
+def mock_smtp(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "voxrow.core.services.unit_of_work.message.smtplib.SMTP",
+        lambda *args, **kwargs: MagicMock(  # noqa: ARG005
+            spec=SMTP,
+            send_message=MagicMock(return_value={}),
+        ),
+    )
+
+
+@pytest.fixture
+def fake_email() -> EmailStr:
+    return "pipinfitriadi@gmail.com"
+
+
+@pytest.fixture
+def fake_pandas_dataframe() -> pd.DataFrame:
+    return pd.DataFrame({"Name": ["Alice", "Bob"], "Age": [25, 30]})
+
+
+@pytest.fixture
+def fake_parquet_bytes(fake_pandas_dataframe: pd.DataFrame) -> BytesIO:
+    buffer: BytesIO = BytesIO()
+
+    fake_pandas_dataframe.to_parquet(buffer, engine="pyarrow", index=False)
+    buffer.seek(0)
+
+    yield buffer
+
+    buffer.close()
 
 
 class FakeSQLModel(SQLModelEntity):
@@ -500,3 +519,37 @@ class TestHandlersEtl:
         assert fake_row.a == 1
         assert fake_row.b.c == fake_json_column.c
         assert fake_row.deleted_at is not None
+
+
+class TestHandlersMessage:
+    def test_smtp(self, fake_email: EmailStr, mock_smtp: Callable) -> None:  # noqa: ARG002
+        assert (
+            handlers.send_message(
+                smtplib.SmtpMessageUnitOfWork("localhost", 25),
+                message=value_objects.SmtpMessage(
+                    "html",
+                    """
+                    <!DOCTYPE html>
+                    <html lang="en"/>
+                        <head>
+                            <meta charset="UTF-8"/>
+                            <meta
+                                name="viewport"
+                                content="width=device-width, initial-scale=1.0"
+                            />
+                            <title>Test</title>
+                        </head>
+                        <body>
+                            Hello World!
+                        </body>
+                    </html>
+                    """,
+                    "Test",
+                ),
+                destination=value_objects.SmtpDestination(
+                    fake_email,
+                    (fake_email,),
+                ),
+            ).success
+            is True
+        )

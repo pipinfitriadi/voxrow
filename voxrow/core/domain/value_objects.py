@@ -13,17 +13,21 @@ from enum import IntEnum, StrEnum
 from http import HTTPMethod
 from pathlib import Path
 from ssl import SSLContext
-from typing import Any, Literal, ParamSpec, Protocol, runtime_checkable
+from typing import Annotated, Any, Literal, ParamSpec, Protocol, runtime_checkable
 from zoneinfo import ZoneInfo
 
 from pydantic import (
     AnyUrl,
     ConfigDict,
+    EmailStr,
+    Field,
     GetCoreSchemaHandler,
     HttpUrl,
+    IPvAnyAddress,
     PositiveInt,
     PostgresDsn,
     SecretStr,
+    StringConstraints,
     validate_call,
 )
 from pydantic.dataclasses import dataclass
@@ -40,6 +44,21 @@ ENCODING: str = "utf-8"
 LOG_TIME_FMT: str = f"[{DATE_FMT} %H:%M:%S]"
 TIME_ZONE: ZoneInfo = ZoneInfo("Asia/Jakarta")
 
+type DomainName = Annotated[
+    str,
+    StringConstraints(
+        pattern=r"^(localhost|(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9])$",
+        to_lower=True,
+    ),
+]
+type Host = Annotated[
+    IPvAnyAddress | DomainName,
+    Field(union_mode="left_to_right"),
+]
+type NetworkPort = Annotated[
+    PositiveInt,
+    Field(le=65_535, description="Valid network port"),
+]
 Param: ParamSpec = ParamSpec("Param")
 
 
@@ -247,6 +266,43 @@ class PathDomain:
 
 @dataclass(frozen=True)
 class Destination: ...
+
+
+# ================================== Content & Status ==================================
+
+
+@dataclass(frozen=True)
+class Message: ...
+
+
+@dataclass(frozen=True)
+class Status:
+    success: bool
+    details: object | None = None
+
+
+# --------------------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class SmtpDestination(Destination):
+    from_sender: EmailStr
+    to_recipients: tuple[EmailStr, ...]
+
+
+@dataclass(frozen=True)
+class SmtpMessage(Message):
+    type: Literal["html", "plain"]
+    content: str
+    subject: str | None = None
+
+
+@dataclass(frozen=True)
+class SmtpStatus(Status):
+    details: dict[EmailStr, tuple[int, bytes]] | None = None
+
+
+# ======================================= Source =======================================
 
 
 @dataclass(frozen=True)

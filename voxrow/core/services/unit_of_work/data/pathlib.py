@@ -6,10 +6,10 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 29 January 2026
 
-from ...adapters.data import httpx
+from ....adapters.data import pathlib
 from . import AbstractDataUnitOfWork
 
 
-class HttpxDataUnitOfWork(AbstractDataUnitOfWork):
+class PathDataUnitOfWork(AbstractDataUnitOfWork):
     def __init__(self) -> None:
-        self.data = httpx.HttpxDataAdapter()
+        self.data = pathlib.PathDataAdapter()
