@@ -30,8 +30,8 @@ class SmtpMessageAdapter(AbstractMessagePort):
     ) -> value_objects.SmtpStatus:
         msg: MIMEText = MIMEText(message.content, message.type)
 
-        msg["From"] = destination.from_sender
-        msg["To"] = ", ".join(destination.to_recipients)
+        msg["From"] = str(destination.from_sender)
+        msg["To"] = ", ".join(str(email) for email in destination.to_recipients)
 
         if message.subject:
             msg["Subject"] = message.subject

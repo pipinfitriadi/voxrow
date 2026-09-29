@@ -19,11 +19,11 @@ from zoneinfo import ZoneInfo
 from pydantic import (
     AnyUrl,
     ConfigDict,
-    EmailStr,
     Field,
     GetCoreSchemaHandler,
     HttpUrl,
     IPvAnyAddress,
+    NameEmail,
     PositiveInt,
     PostgresDsn,
     SecretStr,
@@ -286,8 +286,8 @@ class Status:
 
 @dataclass(frozen=True)
 class SmtpDestination(Destination):
-    from_sender: EmailStr
-    to_recipients: tuple[EmailStr, ...]
+    from_sender: NameEmail
+    to_recipients: tuple[NameEmail, ...]
 
 
 @dataclass(frozen=True)
@@ -299,7 +299,7 @@ class SmtpMessage(Message):
 
 @dataclass(frozen=True)
 class SmtpStatus(Status):
-    details: dict[EmailStr, tuple[int, bytes]] | None = None
+    details: dict[NameEmail, tuple[int, bytes]] | None = None
 
 
 # ======================================= Source =======================================

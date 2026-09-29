@@ -25,9 +25,9 @@ from pydantic import (
     AnyUrl,
     BaseModel,
     DirectoryPath,
-    EmailStr,
     FilePath,
     HttpUrl,
+    NameEmail,
     SecretStr,
     validate_call,
 )
@@ -144,8 +144,8 @@ def mock_smtp(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def fake_email() -> EmailStr:
-    return "pipinfitriadi@gmail.com"
+def fake_email() -> NameEmail:
+    return "Pipin Fitriadi <pipinfitriadi@gmail.com>"
 
 
 @pytest.fixture
@@ -522,7 +522,7 @@ class TestHandlersEtl:
 
 
 class TestHandlersMessage:
-    def test_smtp(self, fake_email: EmailStr, mock_smtp: Callable) -> None:  # noqa: ARG002
+    def test_smtp(self, fake_email: NameEmail, mock_smtp: Callable) -> None:  # noqa: ARG002
         assert (
             handlers.send_message(
                 smtplib.SmtpMessageUnitOfWork("localhost", 25),
