@@ -29,8 +29,6 @@ class SQLModelDataAdapter(AbstractSQLModel, AbstractDataPort):
     ) -> value_objects.Data:
         yield from self.session.exec(
             source.query.execution_options(yield_per=source.batch_size)
-            if hasattr(source.query, "execution_options")
-            else source.query
         ).mappings()
 
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
