@@ -27,7 +27,11 @@ class SQLModelDataAdapter(AbstractSQLModel, AbstractDataPort):
         *,
         source: value_objects.SQLModelSource,
     ) -> value_objects.Data:
-        return self.session.execute(source.query).mappings()
+        yield from self.session.exec(
+            source.query.execution_options(yield_per=source.batch_size)
+            if hasattr(source.query, "execution_options")
+            else source.query
+        ).mappings()
 
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     async def load(
