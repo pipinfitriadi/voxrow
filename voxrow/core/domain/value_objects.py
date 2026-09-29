@@ -405,3 +405,4 @@ class SQLModelDestination(Destination):
 @dataclass(frozen=True)
 class SQLModelSource(Source):
     query: Any
+    batch_size: PositiveInt = 5_000
