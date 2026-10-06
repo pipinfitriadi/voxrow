@@ -379,6 +379,7 @@ class TestHandlersEtl:
                     fake_google_service_account_file,
                 )
             )(destination=value_objects.GcsDestination()),
+            transform=domain_services.CsvTransform(),
         ) == AnyUrl(f"{value_objects.Boto3Scheme.gs}://{fake_bucket}/with-header.csv")
 
     def test_httpx(self, mock_httpx: Callable) -> None:  # noqa: ARG002
