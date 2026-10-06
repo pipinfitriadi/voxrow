@@ -39,7 +39,7 @@ class TestDomainServices:
         )
         assert (
             domain_services.CsvTransform(
-                delimiter=value_objects.Delimiter.semicolon,
+                delimiter="SEMICOLON",
                 use_header=False,
             )(data).getvalue()
             == (test_files_dir / "without-header.csv").read_text()
