@@ -36,6 +36,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from rich.console import Console
 
 # Constants
+BATCH_SIZE: PositiveInt = 5_000
 CHUNK_SIZE: PositiveInt = 8 * (1_024**2)  # 8 MB
 CONFIG_DICT: ConfigDict = ConfigDict(arbitrary_types_allowed=True)
 DATE_FMT: str = "%Y-%m-%d"
@@ -406,4 +407,4 @@ class SQLModelDestination(Destination):
 class SQLModelSource(Source):
     query: Any
     _: KW_ONLY
-    batch_size: PositiveInt = 5_000
+    batch_size: PositiveInt = BATCH_SIZE
