@@ -72,6 +72,14 @@ class CsvTransform(Transform):
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def __call__(self, data: value_objects.Data) -> value_objects.Data:
         csv_file: StringIO | None = None
+        delimiters: dict = {
+            "TAB": "\t",
+            "PIPE": "|",
+            "SEMICOLON": ";",
+            "COMMA": ",",
+            "UNIT-SEPARATOR": "\x1f",
+            "RECORD-SEPARATOR": "\x1e",
+        }
 
         for i, row in enumerate(data):
             if i == 0:
@@ -79,14 +87,7 @@ class CsvTransform(Transform):
                 csv_writer: csv.DictWriter = csv.DictWriter(
                     csv_file,
                     fieldnames=row.keys(),
-                    delimiter={
-                        "TAB": "\t",
-                        "PIPE": "|",
-                        "SEMICOLON": ";",
-                        "COMMA": ",",
-                        "UNIT-SEPARATOR": "\x1f",
-                        "RECORD-SEPARATOR": "\x1e",
-                    }[self.delimiter],
+                    delimiter=delimiters[self.delimiter],
                     lineterminator=self.line_terminator,
                     quoting=getattr(csv, self.quoting),
                 )
