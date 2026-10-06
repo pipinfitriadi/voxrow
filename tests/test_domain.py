@@ -10,14 +10,13 @@ import gzip
 from datetime import date
 
 import pytest
-from pydantic import TypeAdapter, ValidationError
+from pydantic import DirectoryPath, TypeAdapter, ValidationError
 
-from voxrow.core.domain import domain_services
-from voxrow.core.domain.value_objects import ENCODING, CaseInsensitiveStrEnum, Host
+from voxrow.core.domain import domain_services, value_objects
 
 # Constants
 TEST_DATA: tuple = (1, 2, 3)
-TEST_DATA_BYTES: bytes = str(TEST_DATA).encode(ENCODING)
+TEST_DATA_BYTES: bytes = str(TEST_DATA).encode(value_objects.ENCODING)
 TEST_DATA_JSON: str = "[1, 2, 3]"
 
 
@@ -30,6 +29,21 @@ class TestDomainServices:
     def test_functions(self) -> None:
         assert isinstance(domain_services.today(), date)
         assert domain_services.now().tzinfo is not None
+
+    def test_csv(self, test_files_dir: DirectoryPath) -> None:
+        data: tuple(dict, ...) = (dict(a=1, b="abc"), dict(a=2, b="def"))
+
+        assert (
+            domain_services.CsvTransform()(data).getvalue()
+            == (test_files_dir / "with-header.csv").read_text()
+        )
+        assert (
+            domain_services.CsvTransform(
+                delimiter=value_objects.Delimiter.semicolon,
+                use_header=False,
+            )(data).getvalue()
+            == (test_files_dir / "without-header.csv").read_text()
+        )
 
     def test_gzip(self, fake_gzip: bytes) -> None:
         assert domain_services.compress_to_gzip(*(TEST_DATA,)) == fake_gzip
@@ -48,10 +62,10 @@ class TestDomainServices:
 class TestValueObjects:
     @pytest.fixture(scope="class", autouse=True)
     def host(self) -> TypeAdapter:
-        return TypeAdapter(Host)
+        return TypeAdapter(value_objects.Host)
 
     def test_case_insentive_str_enum(self) -> None:
-        class FakeEnum(CaseInsensitiveStrEnum):
+        class FakeEnum(value_objects.CaseInsensitiveStrEnum):
             A = "a"
 
         FakeEnum("A")

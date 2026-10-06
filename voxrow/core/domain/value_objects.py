@@ -189,6 +189,32 @@ class Boto3Scheme(StrEnum):
     s3 = "s3"
 
 
+class Delimiter(StrEnum):
+    # Risk level    : Very Low
+    # Based Used For: Natural text, mixed content, copy-pasting
+    tab = "\t"
+
+    # Risk level    : Very Low
+    # Based Used For: Databases, logs, text heavy data
+    pipe = "|"
+
+    # Risk level    : Medium
+    # Based Used For: European regional data, standard tables
+    semicolon = ";"
+
+    # Risk level    : High (without quotes)
+    # Based Used For: Strictly numeric or fully escaped data
+    comma = ","
+
+    # Risk level    : Zero
+    # Based Used For: Automated backend system-to-system transfers
+    unit_separator = "\x1f"
+
+    # Risk level    : Zero
+    # Based Used For: Automated backend system-to-system transfers
+    record_separator = "\x1e"
+
+
 class CaseInsensitiveStrEnum(StrEnum):
     @classmethod
     @validate_call(validate_return=True)
