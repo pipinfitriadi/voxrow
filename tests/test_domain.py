@@ -30,18 +30,20 @@ class TestDomainServices:
         assert isinstance(domain_services.today(), date)
         assert domain_services.now().tzinfo is not None
 
-    def test_csv(self, test_files_dir: DirectoryPath) -> None:
-        data: tuple(dict, ...) = (dict(a=1, b="abc"), dict(a=2, b="def"))
-
+    def test_csv(
+        self,
+        test_files_dir: DirectoryPath,
+        fake_data: value_objects.Data,
+    ) -> None:
         assert (
-            domain_services.CsvTransform()(data).getvalue()
+            domain_services.CsvTransform()(fake_data).getvalue()
             == (test_files_dir / "with-header.csv").read_text()
         )
         assert (
             domain_services.CsvTransform(
                 delimiter="SEMICOLON",
                 use_header=False,
-            )(data).getvalue()
+            )(fake_data).getvalue()
             == (test_files_dir / "without-header.csv").read_text()
         )
 

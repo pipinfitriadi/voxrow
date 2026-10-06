@@ -60,7 +60,12 @@ def fake_boto3_credential() -> value_objects.Boto3Credential:
 
 @pytest.fixture
 def fake_bucket() -> str:
-    return "fake_bucket"
+    return "examplebucket"
+
+
+@pytest.fixture
+def fake_data() -> value_objects.Data:
+    return (dict(a=1, b="abc"), dict(a=2, b="def"))
 
 
 @pytest.fixture

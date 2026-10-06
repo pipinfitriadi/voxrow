@@ -10,27 +10,21 @@ from abc import ABC, abstractmethod
 
 from pydantic import validate_call
 
-from ...domain.value_objects import (
-    CONFIG_DICT,
-    Data,
-    Destination,
-    ResourceLocation,
-    Source,
-)
+from ...domain import value_objects
 
 
 class AbstractDataPort(ABC):  # pragma: no cover
     @abstractmethod
-    @validate_call(config=CONFIG_DICT, validate_return=True)
-    def extract(self, *, source: Source) -> Data:
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
+    def extract(self, *, source: value_objects.Source) -> value_objects.Data:
         pass
 
     @abstractmethod
-    @validate_call(config=CONFIG_DICT, validate_return=True)
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     async def load(
         self,
-        data: Data,
+        data: value_objects.Data,
         *,
-        destination: Destination,
-    ) -> ResourceLocation:
+        destination: value_objects.Destination,
+    ) -> value_objects.ResourceLocation:
         pass

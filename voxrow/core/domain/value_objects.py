@@ -366,6 +366,16 @@ class EncryptionSource(Source):
     file: ReadableStream
 
 
+@dataclass(frozen=True)
+class GcsDestination(Destination):
+    pass
+
+
+@dataclass(frozen=True)
+class GcsSource(Source):
+    pass
+
+
 @dataclass(config=CONFIG_DICT, frozen=True)
 class HttpxSource(Source):
     url: HttpUrl
