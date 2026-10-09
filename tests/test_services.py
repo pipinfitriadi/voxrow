@@ -371,6 +371,8 @@ class TestHandlersEtl:
         fake_google_service_account_file: FilePath,
         mock_gcs: Callable,  # noqa: ARG002
     ) -> None:
+        blob_name: str = "with-header.csv"
+
         assert await handlers.etl(
             source=fake_data,
             destination=gcs.GcsDataUnitOfWork(
@@ -378,9 +380,15 @@ class TestHandlersEtl:
                     fake_google_project_id,
                     fake_google_service_account_file,
                 )
-            )(destination=value_objects.GcsDestination()),
+            )(
+                destination=value_objects.GcsDestination(
+                    blob_name,
+                    fake_bucket,
+                    value_objects.ContentType.csv,
+                ),
+            ),
             transform=domain_services.CsvTransform(),
-        ) == AnyUrl(f"{value_objects.Boto3Scheme.gs}://{fake_bucket}/with-header.csv")
+        ) == AnyUrl(f"{value_objects.Boto3Scheme.gs}://{fake_bucket}/{blob_name}")
 
     def test_httpx(self, mock_httpx: Callable) -> None:  # noqa: ARG002
         fake_user_total: int = 10

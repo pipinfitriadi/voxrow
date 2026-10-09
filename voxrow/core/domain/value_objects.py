@@ -37,7 +37,7 @@ from rich.console import Console
 
 # Constants
 BATCH_SIZE: PositiveInt = 5_000
-CHUNK_SIZE: PositiveInt = 8 * (1_024**2)  # 8 MB
+CHUNK_SIZE: PositiveInt = 8 * (1_024**2)  # 8 MiB
 CONFIG_DICT: ConfigDict = ConfigDict(arbitrary_types_allowed=True)
 DATE_FMT: str = "%Y-%m-%d"
 DEFAULT_SCHEMA: str = "main"
@@ -368,7 +368,12 @@ class EncryptionSource(Source):
 
 @dataclass(frozen=True)
 class GcsDestination(Destination):
-    pass
+    blob_name: str
+    bucket_name: str
+    content_type: ContentType | None = None
+    encoding: str = ENCODING
+    _: KW_ONLY
+    chunk_size: PositiveInt = CHUNK_SIZE
 
 
 @dataclass(frozen=True)
@@ -389,7 +394,7 @@ class HttpxSource(Source):
 @dataclass(frozen=True)
 class ObsDestination(Destination, ObsDomain):
     _: KW_ONLY
-    chunk_size: int = CHUNK_SIZE
+    chunk_size: PositiveInt = CHUNK_SIZE
     max_workers_thread_pool_executor: int | None = 5
 
 
