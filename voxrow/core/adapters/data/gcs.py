@@ -63,11 +63,14 @@ class GcsDataAdapter(AbstractDataPort):
 
             # GCS resumable upload; copy data in bounded-size blocks.
             with blob.open("wb", ignore_flush=True) as blob_writer:
-                while chunk := data.read(destination.chunk_size):
-                    if isinstance(chunk, str):
-                        chunk = chunk.encode(destination.encoding)
+                try:
+                    while chunk := data.read(destination.chunk_size):
+                        if isinstance(chunk, str):
+                            chunk = chunk.encode(destination.encoding)
 
-                    blob_writer.write(chunk)
+                        blob_writer.write(chunk)
+                finally:
+                    data.close()
 
             logger.debug("Completed GCS's Upload: %s", destination.blob_name)
 
