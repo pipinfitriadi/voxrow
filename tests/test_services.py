@@ -387,7 +387,7 @@ class TestHandlersEtl:
                     value_objects.ContentType.csv,
                 ),
             ),
-            transform=domain_services.CsvTransform(),
+            transform=domain_services.DumpsToCsv(),
         ) == AnyUrl(f"{value_objects.Boto3Scheme.gs}://{fake_bucket}/{blob_name}")
 
     def test_httpx(self, mock_httpx: Callable) -> None:  # noqa: ARG002

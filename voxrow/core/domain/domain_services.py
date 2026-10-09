@@ -37,8 +37,26 @@ class Transform(Protocol):
     def __call__(self, data: value_objects.Data) -> value_objects.Data: ...
 
 
+# Gzip
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
+def compress_to_gzip(data: value_objects.Data) -> value_objects.Data:
+    if not isinstance(data, str) and not isinstance(data, bytes):
+        data: str = str(data)
+
+    if not isinstance(data, bytes):
+        data: bytes = data.encode(value_objects.ENCODING)
+
+    return gzip.compress(data, compresslevel=9)
+
+
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
+def decompress_from_gzip(data: value_objects.Data) -> value_objects.Data:
+    return gzip.decompress(data)
+
+
+# CSV
 @dataclass(frozen=True)
-class CsvTransform(Transform):
+class DumpsToCsv(Transform):
     _: KW_ONLY
     delimiter: Literal[
         # Risk level    : Very Low
@@ -61,7 +79,7 @@ class CsvTransform(Transform):
         "RECORD-SEPARATOR",
     ] = "COMMA"
     line_terminator: str = "\n"
-    use_header: bool = True
+    has_header: bool = True
     quoting: Literal[
         "QUOTE_ALL",
         "QUOTE_MINIMAL",
@@ -92,7 +110,7 @@ class CsvTransform(Transform):
                     quoting=getattr(csv, self.quoting),
                 )
 
-                if self.use_header:
+                if self.has_header:
                     csv_writer.writeheader()
 
             csv_writer.writerow(row)
@@ -103,22 +121,7 @@ class CsvTransform(Transform):
         return csv_file
 
 
-@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
-def compress_to_gzip(data: value_objects.Data) -> value_objects.Data:
-    if not isinstance(data, str) and not isinstance(data, bytes):
-        data: str = str(data)
-
-    if not isinstance(data, bytes):
-        data: bytes = data.encode(value_objects.ENCODING)
-
-    return gzip.compress(data, compresslevel=9)
-
-
-@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
-def decompress_from_gzip(data: value_objects.Data) -> value_objects.Data:
-    return gzip.decompress(data)
-
-
+# JSON
 @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
 def dumps_to_json(data: value_objects.Data) -> value_objects.Data:
     return json.dumps(data, default=str)

@@ -36,13 +36,13 @@ class TestDomainServices:
         fake_data: value_objects.Data,
     ) -> None:
         assert (
-            domain_services.CsvTransform()(fake_data).getvalue()
+            domain_services.DumpsToCsv()(fake_data).getvalue()
             == (test_files_dir / "with-header.csv").read_text()
         )
         assert (
-            domain_services.CsvTransform(
+            domain_services.DumpsToCsv(
                 delimiter="SEMICOLON",
-                use_header=False,
+                has_header=False,
             )(fake_data).getvalue()
             == (test_files_dir / "without-header.csv").read_text()
         )
