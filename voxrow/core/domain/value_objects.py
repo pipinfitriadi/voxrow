@@ -223,6 +223,7 @@ class ContentType(StrEnum):
     parquet = "application/vnd.apache.parquet"
     svg = "image/svg+xml"
     text = "text/plain"
+    tsv = "text/tab-separated-values"
     xml = "application/xml"
 
 
@@ -273,6 +274,15 @@ class DuckDBQuery:
 
 class Domain:
     pass
+
+
+@dataclass(frozen=True)
+class GcsDomain:
+    blob_name: str
+    bucket_name: str
+    encoding: str = ENCODING
+    _: KW_ONLY
+    chunk_size: PositiveInt = CHUNK_SIZE
 
 
 class LogLevel(IntEnum):
@@ -408,17 +418,12 @@ class EncryptionSource(Source):
 
 
 @dataclass(frozen=True)
-class GcsDestination(Destination):
-    blob_name: str
-    bucket_name: str
+class GcsDestination(Destination, GcsDomain):
     content_type: ContentType | None = None
-    encoding: str = ENCODING
-    _: KW_ONLY
-    chunk_size: PositiveInt = CHUNK_SIZE
 
 
 @dataclass(frozen=True)
-class GcsSource(Source):
+class GcsSource(Source, GcsDomain):
     pass
 
 

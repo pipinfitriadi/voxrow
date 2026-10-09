@@ -6,7 +6,9 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 6 October 2026
 
+import codecs
 import logging
+from io import BytesIO, TextIOWrapper
 
 from google.cloud.storage import Blob, Client
 from pydantic import AnyUrl, PositiveInt, validate_call
@@ -30,8 +32,51 @@ class GcsDataAdapter(AbstractDataPort):
         self,
         *,
         source: value_objects.GcsSource,
-    ) -> value_objects.Data:  # pragma: no cover
-        pass
+    ) -> value_objects.Data:
+        """Stream a GCS object into a binary or text destination."""
+        blob: Blob | None = self.client.bucket(source.bucket_name).get_blob(
+            source.blob_name
+        )
+
+        if blob is None:
+            raise FileNotFoundError(
+                AnyUrl(
+                    f"{value_objects.Boto3Scheme.gs}://{source.bucket_name}/{source.blob_name}"
+                )
+            )
+
+        content_type: str = (blob.content_type or "").split(";")[0].lower()
+        data: BytesIO | TextIOWrapper = (
+            TextIOWrapper(
+                BytesIO(),
+                source.encoding,
+            )
+            if content_type
+            in {
+                value_objects.ContentType.text,
+                value_objects.ContentType.csv,
+                value_objects.ContentType.tsv,
+                value_objects.ContentType.json,
+                value_objects.ContentType.xml,
+            }
+            else BytesIO()
+        )
+        decoder: codecs.IncrementalDecoder | None = (
+            codecs.getincrementaldecoder(source.encoding)()
+            if isinstance(data, TextIOWrapper)
+            else None
+        )
+
+        with blob.open("rb", source.chunk_size) as blob_reader:
+            while chunk := blob_reader.read(source.chunk_size):
+                data.write(decoder.decode(chunk) if decoder is not None else chunk)
+
+        if decoder is not None:
+            data.write(decoder.decode(b"", final=True))
+
+        data.seek(0)
+
+        return data
 
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     async def load(

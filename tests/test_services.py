@@ -384,7 +384,7 @@ class TestHandlersEtl:
                 destination=value_objects.GcsDestination(
                     blob_name,
                     fake_bucket,
-                    value_objects.ContentType.csv,
+                    content_type=value_objects.ContentType.csv,
                 ),
             ),
             transform=domain_services.DumpsToCsv(),
