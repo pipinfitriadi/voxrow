@@ -37,6 +37,8 @@ class TestDomainServices:
     ) -> None:
         csv_with_header: FilePath = test_files_dir / "with-header.csv"
         csv_without_header: FilePath = test_files_dir / "without-header.csv"
+        delimiter: str = "SEMICOLON"
+        has_header: bool = False
 
         # Dumps
         assert (
@@ -45,8 +47,8 @@ class TestDomainServices:
         )
         assert (
             domain_services.DumpsToCsv(
-                delimiter="SEMICOLON",
-                has_header=False,
+                delimiter=delimiter,
+                has_header=has_header,
             )(fake_data).getvalue()
             == csv_without_header.read_text()
         )
@@ -55,8 +57,8 @@ class TestDomainServices:
         assert tuple(domain_services.LoadsToCsv()(csv_with_header.open())) == fake_data
         assert tuple(
             domain_services.LoadsToCsv(
-                delimiter="SEMICOLON",
-                has_header=False,
+                delimiter=delimiter,
+                has_header=has_header,
             )(csv_without_header.open())
         ) == tuple(list(row.values()) for row in fake_data)
 
