@@ -38,7 +38,7 @@ class GcsDataAdapter(AbstractDataPort):
             source.blob_name
         )
 
-        if blob is None:
+        if blob is None:  # pragma: no cover
             raise FileNotFoundError(
                 AnyUrl(
                     f"{value_objects.Boto3Scheme.gs}://{source.bucket_name}/{source.blob_name}"

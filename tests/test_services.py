@@ -18,8 +18,6 @@ import pytest
 from anyio import Path
 from duckdb import DuckDBPyConnection
 from google.cloud.bigquery import Client as BigqueryClient
-from google.cloud.storage import Client as GcsClient
-from google.oauth2.service_account import Credentials
 from obs import ObsClient
 from pandas.testing import assert_frame_equal
 from pydantic import (
@@ -67,14 +65,6 @@ from voxrow.core.services.unit_of_work.message import smtplib
 
 # Mocks
 @pytest.fixture
-def mock_google_service_account(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(
-        "voxrow.core.adapters.utils.database.bigquery.Credentials.from_service_account_file",
-        lambda *args, **kwargs: MagicMock(spec=Credentials),  # noqa: ARG005
-    )
-
-
-@pytest.fixture
 def mock_bigquery(
     monkeypatch: pytest.MonkeyPatch,
     mock_google_service_account: Callable,  # noqa: ARG001
@@ -108,17 +98,6 @@ def mock_httpx(test_files_dir: DirectoryPath, monkeypatch: pytest.MonkeyPatch) -
                 ),
             ),
         ),
-    )
-
-
-@pytest.fixture
-def mock_gcs(
-    monkeypatch: pytest.MonkeyPatch,
-    mock_google_service_account: Callable,  # noqa: ARG001
-) -> None:
-    monkeypatch.setattr(
-        "voxrow.core.adapters.utils.storage.gcs.Client",
-        lambda *args, **kwargs: MagicMock(spec=GcsClient),  # noqa: ARG005
     )
 
 
@@ -363,32 +342,40 @@ class TestHandlersEtl:
             assert tuple(uow.data.extract(source=uow.source)) == data
 
     @pytest.mark.asyncio
-    async def test_gcs(
+    async def test_gcs(  # noqa: PLR0913,PLR0917
         self,
         fake_bucket: str,
+        fake_blob: str,
         fake_data: value_objects.Data,
         fake_google_project_id: str,
         fake_google_service_account_file: FilePath,
+        test_files_dir: DirectoryPath,
         mock_gcs: Callable,  # noqa: ARG002
     ) -> None:
-        blob_name: str = "with-header.csv"
+        uow: gcs.GcsDataUnitOfWork = gcs.GcsDataUnitOfWork(
+            gcs_get_client(
+                fake_google_project_id,
+                fake_google_service_account_file,
+            )
+        )
 
         assert await handlers.etl(
             source=fake_data,
-            destination=gcs.GcsDataUnitOfWork(
-                gcs_get_client(
-                    fake_google_project_id,
-                    fake_google_service_account_file,
-                )
-            )(
+            destination=uow(
                 destination=value_objects.GcsDestination(
-                    blob_name,
+                    fake_blob,
                     fake_bucket,
                     content_type=value_objects.ContentType.csv,
                 ),
             ),
             transform=domain_services.DumpsToCsv(),
-        ) == AnyUrl(f"{value_objects.Boto3Scheme.gs}://{fake_bucket}/{blob_name}")
+        ) == AnyUrl(f"{value_objects.Boto3Scheme.gs}://{fake_bucket}/{fake_blob}")
+
+        with uow(source=value_objects.GcsSource(fake_blob, fake_bucket)):
+            assert (
+                uow.data.extract(source=uow.source).read()
+                == (test_files_dir / "with-header.csv").read_text()
+            )
 
     def test_httpx(self, mock_httpx: Callable) -> None:  # noqa: ARG002
         fake_user_total: int = 10
