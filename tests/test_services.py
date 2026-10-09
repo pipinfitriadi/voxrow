@@ -18,7 +18,6 @@ import pytest
 from anyio import Path
 from duckdb import DuckDBPyConnection
 from google.cloud.bigquery import Client as BigqueryClient
-from google.oauth2.service_account import Credentials
 from obs import ObsClient
 from pandas.testing import assert_frame_equal
 from pydantic import (
@@ -42,6 +41,9 @@ from voxrow.core.adapters.utils.database.bigquery import (
 )
 from voxrow.core.adapters.utils.database.duckdb import AbstractDuckDB
 from voxrow.core.adapters.utils.database.sqlmodel import PydanticJSON, SQLModelEntity
+from voxrow.core.adapters.utils.storage.gcs import (
+    get_client as gcs_get_client,
+)
 from voxrow.core.adapters.utils.storage.obs import (
     get_client as obs_get_client,
 )
@@ -52,6 +54,7 @@ from voxrow.core.services.unit_of_work.data import (
     boto3,
     cryptography,
     duckdb,
+    gcs,
     httpx,
     obs,
     pathlib,
@@ -62,7 +65,10 @@ from voxrow.core.services.unit_of_work.message import smtplib
 
 # Mocks
 @pytest.fixture
-def mock_bigquery(monkeypatch: pytest.MonkeyPatch) -> None:
+def mock_bigquery(
+    monkeypatch: pytest.MonkeyPatch,
+    mock_google_service_account: Callable,  # noqa: ARG001
+) -> None:
     monkeypatch.setattr(
         "voxrow.core.adapters.utils.database.bigquery.Client",
         lambda *args, **kwargs: MagicMock(  # noqa: ARG005
@@ -76,10 +82,6 @@ def mock_bigquery(monkeypatch: pytest.MonkeyPatch) -> None:
                 ),
             ),
         ),
-    )
-    monkeypatch.setattr(
-        "voxrow.core.adapters.utils.database.bigquery.Credentials.from_service_account_file",
-        lambda *args, **kwargs: MagicMock(spec=Credentials),  # noqa: ARG005
     )
 
 
@@ -296,16 +298,6 @@ class TestHandlersEtl:
             ),
         ) == AnyUrl(f"{value_objects.Boto3Scheme.r2}://{fake_bucket}/{key}")
 
-    def test_httpx(self, mock_httpx: Callable) -> None:  # noqa: ARG002
-        fake_user_total: int = 10
-
-        with httpx.HttpxDataUnitOfWork()(
-            source=value_objects.HttpxSource(
-                "https://jsonplaceholder.typicode.com/users"
-            ),
-        ) as uow:
-            assert len(uow.data.extract(source=uow.source)) == fake_user_total
-
     @pytest.mark.asyncio
     async def test_duckdb(self, fake_duckdb_conn: DuckDBPyConnection) -> None:
         data: tuple[dict, ...] = (dict(b=2),)
@@ -349,6 +341,52 @@ class TestHandlersEtl:
         ):
             assert tuple(uow.data.extract(source=uow.source)) == data
 
+    @pytest.mark.asyncio
+    async def test_gcs(  # noqa: PLR0913,PLR0917
+        self,
+        fake_bucket: str,
+        fake_blob: str,
+        fake_data: value_objects.Data,
+        fake_google_project_id: str,
+        fake_google_service_account_file: FilePath,
+        test_files_dir: DirectoryPath,
+        mock_gcs: Callable,  # noqa: ARG002
+    ) -> None:
+        uow: gcs.GcsDataUnitOfWork = gcs.GcsDataUnitOfWork(
+            gcs_get_client(
+                fake_google_project_id,
+                fake_google_service_account_file,
+            )
+        )
+
+        assert await handlers.etl(
+            source=fake_data,
+            destination=uow(
+                destination=value_objects.GcsDestination(
+                    fake_blob,
+                    fake_bucket,
+                    content_type=value_objects.ContentType.csv,
+                ),
+            ),
+            transform=domain_services.DumpsToCsv(),
+        ) == AnyUrl(f"{value_objects.Boto3Scheme.gs}://{fake_bucket}/{fake_blob}")
+
+        with uow(source=value_objects.GcsSource(fake_blob, fake_bucket)):
+            assert (
+                uow.data.extract(source=uow.source).read()
+                == (test_files_dir / "with-header.csv").read_text()
+            )
+
+    def test_httpx(self, mock_httpx: Callable) -> None:  # noqa: ARG002
+        fake_user_total: int = 10
+
+        with httpx.HttpxDataUnitOfWork()(
+            source=value_objects.HttpxSource(
+                "https://jsonplaceholder.typicode.com/users"
+            ),
+        ) as uow:
+            assert len(uow.data.extract(source=uow.source)) == fake_user_total
+
     @pytest.mark.filterwarnings(
         "ignore:ssl.PROTOCOL_TLS is deprecated:DeprecationWarning"
     )
@@ -356,8 +394,9 @@ class TestHandlersEtl:
         "ignore:datetime.datetime.utcnow\\(\\):DeprecationWarning:obs.client"
     )
     @pytest.mark.asyncio
-    async def test_obs(
+    async def test_obs(  # noqa: PLR0913,PLR0917
         self,
+        fake_bucket: str,
         fake_message: str,
         fake_message_bytes: bytes,
         fake_pandas_dataframe: pd.DataFrame,
@@ -371,12 +410,11 @@ class TestHandlersEtl:
                 HttpUrl("https://obs.ap-southeast-1.myhuaweicloud.com"),
             )
         )
-        bucket_name: str = "examplebucket"
 
         with (
             uow(
                 source=value_objects.ObsSource(
-                    bucket_name,
+                    fake_bucket,
                     "file.txt",
                     value_objects.ContentType.text,
                 ),
@@ -401,7 +439,7 @@ class TestHandlersEtl:
         with (
             uow(
                 source=value_objects.ObsSource(
-                    bucket_name,
+                    fake_bucket,
                     "file.parquet",
                     value_objects.ContentType.parquet,
                 ),
@@ -434,12 +472,12 @@ class TestHandlersEtl:
             source=fake_file.open(mode="rb"),
             destination=uow(
                 destination=value_objects.ObsDestination(
-                    bucket_name,
+                    fake_bucket,
                     object_key,
                     value_objects.ContentType.mp4,
                 ),
             ),
-        ) == AnyUrl(f"{value_objects.Boto3Scheme.obs}://{bucket_name}/{object_key}")
+        ) == AnyUrl(f"{value_objects.Boto3Scheme.obs}://{fake_bucket}/{object_key}")
 
     @pytest.mark.asyncio
     async def test_pathlib(

@@ -6,11 +6,16 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 2 March 2026
 
+from collections.abc import Callable
 from unittest.mock import MagicMock
 
 import pytest
 from botocore.client import BaseClient
 from duckdb import DuckDBPyConnection, connect
+from google.api_core.page_iterator import HTTPIterator
+from google.cloud.storage import Blob
+from google.cloud.storage import Client as GcsClient
+from google.oauth2.service_account import Credentials
 from pydantic import AnyUrl, DirectoryPath, FilePath
 from sqlalchemy import Engine
 
@@ -45,6 +50,44 @@ def mock_boto3(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
+def mock_google_service_account(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "voxrow.core.adapters.utils.database.bigquery.Credentials.from_service_account_file",
+        lambda *args, **kwargs: MagicMock(spec=Credentials),  # noqa: ARG005
+    )
+
+
+@pytest.fixture
+def mock_gcs(
+    fake_bucket: str,
+    fake_blob: str,
+    test_files_dir: DirectoryPath,
+    monkeypatch: pytest.MonkeyPatch,
+    mock_google_service_account: Callable,  # noqa: ARG001
+) -> None:
+    mock_blob: MagicMock = MagicMock(
+        spec=Blob,
+        content_type=value_objects.ContentType.csv,
+        open=(test_files_dir / "with-header.csv").open,
+    )
+
+    mock_blob.configure_mock(name=fake_blob, bucket=fake_bucket)
+    monkeypatch.setattr(
+        "voxrow.core.adapters.utils.storage.gcs.Client",
+        lambda *args, **kwargs: MagicMock(  # noqa: ARG005
+            spec=GcsClient,
+            list_blobs=MagicMock(
+                spec=HTTPIterator,
+                return_value=(mock_blob for _ in range(1)),
+            ),
+            bucket=MagicMock(
+                return_value=MagicMock(get_blob=MagicMock(return_value=mock_blob))
+            ),
+        ),
+    )
+
+
+@pytest.fixture
 def test_files_dir() -> DirectoryPath:
     return DirectoryPath("tests") / "files"
 
@@ -60,7 +103,17 @@ def fake_boto3_credential() -> value_objects.Boto3Credential:
 
 @pytest.fixture
 def fake_bucket() -> str:
-    return "fake_bucket"
+    return "examplebucket"
+
+
+@pytest.fixture
+def fake_blob() -> str:
+    return "directory/with-header.csv"
+
+
+@pytest.fixture
+def fake_data() -> value_objects.Data:
+    return (dict(a="1", b="abc"), dict(a="2", b="def"))
 
 
 @pytest.fixture

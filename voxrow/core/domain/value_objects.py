@@ -37,8 +37,16 @@ from rich.console import Console
 
 # Constants
 BATCH_SIZE: PositiveInt = 5_000
-CHUNK_SIZE: PositiveInt = 8 * (1_024**2)  # 8 MB
+CHUNK_SIZE: PositiveInt = 8 * (1_024**2)  # 8 MiB
 CONFIG_DICT: ConfigDict = ConfigDict(arbitrary_types_allowed=True)
+CSV_DELIMITERS: dict = {
+    "TAB": "\t",
+    "PIPE": "|",
+    "SEMICOLON": ";",
+    "COMMA": ",",
+    "UNIT-SEPARATOR": "\x1f",
+    "RECORD-SEPARATOR": "\x1e",
+}
 DATE_FMT: str = "%Y-%m-%d"
 DEFAULT_SCHEMA: str = "main"
 ENCODING: str = "utf-8"
@@ -215,7 +223,41 @@ class ContentType(StrEnum):
     parquet = "application/vnd.apache.parquet"
     svg = "image/svg+xml"
     text = "text/plain"
+    tsv = "text/tab-separated-values"
     xml = "application/xml"
+
+
+@dataclass(frozen=True)
+class CsvDomain:
+    _: KW_ONLY
+    delimiter: Literal[
+        # Risk level    : Very Low
+        # Based Used For: Natural text, mixed content, copy-pasting
+        "TAB",
+        # Risk level    : Very Low
+        # Based Used For: Databases, logs, text heavy data
+        "PIPE",
+        # Risk level    : Medium
+        # Based Used For: European regional data, standard tables
+        "SEMICOLON",
+        # Risk level    : High (without quotes)
+        # Based Used For: Strictly numeric or fully escaped data
+        "COMMA",
+        # Risk level    : Zero
+        # Based Used For: Automated backend system-to-system transfers
+        "UNIT-SEPARATOR",
+        # Risk level    : Zero
+        # Based Used For: Automated backend system-to-system transfers
+        "RECORD-SEPARATOR",
+    ] = "COMMA"
+    line_terminator: str = "\n"
+    quoting: Literal[
+        "QUOTE_ALL",
+        "QUOTE_MINIMAL",
+        "QUOTE_NONE",
+        "QUOTE_NONNUMERIC",
+    ] = "QUOTE_ALL"
+    has_header: bool = True
 
 
 class DbDialect(StrEnum):
@@ -232,6 +274,15 @@ class DuckDBQuery:
 
 class Domain:
     pass
+
+
+@dataclass(frozen=True)
+class GcsDomain:
+    blob_name: str
+    bucket_name: str
+    encoding: str = ENCODING
+    _: KW_ONLY
+    chunk_size: PositiveInt = CHUNK_SIZE
 
 
 class LogLevel(IntEnum):
@@ -366,6 +417,16 @@ class EncryptionSource(Source):
     file: ReadableStream
 
 
+@dataclass(frozen=True)
+class GcsDestination(Destination, GcsDomain):
+    content_type: ContentType | None = None
+
+
+@dataclass(frozen=True)
+class GcsSource(Source, GcsDomain):
+    pass
+
+
 @dataclass(config=CONFIG_DICT, frozen=True)
 class HttpxSource(Source):
     url: HttpUrl
@@ -379,7 +440,7 @@ class HttpxSource(Source):
 @dataclass(frozen=True)
 class ObsDestination(Destination, ObsDomain):
     _: KW_ONLY
-    chunk_size: int = CHUNK_SIZE
+    chunk_size: PositiveInt = CHUNK_SIZE
     max_workers_thread_pool_executor: int | None = 5
 
 

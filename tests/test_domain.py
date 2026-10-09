@@ -10,7 +10,7 @@ import gzip
 from datetime import date
 
 import pytest
-from pydantic import DirectoryPath, TypeAdapter, ValidationError
+from pydantic import DirectoryPath, FilePath, TypeAdapter, ValidationError
 
 from voxrow.core.domain import domain_services, value_objects
 
@@ -30,20 +30,37 @@ class TestDomainServices:
         assert isinstance(domain_services.today(), date)
         assert domain_services.now().tzinfo is not None
 
-    def test_csv(self, test_files_dir: DirectoryPath) -> None:
-        data: tuple(dict, ...) = (dict(a=1, b="abc"), dict(a=2, b="def"))
+    def test_csv(
+        self,
+        test_files_dir: DirectoryPath,
+        fake_data: value_objects.Data,
+    ) -> None:
+        csv_with_header: FilePath = test_files_dir / "with-header.csv"
+        csv_without_header: FilePath = test_files_dir / "without-header.csv"
+        delimiter: str = "SEMICOLON"
+        has_header: bool = False
 
+        # Dumps
         assert (
-            domain_services.CsvTransform()(data).getvalue()
-            == (test_files_dir / "with-header.csv").read_text()
+            domain_services.DumpsToCsv()(fake_data).getvalue()
+            == csv_with_header.read_text()
         )
         assert (
-            domain_services.CsvTransform(
-                delimiter="SEMICOLON",
-                use_header=False,
-            )(data).getvalue()
-            == (test_files_dir / "without-header.csv").read_text()
+            domain_services.DumpsToCsv(
+                delimiter=delimiter,
+                has_header=has_header,
+            )(fake_data).getvalue()
+            == csv_without_header.read_text()
         )
+
+        # Loads
+        assert tuple(domain_services.LoadsToCsv()(csv_with_header.open())) == fake_data
+        assert tuple(
+            domain_services.LoadsToCsv(
+                delimiter=delimiter,
+                has_header=has_header,
+            )(csv_without_header.open())
+        ) == tuple(list(row.values()) for row in fake_data)
 
     def test_gzip(self, fake_gzip: bytes) -> None:
         assert domain_services.compress_to_gzip(*(TEST_DATA,)) == fake_gzip
