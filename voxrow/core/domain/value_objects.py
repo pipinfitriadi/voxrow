@@ -39,6 +39,14 @@ from rich.console import Console
 BATCH_SIZE: PositiveInt = 5_000
 CHUNK_SIZE: PositiveInt = 8 * (1_024**2)  # 8 MiB
 CONFIG_DICT: ConfigDict = ConfigDict(arbitrary_types_allowed=True)
+CSV_DELIMITERS: dict = {
+    "TAB": "\t",
+    "PIPE": "|",
+    "SEMICOLON": ";",
+    "COMMA": ",",
+    "UNIT-SEPARATOR": "\x1f",
+    "RECORD-SEPARATOR": "\x1e",
+}
 DATE_FMT: str = "%Y-%m-%d"
 DEFAULT_SCHEMA: str = "main"
 ENCODING: str = "utf-8"
@@ -216,6 +224,39 @@ class ContentType(StrEnum):
     svg = "image/svg+xml"
     text = "text/plain"
     xml = "application/xml"
+
+
+@dataclass(frozen=True)
+class CsvDomain:
+    _: KW_ONLY
+    delimiter: Literal[
+        # Risk level    : Very Low
+        # Based Used For: Natural text, mixed content, copy-pasting
+        "TAB",
+        # Risk level    : Very Low
+        # Based Used For: Databases, logs, text heavy data
+        "PIPE",
+        # Risk level    : Medium
+        # Based Used For: European regional data, standard tables
+        "SEMICOLON",
+        # Risk level    : High (without quotes)
+        # Based Used For: Strictly numeric or fully escaped data
+        "COMMA",
+        # Risk level    : Zero
+        # Based Used For: Automated backend system-to-system transfers
+        "UNIT-SEPARATOR",
+        # Risk level    : Zero
+        # Based Used For: Automated backend system-to-system transfers
+        "RECORD-SEPARATOR",
+    ] = "COMMA"
+    line_terminator: str = "\n"
+    quoting: Literal[
+        "QUOTE_ALL",
+        "QUOTE_MINIMAL",
+        "QUOTE_NONE",
+        "QUOTE_NONNUMERIC",
+    ] = "QUOTE_ALL"
+    has_header: bool = True
 
 
 class DbDialect(StrEnum):

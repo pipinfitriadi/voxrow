@@ -9,10 +9,9 @@
 import csv
 import gzip
 import json
-from dataclasses import KW_ONLY
 from datetime import date, datetime
 from io import StringIO
-from typing import Literal, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 from zoneinfo import ZoneInfo
 
 from pydantic import validate_call
@@ -56,48 +55,10 @@ def decompress_from_gzip(data: value_objects.Data) -> value_objects.Data:
 
 # CSV
 @dataclass(frozen=True)
-class DumpsToCsv(Transform):
-    _: KW_ONLY
-    delimiter: Literal[
-        # Risk level    : Very Low
-        # Based Used For: Natural text, mixed content, copy-pasting
-        "TAB",
-        # Risk level    : Very Low
-        # Based Used For: Databases, logs, text heavy data
-        "PIPE",
-        # Risk level    : Medium
-        # Based Used For: European regional data, standard tables
-        "SEMICOLON",
-        # Risk level    : High (without quotes)
-        # Based Used For: Strictly numeric or fully escaped data
-        "COMMA",
-        # Risk level    : Zero
-        # Based Used For: Automated backend system-to-system transfers
-        "UNIT-SEPARATOR",
-        # Risk level    : Zero
-        # Based Used For: Automated backend system-to-system transfers
-        "RECORD-SEPARATOR",
-    ] = "COMMA"
-    line_terminator: str = "\n"
-    has_header: bool = True
-    quoting: Literal[
-        "QUOTE_ALL",
-        "QUOTE_MINIMAL",
-        "QUOTE_NONE",
-        "QUOTE_NONNUMERIC",
-    ] = "QUOTE_ALL"
-
+class DumpsToCsv(Transform, value_objects.CsvDomain):
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def __call__(self, data: value_objects.Data) -> value_objects.Data:
         csv_file: StringIO | None = None
-        delimiters: dict = {
-            "TAB": "\t",
-            "PIPE": "|",
-            "SEMICOLON": ";",
-            "COMMA": ",",
-            "UNIT-SEPARATOR": "\x1f",
-            "RECORD-SEPARATOR": "\x1e",
-        }
 
         for i, row in enumerate(data):
             if i == 0:
@@ -105,7 +66,7 @@ class DumpsToCsv(Transform):
                 csv_writer: csv.DictWriter = csv.DictWriter(
                     csv_file,
                     fieldnames=row.keys(),
-                    delimiter=delimiters[self.delimiter],
+                    delimiter=value_objects.CSV_DELIMITERS[self.delimiter],
                     lineterminator=self.line_terminator,
                     quoting=getattr(csv, self.quoting),
                 )
@@ -119,6 +80,18 @@ class DumpsToCsv(Transform):
             csv_file.seek(0)
 
         return csv_file
+
+
+@dataclass(frozen=True)
+class LoadsToCsv(Transform, value_objects.CsvDomain):
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
+    def __call__(self, data: value_objects.Data) -> value_objects.Data:
+        yield from (csv.DictReader if self.has_header else csv.reader)(
+            data,
+            delimiter=value_objects.CSV_DELIMITERS[self.delimiter],
+            lineterminator=self.line_terminator,
+            quoting=getattr(csv, self.quoting),
+        )
 
 
 # JSON

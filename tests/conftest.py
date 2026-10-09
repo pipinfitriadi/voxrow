@@ -65,7 +65,7 @@ def fake_bucket() -> str:
 
 @pytest.fixture
 def fake_data() -> value_objects.Data:
-    return (dict(a=1, b="abc"), dict(a=2, b="def"))
+    return (dict(a="1", b="abc"), dict(a="2", b="def"))
 
 
 @pytest.fixture

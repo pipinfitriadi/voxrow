@@ -10,7 +10,7 @@ import gzip
 from datetime import date
 
 import pytest
-from pydantic import DirectoryPath, TypeAdapter, ValidationError
+from pydantic import DirectoryPath, FilePath, TypeAdapter, ValidationError
 
 from voxrow.core.domain import domain_services, value_objects
 
@@ -35,17 +35,30 @@ class TestDomainServices:
         test_files_dir: DirectoryPath,
         fake_data: value_objects.Data,
     ) -> None:
+        csv_with_header: FilePath = test_files_dir / "with-header.csv"
+        csv_without_header: FilePath = test_files_dir / "without-header.csv"
+
+        # Dumps
         assert (
             domain_services.DumpsToCsv()(fake_data).getvalue()
-            == (test_files_dir / "with-header.csv").read_text()
+            == csv_with_header.read_text()
         )
         assert (
             domain_services.DumpsToCsv(
                 delimiter="SEMICOLON",
                 has_header=False,
             )(fake_data).getvalue()
-            == (test_files_dir / "without-header.csv").read_text()
+            == csv_without_header.read_text()
         )
+
+        # Loads
+        assert tuple(domain_services.LoadsToCsv()(csv_with_header.open())) == fake_data
+        assert tuple(
+            domain_services.LoadsToCsv(
+                delimiter="SEMICOLON",
+                has_header=False,
+            )(csv_without_header.open())
+        ) == tuple(list(row.values()) for row in fake_data)
 
     def test_gzip(self, fake_gzip: bytes) -> None:
         assert domain_services.compress_to_gzip(*(TEST_DATA,)) == fake_gzip
