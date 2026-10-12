@@ -62,6 +62,26 @@ class TestDomainServices:
             )(csv_without_header.open())
         ) == tuple(list(row.values()) for row in fake_data)
 
+    @pytest.mark.parametrize(
+        ("input_value", "expected_value"),
+        [
+            (b"hello", "aGVsbG8="),
+            (bytearray(b"hello"), "aGVsbG8="),
+            (memoryview(b"hello"), "aGVsbG8="),
+            (b"\x00\xff\x80", "AP+A"),
+            (b"", ""),
+            (None, None),
+            ("hello", "hello"),
+            (123, 123),
+        ],
+    )
+    def test_encode_binary(
+        self,
+        input_value: bytes | bytearray | memoryview | int | None,
+        expected_value: str | int | None,
+    ) -> None:
+        assert domain_services.encode_binary(input_value) == expected_value
+
     def test_gzip(self, fake_gzip: bytes) -> None:
         assert domain_services.compress_to_gzip(*(TEST_DATA,)) == fake_gzip
         assert (

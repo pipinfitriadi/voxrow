@@ -6,6 +6,7 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 14 January 2026
 
+import base64
 import csv
 import gzip
 import json
@@ -19,6 +20,17 @@ from pydantic.dataclasses import dataclass
 
 from . import value_objects
 
+# ================================================================================
+
+
+@validate_call(validate_return=True)
+def encode_binary(value: object) -> object:
+    return (
+        base64.b64encode(bytes(value)).decode()
+        if isinstance(value, (bytes, bytearray, memoryview))
+        else value
+    )
+
 
 @validate_call(validate_return=True)
 def now(tz: ZoneInfo = value_objects.TIME_ZONE) -> datetime:
@@ -30,10 +42,16 @@ def today(tz: ZoneInfo = value_objects.TIME_ZONE) -> date:
     return now(tz).date()
 
 
+# ================================== Transform ===================================
+
+
 @runtime_checkable
 class Transform(Protocol):
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def __call__(self, data: value_objects.Data) -> value_objects.Data: ...
+
+
+# --------------------------------------------------------------------------------
 
 
 # Gzip
