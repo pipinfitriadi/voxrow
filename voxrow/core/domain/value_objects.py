@@ -245,7 +245,7 @@ class CsvDomain:
         # Based Used For: Databases, logs, text heavy data
         "CARET",
         # Risk level    : Very Low
-        # Based Used For: Natural text, mixed content, copy-pasting
+        # Based Used For: Database exports, data integration, & text-heavy tabular data
         "TAB",
         # Risk level    : Medium
         # Based Used For: European regional data, standard tables
