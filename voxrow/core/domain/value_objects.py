@@ -40,12 +40,13 @@ BATCH_SIZE: PositiveInt = 5_000
 CHUNK_SIZE: PositiveInt = 8 * (1_024**2)  # 8 MiB
 CONFIG_DICT: ConfigDict = ConfigDict(arbitrary_types_allowed=True)
 CSV_DELIMITERS: dict = {
-    "TAB": "\t",
-    "PIPE": "|",
-    "SEMICOLON": ";",
+    "CARET": "^",
     "COMMA": ",",
-    "UNIT-SEPARATOR": "\x1f",
+    "PIPE": "|",
     "RECORD-SEPARATOR": "\x1e",
+    "SEMICOLON": ";",
+    "TAB": "\t",
+    "UNIT-SEPARATOR": "\x1f",
 }
 DATE_FMT: str = "%Y-%m-%d"
 DEFAULT_SCHEMA: str = "main"
@@ -231,24 +232,27 @@ class ContentType(StrEnum):
 class CsvDomain:
     _: KW_ONLY
     delimiter: Literal[
-        # Risk level    : Very Low
-        # Based Used For: Natural text, mixed content, copy-pasting
-        "TAB",
-        # Risk level    : Very Low
-        # Based Used For: Databases, logs, text heavy data
-        "PIPE",
-        # Risk level    : Medium
-        # Based Used For: European regional data, standard tables
-        "SEMICOLON",
-        # Risk level    : High (without quotes)
-        # Based Used For: Strictly numeric or fully escaped data
-        "COMMA",
         # Risk level    : Zero
         # Based Used For: Automated backend system-to-system transfers
         "UNIT-SEPARATOR",
         # Risk level    : Zero
         # Based Used For: Automated backend system-to-system transfers
         "RECORD-SEPARATOR",
+        # Risk level    : Very Low
+        # Based Used For: Databases, logs, text heavy data
+        "PIPE",
+        # Risk level    : Very Low
+        # Based Used For: Databases, logs, text heavy data
+        "CARET",
+        # Risk level    : Very Low
+        # Based Used For: Natural text, mixed content, copy-pasting
+        "TAB",
+        # Risk level    : Medium
+        # Based Used For: European regional data, standard tables
+        "SEMICOLON",
+        # Risk level    : High (without quotes)
+        # Based Used For: Strictly numeric or fully escaped data
+        "COMMA",
     ] = "COMMA"
     line_terminator: str = "\n"
     quoting: Literal[
