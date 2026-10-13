@@ -30,15 +30,6 @@ class HttpxDataAdapter(AbstractDataPort):
         }
         resp: Response = methods[source.method](
             url=str(source.url),
-            params=source.params,
-            headers=source.headers,
-            cookies=source.cookies,
-            auth=source.auth,
-            proxy=source.proxy,
-            follow_redirects=source.follow_redirects,
-            verify=source.verify,
-            timeout=source.timeout,
-            trust_env=source.trust_env,
             **(
                 dict(
                     content=source.content,
@@ -49,11 +40,24 @@ class HttpxDataAdapter(AbstractDataPort):
                 if source.method is HTTPMethod.POST
                 else {}
             ),
+            params=source.params,
+            headers=source.headers,
+            cookies=source.cookies,
+            auth=source.auth,
+            proxy=source.proxy,
+            follow_redirects=source.follow_redirects,
+            verify=source.verify,
+            timeout=source.timeout,
+            trust_env=source.trust_env,
         )
 
         resp.raise_for_status()
 
-        return resp.json()
+        return (
+            resp.json()
+            if source.output_type == "JSON"
+            else (resp.text if source.output_type == "TEXT" else resp.content)
+        )
 
     @validate_call(config=CONFIG_DICT, validate_return=True)
     async def load(

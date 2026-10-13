@@ -9,19 +9,12 @@
 import logging
 from collections.abc import AsyncIterable, Iterable, Iterator, Sequence
 from dataclasses import KW_ONLY
+from datetime import datetime
 from enum import IntEnum, StrEnum
 from http import HTTPMethod
 from pathlib import Path
 from ssl import SSLContext
-from typing import (
-    Annotated,
-    Any,
-    Literal,
-    ParamSpec,
-    Protocol,
-    TypedDict,
-    runtime_checkable,
-)
+from typing import Annotated, Any, Literal, ParamSpec, Protocol, runtime_checkable
 from zoneinfo import ZoneInfo
 
 from pydantic import (
@@ -234,6 +227,7 @@ class ContentType(StrEnum):
     svg = "image/svg+xml"
     text = "text/plain"
     tsv = "text/tab-separated-values"
+    urlencoded = "application/x-www-form-urlencoded"
     xml = "application/xml"
 
 
@@ -449,6 +443,13 @@ class HttpxSource(Source):
     url: HttpUrl
     method: HTTPMethod = HTTPMethod.GET
     _: KW_ONLY
+    output_type: Literal["BYTES", "JSON", "TEXT"] = "JSON"
+    # For HTTPMethod.POST Only
+    content: str | bytes | Iterable[bytes] | AsyncIterable[bytes] | None = None
+    data: dict[str, Any] | None = None
+    files: dict[str, Any] | tuple[tuple[str, Any], ...] | None = None
+    json: Any | None = None
+    # For HTTPMethod.GET & HTTPMethod.POST
     params: Any | None = None
     headers: dict | tuple | None = None
     cookies: dict[str, str] | list[tuple[str, str]] | None = None
@@ -458,11 +459,6 @@ class HttpxSource(Source):
     verify: SSLContext | str | bool = True
     timeout: float | tuple | None = None
     trust_env: bool = True
-    # For HTTPMethod.POST
-    content: str | bytes | Iterable[bytes] | AsyncIterable[bytes] | None = None
-    data: dict[str, Any] | None = None
-    files: dict[str, Any] | tuple[tuple[str, Any], ...] | None = None
-    json: Any | None = None
 
 
 @dataclass(frozen=True)
@@ -501,34 +497,72 @@ class SQLModelSource(Source):
 
 # =================================== API: Salesforce ==================================
 
+type SalesforceBulkApiQueryColumnDelimiter = Literal[
+    "BACKQUOTE",
+    "CARET",
+    "COMMA",
+    "PIPE",
+    "SEMICOLON",
+    "TAB",
+]
+type SalesforceBulkApiQueryContentType = Literal["CSV"]
+type SalesforceBulkApiQueryLineEnding = Literal[
+    "LF",  # linefeed character
+    "CRLF",  # Carriage return character followed by a linefeed character
+]
+type SalesforceBulkApiQueryOperation = Literal[
+    # Returns data that hasn't been deleted or archived. For more information,
+    # see query() in SOAP API Developer Guide.
+    # https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_calls_query.htm
+    "query",
+    # Returns records that have been deleted because of a merge or delete,
+    # and returns information about archived Task and Event records.
+    # For more information, see queryAll() in SOAP API Developer Guide.
+    # https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_calls_queryall.htm
+    "queryAll",
+]
+
 
 class SalesforceBulkApiQuery:
-    operation: Literal[
-        # Returns data that hasn't been deleted or archived. For more information,
-        # see query() in SOAP API Developer Guide.
-        # https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_calls_query.htm
-        "query",
-        # Returns records that have been deleted because of a merge or delete,
-        # and returns information about archived Task and Event records.
-        # For more information, see queryAll() in SOAP API Developer Guide.
-        # https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_calls_queryall.htm
-        "queryAll",
-    ]
+    operation: SalesforceBulkApiQueryOperation
     query: str  # SOQL queries
-    content_type: Literal["CSV"] = "CSV"
-    column_delimiter: Literal[
-        "BACKQUOTE",
-        "CARET",
-        "COMMA",
-        "PIPE",
-        "SEMICOLON",
-        "TAB",
-    ] = "COMMA"
-    line_ending: Literal[
-        "LF",  # linefeed character
-        "CRLF",  # Carriage return character followed by a linefeed character
-    ] = "LF"
+    content_type: SalesforceBulkApiQueryContentType = "CSV"
+    column_delimiter: SalesforceBulkApiQueryColumnDelimiter = "COMMA"
+    line_ending: SalesforceBulkApiQueryLineEnding = "LF"
 
 
-class SalesforceBulkApiQueryJobInfo(TypedDict):
-    pass
+@dataclass
+class SalesforceBulkApiQueryJobInfo:
+    id: str
+    operation: SalesforceBulkApiQueryOperation
+    object: str
+    created_by_id: Annotated[str, Field(validation_alias="createdById")]
+    created_date: Annotated[datetime, Field(validation_alias="createdDate")]
+    system_modstamp: Annotated[datetime, Field(validation_alias="systemModstamp")]
+    state: Literal[
+        # The job is ready to be processed and Salesforce has put the job in the queue.
+        "UploadComplete",
+        # Salesforce is processing the job.
+        "InProgress",
+        # The job has been aborted. See Abort a Query Job.
+        # https://developer.salesforce.com/docs/platform/api-asynch/guide/query-abort-job.html
+        "Aborted",
+        # Salesforce has finished processing the job.
+        "JobComplete",
+        # The job failed.
+        "Failed",
+    ]
+    concurrency_mode: Annotated[str, Field(validation_alias="concurrencyMode")]
+    content_type: Annotated[
+        SalesforceBulkApiQueryContentType,
+        Field(validation_alias="contentType"),
+    ]
+    api_version: Annotated[float, Field(validation_alias="apiVersion")]
+    line_ending: Annotated[
+        SalesforceBulkApiQueryLineEnding,
+        Field(validation_alias="lineEnding"),
+    ]
+    column_delimiter: Annotated[
+        SalesforceBulkApiQueryColumnDelimiter,
+        Field(validation_alias="columnDelimiter"),
+    ]
