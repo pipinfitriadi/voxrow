@@ -13,7 +13,15 @@ from enum import IntEnum, StrEnum
 from http import HTTPMethod
 from pathlib import Path
 from ssl import SSLContext
-from typing import Annotated, Any, Literal, ParamSpec, Protocol, runtime_checkable
+from typing import (
+    Annotated,
+    Any,
+    Literal,
+    ParamSpec,
+    Protocol,
+    TypedDict,
+    runtime_checkable,
+)
 from zoneinfo import ZoneInfo
 
 from pydantic import (
@@ -40,6 +48,7 @@ BATCH_SIZE: PositiveInt = 5_000
 CHUNK_SIZE: PositiveInt = 8 * (1_024**2)  # 8 MiB
 CONFIG_DICT: ConfigDict = ConfigDict(arbitrary_types_allowed=True)
 CSV_DELIMITERS: dict = {
+    "BACKQUOTE": "`",
     "CARET": "^",
     "COMMA": ",",
     "PIPE": "|",
@@ -247,6 +256,10 @@ class CsvDomain:
         # Risk level    : Very Low
         # Based Used For: Database exports, data integration, & text-heavy tabular data
         "TAB",
+        # Risk level    : Low
+        # Based Used For: Alternative field delimiter to minimize conflicts with common
+        #                 punctuation characters in source data.
+        "BACKQUOTE",
         # Risk level    : Medium
         # Based Used For: European regional data, standard tables
         "SEMICOLON",
@@ -484,3 +497,38 @@ class SQLModelSource(Source):
     query: Any
     _: KW_ONLY
     batch_size: PositiveInt = BATCH_SIZE
+
+
+# =================================== API: Salesforce ==================================
+
+
+class SalesforceBulkApiQuery:
+    operation: Literal[
+        # Returns data that hasn't been deleted or archived. For more information,
+        # see query() in SOAP API Developer Guide.
+        # https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_calls_query.htm
+        "query",
+        # Returns records that have been deleted because of a merge or delete,
+        # and returns information about archived Task and Event records.
+        # For more information, see queryAll() in SOAP API Developer Guide.
+        # https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_calls_queryall.htm
+        "queryAll",
+    ]
+    query: str  # SOQL queries
+    content_type: Literal["CSV"] = "CSV"
+    column_delimiter: Literal[
+        "BACKQUOTE",
+        "CARET",
+        "COMMA",
+        "PIPE",
+        "SEMICOLON",
+        "TAB",
+    ] = "COMMA"
+    line_ending: Literal[
+        "LF",  # linefeed character
+        "CRLF",  # Carriage return character followed by a linefeed character
+    ] = "LF"
+
+
+class SalesforceBulkApiQueryJobInfo(TypedDict):
+    pass
