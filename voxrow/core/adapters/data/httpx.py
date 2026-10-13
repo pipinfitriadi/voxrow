@@ -30,10 +30,25 @@ class HttpxDataAdapter(AbstractDataPort):
         }
         resp: Response = methods[source.method](
             url=str(source.url),
-            verify=source.verify,
+            params=source.params,
             headers=source.headers,
-            **(dict(timeout=source.timeout) if source.timeout is not None else {}),
-            **(dict(json=source.json) if source.method is HTTPMethod.POST else {}),
+            cookies=source.cookies,
+            auth=source.auth,
+            proxy=source.proxy,
+            follow_redirects=source.follow_redirects,
+            verify=source.verify,
+            timeout=source.timeout,
+            trust_env=source.trust_env,
+            **(
+                dict(
+                    content=source.content,
+                    data=source.data,
+                    files=source.files,
+                    json=source.json,
+                )
+                if source.method is HTTPMethod.POST
+                else {}
+            ),
         )
 
         resp.raise_for_status()

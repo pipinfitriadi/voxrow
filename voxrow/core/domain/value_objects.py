@@ -7,7 +7,7 @@
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 13 January 2026
 
 import logging
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import AsyncIterable, Iterable, Iterator, Sequence
 from dataclasses import KW_ONLY
 from enum import IntEnum, StrEnum
 from http import HTTPMethod
@@ -435,10 +435,21 @@ class GcsSource(Source, GcsDomain):
 class HttpxSource(Source):
     url: HttpUrl
     method: HTTPMethod = HTTPMethod.GET
-    headers: dict | None = None
-    json: Any | None = None
-    timeout: float | None = None
+    _: KW_ONLY
+    params: Any | None = None
+    headers: dict | tuple | None = None
+    cookies: dict[str, str] | list[tuple[str, str]] | None = None
+    auth: tuple[str | bytes, str | bytes] | None = None
+    proxy: HttpUrl | str | None = None
+    follow_redirects: bool = False
     verify: SSLContext | str | bool = True
+    timeout: float | tuple | None = None
+    trust_env: bool = True
+    # For HTTPMethod.POST
+    content: str | bytes | Iterable[bytes] | AsyncIterable[bytes] | None = None
+    data: dict[str, Any] | None = None
+    files: dict[str, Any] | tuple[tuple[str, Any], ...] | None = None
+    json: Any | None = None
 
 
 @dataclass(frozen=True)
