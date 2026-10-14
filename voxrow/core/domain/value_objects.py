@@ -497,7 +497,8 @@ class SQLModelSource(Source):
 
 # =================================== API: Salesforce ==================================
 
-type SalesforceBulkApiQueryColumnDelimiter = Literal[
+type SalesforceObjectQueryLanguage = str
+type SalesforceQueryJobColumnDelimiter = Literal[
     "BACKQUOTE",
     "CARET",
     "COMMA",
@@ -505,12 +506,13 @@ type SalesforceBulkApiQueryColumnDelimiter = Literal[
     "SEMICOLON",
     "TAB",
 ]
-type SalesforceBulkApiQueryContentType = Literal["CSV"]
-type SalesforceBulkApiQueryLineEnding = Literal[
+type SalesforceQueryJobContentType = Literal["CSV"]
+type SalesforceQueryJobId = str
+type SalesforceQueryJobLineEnding = Literal[
     "LF",  # linefeed character
     "CRLF",  # Carriage return character followed by a linefeed character
 ]
-type SalesforceBulkApiQueryOperation = Literal[
+type SalesforceQueryJobOperation = Literal[
     # Returns data that hasn't been deleted or archived. For more information,
     # see query() in SOAP API Developer Guide.
     # https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_calls_query.htm
@@ -523,18 +525,19 @@ type SalesforceBulkApiQueryOperation = Literal[
 ]
 
 
-class SalesforceBulkApiQuery:
-    operation: SalesforceBulkApiQueryOperation
-    query: str  # SOQL queries
-    content_type: SalesforceBulkApiQueryContentType = "CSV"
-    column_delimiter: SalesforceBulkApiQueryColumnDelimiter = "COMMA"
-    line_ending: SalesforceBulkApiQueryLineEnding = "LF"
+@dataclass(frozen=True)
+class SalesforceQueryJobCreate:
+    operation: SalesforceQueryJobOperation
+    query: SalesforceObjectQueryLanguage
+    content_type: SalesforceQueryJobContentType = "CSV"
+    column_delimiter: SalesforceQueryJobColumnDelimiter = "COMMA"
+    line_ending: SalesforceQueryJobLineEnding = "LF"
 
 
-@dataclass
-class SalesforceBulkApiQueryJobInfo:
-    id: str
-    operation: SalesforceBulkApiQueryOperation
+@dataclass(frozen=True)
+class SalesforceQueryJobInfo:
+    id: SalesforceQueryJobId
+    operation: SalesforceQueryJobOperation
     object: str
     created_by_id: Annotated[str, Field(validation_alias="createdById")]
     created_date: Annotated[datetime, Field(validation_alias="createdDate")]
@@ -554,15 +557,29 @@ class SalesforceBulkApiQueryJobInfo:
     ]
     concurrency_mode: Annotated[str, Field(validation_alias="concurrencyMode")]
     content_type: Annotated[
-        SalesforceBulkApiQueryContentType,
+        SalesforceQueryJobContentType,
         Field(validation_alias="contentType"),
     ]
     api_version: Annotated[float, Field(validation_alias="apiVersion")]
     line_ending: Annotated[
-        SalesforceBulkApiQueryLineEnding,
+        SalesforceQueryJobLineEnding,
         Field(validation_alias="lineEnding"),
     ]
     column_delimiter: Annotated[
-        SalesforceBulkApiQueryColumnDelimiter,
+        SalesforceQueryJobColumnDelimiter,
         Field(validation_alias="columnDelimiter"),
     ]
+    job_type: Annotated[str | None, Field(validation_alias="jobType")] = None
+    number_records_processed: Annotated[
+        int | None,
+        Field(validation_alias="numberRecordsProcessed"),
+    ] = None
+    retries: int | None = None
+    total_processing_time: Annotated[
+        int | None,
+        Field(validation_alias="totalProcessingTime"),
+    ] = None
+    is_pk_chunking_supported: Annotated[
+        bool | None,
+        Field(validation_alias="isPkChunkingSupported"),
+    ] = None

@@ -21,35 +21,32 @@ from ....services.unit_of_work.data import httpx
 TOKEN_EXPIRATION_SECONDS: PositiveInt = 2 * 60**2
 
 
-@dataclass(frozen=True)
-class QueryJob:
-    id: str
-
-    def abort(self) -> None: ...
-
-    def delete(self) -> None: ...
-
-    def info(self) -> value_objects.SalesforceBulkApiQueryJobInfo: ...
-
-    def result(self) -> value_objects.Data: ...
-
-
 @dataclass
-class BulkApiV2:
-    api_version: Annotated[str, Field(frozen=True, pattern=r"v\d+\.\d+")]
+class BulkApiV2Query:
+    """
+    Salesforce's Bulk API 2.0 Query.
+
+    Docs: https://developer.salesforce.com/docs/platform/api-asynch/guide/query-bulk-api-2-0.html
+    """
+
+    api_version: Annotated[float, Field(frozen=True)]
     base_url: Annotated[HttpUrl, Field(frozen=True)]
     client_id: Annotated[str, Field(frozen=True)]
     client_secret: Annotated[SecretStr, Field(frozen=True)]
     _uow: httpx.HttpxDataUnitOfWork = PrivateAttr()
     _token: dict = PrivateAttr()
+    _url: HttpUrl = PrivateAttr()
 
     def __post_init__(self) -> None:
         self._uow = httpx.HttpxDataUnitOfWork()
         self._token = {}
+        self._url = HttpUrl(
+            f"{self.base_url}/services/data/v{self.api_version:.1f}/jobs/query"
+        )
 
     @property
     @validate_call(validate_return=True)
-    def access_token(self) -> SecretStr:
+    def _access_token(self) -> SecretStr:
         if not self._token or time() >= (
             float(self._token["issued_at"]) / 1e3 + TOKEN_EXPIRATION_SECONDS
         ):
@@ -69,36 +66,61 @@ class BulkApiV2:
 
         return SecretStr(self._token["access_token"])
 
-    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
-    def all_query_job(self) -> Iterator[QueryJob]:
+    @validate_call(validate_return=True)
+    def all(self) -> Iterator[value_objects.SalesforceQueryJobInfo]:
         """
         Get Information About All Query Jobs.
 
         Docs: https://developer.salesforce.com/docs/platform/api-asynch/guide/query-get-all-jobs.html
         """
 
-    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
-    def get_query_job(self, query: value_objects.SalesforceBulkApiQuery) -> QueryJob:
-        """
-        Salesforce's Bulk API 2.0 Query.
+    @validate_call(validate_return=True)
+    def get(
+        self,
+        value: value_objects.SalesforceQueryJobId
+        | value_objects.SalesforceQueryJobCreate,
+    ) -> value_objects.SalesforceQueryJobInfo:
+        headers: dict = {
+            "Content-Type": value_objects.ContentType.json,
+            "Authorization": f"Bearer {self._access_token}",
+        }
 
-        Docs: https://developer.salesforce.com/docs/platform/api-asynch/guide/query-bulk-api-2-0.html
-        """
-        with self._uow(
-            source=value_objects.HttpxSource(
-                f"{self.base_url}/services/data/{self.api_version}/jobs/query",
-                HTTPMethod.POST,
-                headers={
-                    "Content-Type": value_objects.ContentType.json,
-                    "Authorization": f"Bearer {self.access_token}",
-                },
-                json=dict(
-                    operation=query.operation,
-                    query=query.query,
-                    contentType=query.content_type,
-                    columnDelimiter=query.column_delimiter,
-                    lineEnding=query.line_ending,
-                ),
-            )
-        ):
-            return QueryJob(self._uow.data.extract(source=self._uow.source)["id"])
+        if isinstance(value, value_objects.SalesforceQueryJobCreate):
+            with self._uow(
+                source=value_objects.HttpxSource(
+                    self._url,
+                    HTTPMethod.POST,
+                    headers=headers,
+                    json=dict(
+                        operation=value.operation,
+                        query=value.query,
+                        contentType=value.content_type,
+                        columnDelimiter=value.column_delimiter,
+                        lineEnding=value.line_ending,
+                    ),
+                )
+            ):
+                return value_objects.SalesforceQueryJobInfo(
+                    **self._uow.data.extract(source=self._uow.source)
+                )
+        else:
+            with self._uow(
+                source=value_objects.HttpxSource(
+                    f"{self._url}/{value}",
+                    headers=headers,
+                )
+            ):
+                return value_objects.SalesforceQueryJobInfo(
+                    **self._uow.data.extract(source=self._uow.source)
+                )
+
+    @validate_call(validate_return=True)
+    def abort(self, value: value_objects.SalesforceQueryJobInfo) -> None: ...
+
+    @validate_call(validate_return=True)
+    def delete(self, value: value_objects.SalesforceQueryJobInfo) -> None: ...
+
+    @validate_call(validate_return=True)
+    def result(
+        self, value: value_objects.SalesforceQueryJobInfo
+    ) -> value_objects.Data: ...
