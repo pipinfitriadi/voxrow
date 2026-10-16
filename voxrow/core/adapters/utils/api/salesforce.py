@@ -14,7 +14,7 @@ from typing import Annotated
 from pydantic import Field, HttpUrl, PositiveInt, PrivateAttr, SecretStr, validate_call
 from pydantic.dataclasses import dataclass
 
-from ....domain import value_objects
+from ....domain import domain_services, value_objects
 from ....services.unit_of_work.data import httpx
 
 # Consts
@@ -193,7 +193,9 @@ class BulkApiV2Query:
 
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def result(
-        self, value: value_objects.SalesforceQueryJobInfo
+        self,
+        value: value_objects.SalesforceQueryJobInfo,
+        max_records: PositiveInt | None = None,
     ) -> value_objects.Data:
         """
         Get Results for a Query Job.
@@ -205,3 +207,25 @@ class BulkApiV2Query:
         is the same as the order you requested them. In version 49.0 and earlier,
         the order of the columns is returned alphabetically.
         """
+        params: dict = {**(dict(maxRecords=max_records) if max_records else {})}
+        headers: dict = {
+            "Accept": value_objects.ContentType.csv,
+            "Authorization": f"Bearer {self._access_token}",
+        }
+
+        while True:
+            with self._uow(
+                source=value_objects.HttpxSource(
+                    f"{self._url}/{value.id}/results",
+                    headers=headers,
+                    params=params,
+                    output_type="TEXT",
+                )
+            ):
+                yield from domain_services.LoadsFromCsv(
+                    delimiter=value.column_delimiter,
+                    line_terminator=dict(
+                        LF="\n",
+                        CLRF="\r\n",
+                    )[value.line_ending],
+                )(self._uow.data.extract(source=self._uow.source))

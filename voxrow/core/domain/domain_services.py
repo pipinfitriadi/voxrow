@@ -101,7 +101,7 @@ class DumpsToCsv(Transform, value_objects.CsvDomain):
 
 
 @dataclass(frozen=True)
-class LoadsToCsv(Transform, value_objects.CsvDomain):
+class LoadsFromCsv(Transform, value_objects.CsvDomain):
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def __call__(self, data: value_objects.Data) -> value_objects.Data:
         yield from (csv.DictReader if self.has_header else csv.reader)(

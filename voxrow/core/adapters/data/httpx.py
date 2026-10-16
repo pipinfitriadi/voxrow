@@ -39,7 +39,8 @@ class HttpxDataAdapter(AbstractDataPort):
                     files=source.files,
                     json=source.json,
                 )
-                if source.method in (
+                if source.method
+                in (
                     HTTPMethod.PATCH,
                     HTTPMethod.POST,
                 )
