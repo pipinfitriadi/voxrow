@@ -202,6 +202,7 @@ class BulkApiV2Query:
     def result(
         self,
         value: value_objects.SalesforceQueryJob,
+        *,
         max_records: PositiveInt | None = None,
     ) -> value_objects.Data:
         """

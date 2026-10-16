@@ -6,8 +6,8 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 10 May 2026
 
+import logging
 from collections.abc import Callable
-from dataclasses import asdict
 from time import time
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
@@ -32,16 +32,25 @@ def mock_salesforce(
     monkeypatch: pytest.MonkeyPatch,
     test_files_dir: DirectoryPath,
 ) -> None:
-    query_job: dict = domain_services.loads_from_json(
-        (test_files_dir / "salesforce" / "query_job" / "info.json").read_text()
-    )
-
     monkeypatch.setattr(
         "voxrow.core.adapters.data.httpx.get",
         MagicMock(
             side_effect=(
-                MagicMock(
-                    json=MagicMock(return_value=query_job),
+                *(
+                    MagicMock(
+                        json=MagicMock(
+                            return_value=domain_services.loads_from_json(
+                                (
+                                    test_files_dir
+                                    / "salesforce"
+                                    / "query_job"
+                                    / "info"
+                                    / "JobComplete.json"
+                                ).read_text()
+                            )
+                        ),
+                    )
+                    for _ in range(2)
                 ),  # ENDPOINT: /services/data/vXX.X/jobs/query/queryJobId
                 *(
                     MagicMock(
@@ -101,7 +110,17 @@ def mock_salesforce(
                 ),  # ENDPOINT: /services/oauth2/token
                 *(
                     MagicMock(
-                        json=MagicMock(return_value=query_job),
+                        json=MagicMock(
+                            return_value=domain_services.loads_from_json(
+                                (
+                                    test_files_dir
+                                    / "salesforce"
+                                    / "query_job"
+                                    / "info"
+                                    / "UploadComplete.json"
+                                ).read_text()
+                            )
+                        ),
                     )
                     for _ in range(2)
                 ),  # ENDPOINT: /services/data/vXX.X/jobs/query
@@ -111,7 +130,13 @@ def mock_salesforce(
 
 
 class TestApi:
-    def test_salesforce(self, mock_salesforce: Callable) -> None:  # noqa: ARG002
+    def test_salesforce(
+        self,
+        caplog: pytest.LogCaptureFixture,
+        mock_salesforce: Callable,  # noqa: ARG002
+    ) -> None:
+        caplog.set_level(logging.WARNING)
+
         api_query: salesforce.BulkApiV2Query = salesforce.BulkApiV2Query(
             "https://INSTANCE.salesforce.com",
             "fake-client-id",
@@ -122,39 +147,34 @@ class TestApi:
             operation="query",
             query="SELECT Id, Name FROM Account",
         )
+
+        # Create query_job
         query_job: value_objects.SalesforceQueryJob = api_query.get(
             value_objects.SalesforceQueryJobCreate(**query_job_create_params)
-        )
+        )  # state == "UploadComplete"
 
-        api_query.get(query_job.id)
-        api_query.abort(
-            value_objects.SalesforceQueryJob(
-                **dict(
-                    **{
-                        key: value
-                        for key, value in asdict(query_job).items()
-                        if key != "state"
-                    },
-                    state="InProgress",
-                    createdById=query_job.created_by_id,
-                    createdDate=query_job.created_date,
-                    systemModstamp=query_job.system_modstamp,
-                    concurrencyMode=query_job.concurrency_mode,
-                    contentType=query_job.content_type,
-                    apiVersion=query_job.api_version,
-                    lineEnding=query_job.line_ending,
-                    columnDelimiter=query_job.column_delimiter,
-                )
+        assert len(tuple(api_query.result(query_job))) == 0
+
+        for record in caplog.records:
+            assert record.levelno == logging.WARNING
+            assert (
+                record.message
+                == f"Query Job ID {query_job.id}'s state is {query_job.state}!"
             )
-        )
-        api_query.delete(query_job)
+
+        api_query.abort(query_job)  # state == "Aborted"
+        api_query.delete(api_query.get(query_job.id))  # query_job removed
+
+        # Recreate query_job
+        query_job = api_query.get(
+            value_objects.SalesforceQueryJobCreate(**query_job_create_params)
+        )  # state == "UploadComplete"
 
         assert tuple(
             row
             for row in api_query.result(
-                api_query.get(
-                    value_objects.SalesforceQueryJobCreate(**query_job_create_params)
-                )
+                api_query.get(query_job.id),  # state == "JobComplete"
+                max_records=2,
             )
         ) == (
             dict(Id="005R0000000UyrWIAv", Name="James Wu"),
@@ -165,6 +185,7 @@ class TestApi:
             "750R0000000zhfdIAA",
             "750R0000000zhjzIAA",
             "750R0000000zw4yIAA",
+            "750R0000000zxikIAA",
         )
 
 
