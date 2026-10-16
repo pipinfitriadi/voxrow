@@ -220,6 +220,12 @@ class BulkApiV2Query:
             headers: dict = {
                 "Accept": value_objects.ContentType.csv,
                 "Authorization": f"Bearer {self._access_token}",
+                # If encoding is enabled for Bulk API 2.0 Query job responses,
+                # there is a significant improvement in performance of query result
+                # downloads. This not the total query time, but a reduction in the time
+                # to download the results.
+                # https://developer.salesforce.com/docs/platform/api-asynch/guide/query-compression.html
+                "Accept-Encoding": value_objects.ContentEncoding.gzip,
             }
 
             while True:
