@@ -10,10 +10,11 @@ import logging
 from collections.abc import Iterator
 from dataclasses import KW_ONLY
 from http import HTTPMethod
+from io import StringIO
 from time import time
 from typing import Annotated
 
-from pydantic import Field, HttpUrl, PositiveInt, PrivateAttr, SecretStr, validate_call
+from pydantic import Field, HttpUrl, PositiveInt, SecretStr, validate_call
 from pydantic.dataclasses import dataclass
 
 from ....domain import domain_services, value_objects
@@ -25,7 +26,7 @@ TOKEN_EXPIRATION_SECONDS: PositiveInt = 2 * 60**2
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(config=value_objects.CONFIG_DICT)
 class BulkApiV2Query:
     """
     Salesforce's Bulk API 2.0 Query.
@@ -36,15 +37,16 @@ class BulkApiV2Query:
     base_url: Annotated[HttpUrl, Field(frozen=True)]
     client_id: Annotated[str, Field(frozen=True)]
     client_secret: Annotated[SecretStr, Field(frozen=True)]
-    _uow: httpx.HttpxDataUnitOfWork = PrivateAttr()
-    _token: dict = PrivateAttr()
-    _url: HttpUrl = PrivateAttr()
+    _uow: Annotated[
+        httpx.HttpxDataUnitOfWork,
+        Field(init=False, default_factory=httpx.HttpxDataUnitOfWork, frozen=True),
+    ]
+    _token: Annotated[dict, Field(init=False, default_factory=dict)]
+    _url: Annotated[HttpUrl, Field(None, init=False)]
     _: KW_ONLY
     api_version: Annotated[float, Field(frozen=True)]
 
     def __post_init__(self) -> None:
-        self._uow = httpx.HttpxDataUnitOfWork()
-        self._token = {}
         self._url = HttpUrl(
             f"{self.base_url}/services/data/v{self.api_version:.1f}/jobs/query"
         )
@@ -234,7 +236,7 @@ class BulkApiV2Query:
                             LF="\n",
                             CLRF="\r\n",
                         )[value.line_ending],
-                    )(self._uow.data.extract(source=self._uow.source))
+                    )(StringIO(self._uow.data.extract(source=self._uow.source)))
 
                     response_headers: dict = dict(self._uow.data.response.headers)
 
