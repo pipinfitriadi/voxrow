@@ -6,6 +6,7 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 13 October 2026
 
+import logging
 from collections.abc import Iterator
 from http import HTTPMethod
 from time import time
@@ -17,8 +18,10 @@ from pydantic.dataclasses import dataclass
 from ....domain import domain_services, value_objects
 from ....services.unit_of_work.data import httpx
 
-# Consts
+# Constants
 TOKEN_EXPIRATION_SECONDS: PositiveInt = 2 * 60**2
+
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -73,7 +76,7 @@ class BulkApiV2Query:
         is_pk_chunking_enabled: bool = False,
         job_type: value_objects.SalesforceJobType | None = None,
         concurrency_mode: value_objects.SalesforceQueryJobConcurrencyMode | None = None,
-    ) -> Iterator[value_objects.SalesforceQueryJobInfo]:
+    ) -> Iterator[value_objects.SalesforceQueryJob]:
         """
         Get Information About All Query Jobs.
 
@@ -104,7 +107,7 @@ class BulkApiV2Query:
                 response: dict = self._uow.data.extract(source=self._uow.source)
 
             for query_job in response["records"]:
-                yield value_objects.SalesforceQueryJobInfo(**query_job)
+                yield value_objects.SalesforceQueryJob(**query_job)
 
             if response["done"]:
                 break
@@ -122,7 +125,7 @@ class BulkApiV2Query:
         self,
         value: value_objects.SalesforceQueryJobId
         | value_objects.SalesforceQueryJobCreate,
-    ) -> value_objects.SalesforceQueryJobInfo:
+    ) -> value_objects.SalesforceQueryJob:
         headers: dict = {
             "Content-Type": value_objects.ContentType.json,
             "Authorization": f"Bearer {self._access_token}",
@@ -143,7 +146,7 @@ class BulkApiV2Query:
                     ),
                 )
             ):
-                return value_objects.SalesforceQueryJobInfo(
+                return value_objects.SalesforceQueryJob(
                     **self._uow.data.extract(source=self._uow.source)
                 )
         else:
@@ -153,12 +156,12 @@ class BulkApiV2Query:
                     headers=headers,
                 )
             ):
-                return value_objects.SalesforceQueryJobInfo(
+                return value_objects.SalesforceQueryJob(
                     **self._uow.data.extract(source=self._uow.source)
                 )
 
     @validate_call(validate_return=True)
-    def abort(self, value: value_objects.SalesforceQueryJobInfo) -> None:
+    def abort(self, value: value_objects.SalesforceQueryJob) -> None:
         """
         Abort a Query Job.
 
@@ -180,7 +183,7 @@ class BulkApiV2Query:
                 self._uow.data.extract(source=self._uow.source)
 
     @validate_call(validate_return=True)
-    def delete(self, value: value_objects.SalesforceQueryJobInfo) -> None:
+    def delete(self, value: value_objects.SalesforceQueryJob) -> None:
         if value.state in ("JobComplete", "Aborted", "Failed"):
             with self._uow(
                 source=value_objects.HttpxSource(
@@ -194,7 +197,7 @@ class BulkApiV2Query:
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def result(
         self,
-        value: value_objects.SalesforceQueryJobInfo,
+        value: value_objects.SalesforceQueryJob,
         max_records: PositiveInt | None = None,
     ) -> value_objects.Data:
         """
@@ -207,25 +210,37 @@ class BulkApiV2Query:
         is the same as the order you requested them. In version 49.0 and earlier,
         the order of the columns is returned alphabetically.
         """
-        params: dict = {**(dict(maxRecords=max_records) if max_records else {})}
-        headers: dict = {
-            "Accept": value_objects.ContentType.csv,
-            "Authorization": f"Bearer {self._access_token}",
-        }
+        if value.state == "JobComplete":
+            params: dict = {**(dict(maxRecords=max_records) if max_records else {})}
+            headers: dict = {
+                "Accept": value_objects.ContentType.csv,
+                "Authorization": f"Bearer {self._access_token}",
+            }
 
-        while True:
-            with self._uow(
-                source=value_objects.HttpxSource(
-                    f"{self._url}/{value.id}/results",
-                    headers=headers,
-                    params=params,
-                    output_type="TEXT",
-                )
-            ):
-                yield from domain_services.LoadsFromCsv(
-                    delimiter=value.column_delimiter,
-                    line_terminator=dict(
-                        LF="\n",
-                        CLRF="\r\n",
-                    )[value.line_ending],
-                )(self._uow.data.extract(source=self._uow.source))
+            while True:
+                with self._uow(
+                    source=value_objects.HttpxSource(
+                        f"{self._url}/{value.id}/results",
+                        headers=headers,
+                        params=params,
+                        output_type="TEXT",
+                    )
+                ):
+                    yield from domain_services.LoadsFromCsv(
+                        delimiter=value.column_delimiter,
+                        line_terminator=dict(
+                            LF="\n",
+                            CLRF="\r\n",
+                        )[value.line_ending],
+                    )(self._uow.data.extract(source=self._uow.source))
+
+                    response_headers: dict = dict(self._uow.data.response.headers)
+
+                if locator := response_headers["sforce-locator"]:
+                    params.update(locator=locator)
+                else:
+                    break
+        else:
+            logger.warning("Query Job ID %s's state is %s!", value.id, value.state)
+
+            yield from ()

@@ -22,6 +22,8 @@ from . import AbstractDataPort
 
 
 class HttpxDataAdapter(AbstractDataPort):
+    response: Response | None = None
+
     @validate_call(config=CONFIG_DICT, validate_return=True)
     def extract(self, *, source: HttpxSource) -> Data:
         methods: dict = {
@@ -30,7 +32,7 @@ class HttpxDataAdapter(AbstractDataPort):
             HTTPMethod.PATCH: patch,
             HTTPMethod.POST: post,
         }
-        resp: Response = methods[source.method](
+        self.response = methods[source.method](
             url=str(source.url),
             **(
                 dict(
@@ -57,12 +59,16 @@ class HttpxDataAdapter(AbstractDataPort):
             trust_env=source.trust_env,
         )
 
-        resp.raise_for_status()
+        self.response.raise_for_status()
 
         return (
-            resp.json()
+            self.response.json()
             if source.output_type == "JSON"
-            else (resp.text if source.output_type == "TEXT" else resp.content)
+            else (
+                self.response.text
+                if source.output_type == "TEXT"
+                else self.response.content
+            )
         )
 
     @validate_call(config=CONFIG_DICT, validate_return=True)

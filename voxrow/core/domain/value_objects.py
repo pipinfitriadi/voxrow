@@ -536,16 +536,7 @@ type SalesforceQueryJobOperation = Literal[
 
 
 @dataclass(frozen=True)
-class SalesforceQueryJobCreate:
-    operation: SalesforceQueryJobOperation
-    query: SalesforceObjectQueryLanguage
-    content_type: SalesforceQueryJobContentType = "CSV"
-    column_delimiter: SalesforceQueryJobColumnDelimiter = "COMMA"
-    line_ending: SalesforceQueryJobLineEnding = "LF"
-
-
-@dataclass(frozen=True)
-class SalesforceQueryJobInfo:
+class SalesforceQueryJob:
     id: SalesforceQueryJobId
     operation: SalesforceQueryJobOperation
     object: str
@@ -599,3 +590,12 @@ class SalesforceQueryJobInfo:
         bool | None,
         Field(validation_alias="isPkChunkingSupported"),
     ] = None
+
+
+@dataclass(frozen=True)
+class SalesforceQueryJobCreate:
+    operation: SalesforceQueryJobOperation
+    query: SalesforceObjectQueryLanguage
+    content_type: SalesforceQueryJobContentType = "CSV"
+    column_delimiter: SalesforceQueryJobColumnDelimiter = "COMMA"
+    line_ending: SalesforceQueryJobLineEnding = "LF"
