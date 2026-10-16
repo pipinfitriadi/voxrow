@@ -66,13 +66,57 @@ class BulkApiV2Query:
 
         return SecretStr(self._token["access_token"])
 
-    @validate_call(validate_return=True)
-    def all(self) -> Iterator[value_objects.SalesforceQueryJobInfo]:
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
+    def all(
+        self,
+        *,
+        is_pk_chunking_enabled: bool = False,
+        job_type: value_objects.SalesforceJobType | None = None,
+        concurrency_mode: value_objects.SalesforceQueryJobConcurrencyMode | None = None,
+    ) -> Iterator[value_objects.SalesforceQueryJobInfo]:
         """
         Get Information About All Query Jobs.
 
         Docs: https://developer.salesforce.com/docs/platform/api-asynch/guide/query-get-all-jobs.html
         """
+        params: dict = {
+            **(
+                dict(isPkChunkingEnabled=is_pk_chunking_enabled)
+                if is_pk_chunking_enabled
+                else {}
+            ),
+            **(dict(jobType=job_type) if job_type else {}),
+            **(dict(concurrencyMode=concurrency_mode) if concurrency_mode else {}),
+        }
+        headers: dict = {
+            "Content-Type": value_objects.ContentType.json,
+            "Authorization": f"Bearer {self._access_token}",
+        }
+
+        while True:
+            with self._uow(
+                source=value_objects.HttpxSource(
+                    self._url,
+                    headers=headers,
+                    params=params,
+                )
+            ):
+                response: dict = self._uow.data.extract(source=self._uow.source)
+
+                for query_job in response["records"]:
+                    yield value_objects.SalesforceQueryJobInfo(**query_job)
+
+                if response["done"]:
+                    break
+
+            params.update(
+                queryLocator=next(
+                    filter(
+                        lambda row: row[0] == "queryLocator",
+                        HttpUrl(f"http://localhost/{response['nextRecordsUrl']}").query_params,
+                    )
+                )[1],
+            )
 
     @validate_call(validate_return=True)
     def get(
@@ -115,12 +159,40 @@ class BulkApiV2Query:
                 )
 
     @validate_call(validate_return=True)
-    def abort(self, value: value_objects.SalesforceQueryJobInfo) -> None: ...
+    def abort(self, value: value_objects.SalesforceQueryJobInfo) -> None:
+        """
+        Abort a Query Job.
+
+        To abort a job, you must be the job's creator or have the Manage Data
+        Integrations permission.
+        """
+        if value.state in ("UploadComplete", "InProgress"):
+            with self._uow(
+                source=value_objects.HttpxSource(
+                    f"{self._url}/{value.id}",
+                    HTTPMethod.PATCH,
+                    headers={
+                        "Content-Type": value_objects.ContentType.json,
+                        "Authorization": f"Bearer {self._access_token}",
+                    },
+                    json=dict(state="Aborted"),
+                )
+            ):
+                self._uow.data.extract(source=self._uow.source)
 
     @validate_call(validate_return=True)
-    def delete(self, value: value_objects.SalesforceQueryJobInfo) -> None: ...
+    def delete(self, value: value_objects.SalesforceQueryJobInfo) -> None:
+        if value.state in ("JobComplete", "Aborted", "Failed"):
+            with self._uow(
+                source=value_objects.HttpxSource(
+                    f"{self._url}/{value.id}",
+                    HTTPMethod.DELETE,
+                    headers=dict(Authorization=f"Bearer {self._access_token}"),
+                )
+            ):
+                self._uow.data.extract(source=self._uow.source)
 
-    @validate_call(validate_return=True)
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def result(
         self, value: value_objects.SalesforceQueryJobInfo
     ) -> value_objects.Data: ...

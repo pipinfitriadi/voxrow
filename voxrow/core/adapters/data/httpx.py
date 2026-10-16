@@ -8,7 +8,7 @@
 
 from http import HTTPMethod
 
-from httpx import Response, get, post
+from httpx import Response, delete, get, patch, post
 from pydantic import validate_call
 
 from ...domain.value_objects import (
@@ -25,7 +25,9 @@ class HttpxDataAdapter(AbstractDataPort):
     @validate_call(config=CONFIG_DICT, validate_return=True)
     def extract(self, *, source: HttpxSource) -> Data:
         methods: dict = {
+            HTTPMethod.DELETE: delete,
             HTTPMethod.GET: get,
+            HTTPMethod.PATCH: patch,
             HTTPMethod.POST: post,
         }
         resp: Response = methods[source.method](
@@ -37,7 +39,10 @@ class HttpxDataAdapter(AbstractDataPort):
                     files=source.files,
                     json=source.json,
                 )
-                if source.method is HTTPMethod.POST
+                if source.method in (
+                    HTTPMethod.PATCH,
+                    HTTPMethod.POST,
+                )
                 else {}
             ),
             params=source.params,

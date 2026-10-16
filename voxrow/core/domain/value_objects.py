@@ -444,12 +444,12 @@ class HttpxSource(Source):
     method: HTTPMethod = HTTPMethod.GET
     _: KW_ONLY
     output_type: Literal["BYTES", "JSON", "TEXT"] = "JSON"
-    # For HTTPMethod.POST Only
+    # For HTTPMethod: Patch & POST Only
     content: str | bytes | Iterable[bytes] | AsyncIterable[bytes] | None = None
     data: dict[str, Any] | None = None
     files: dict[str, Any] | tuple[tuple[str, Any], ...] | None = None
     json: Any | None = None
-    # For HTTPMethod.GET & HTTPMethod.POST
+    # For HTTPMethod: DELETE, GET, PATCH, & POST
     params: Any | None = None
     headers: dict | tuple | None = None
     cookies: dict[str, str] | list[tuple[str, str]] | None = None
@@ -497,6 +497,11 @@ class SQLModelSource(Source):
 
 # =================================== API: Salesforce ==================================
 
+type SalesforceJobType = Literal[
+    "Classic",  # Bulk API jobs. This includes both query jobs and ingest jobs
+    "V2Query",  # Bulk API 2.0 query jobs
+    "V2Ingest",  # Bulk API 2.0 ingest (upload and upsert) jobs
+]
 type SalesforceObjectQueryLanguage = str
 type SalesforceQueryJobColumnDelimiter = Literal[
     "BACKQUOTE",
@@ -506,6 +511,7 @@ type SalesforceQueryJobColumnDelimiter = Literal[
     "SEMICOLON",
     "TAB",
 ]
+type SalesforceQueryJobConcurrencyMode = Literal["serial", "parallel"]
 type SalesforceQueryJobContentType = Literal["CSV"]
 type SalesforceQueryJobId = str
 type SalesforceQueryJobLineEnding = Literal[
@@ -555,7 +561,10 @@ class SalesforceQueryJobInfo:
         # The job failed.
         "Failed",
     ]
-    concurrency_mode: Annotated[str, Field(validation_alias="concurrencyMode")]
+    concurrency_mode: Annotated[
+        SalesforceQueryJobConcurrencyMode | str,
+        Field(validation_alias="concurrencyMode"),
+    ]
     content_type: Annotated[
         SalesforceQueryJobContentType,
         Field(validation_alias="contentType"),
@@ -569,7 +578,10 @@ class SalesforceQueryJobInfo:
         SalesforceQueryJobColumnDelimiter,
         Field(validation_alias="columnDelimiter"),
     ]
-    job_type: Annotated[str | None, Field(validation_alias="jobType")] = None
+    job_type: Annotated[
+        SalesforceJobType | str | None,
+        Field(validation_alias="jobType"),
+    ] = None
     number_records_processed: Annotated[
         int | None,
         Field(validation_alias="numberRecordsProcessed"),
