@@ -48,6 +48,7 @@ CSV_DELIMITERS: dict = {
     "RECORD-SEPARATOR": "\x1e",
     "SEMICOLON": ";",
     "TAB": "\t",
+    "TILDE": "~",
     "UNIT-SEPARATOR": "\x1f",
 }
 DATE_FMT: str = "%Y-%m-%d"
@@ -251,8 +252,11 @@ class CsvDomain:
         # Based Used For: Database exports, data integration, & text-heavy tabular data
         "TAB",
         # Risk level    : Low
+        # Based Used For: General-purpose CSV delimiter
+        "TILDE",
+        # Risk level    : Low
         # Based Used For: Alternative field delimiter to minimize conflicts with common
-        #                 punctuation characters in source data.
+        #                 punctuation characters in source data
         "BACKQUOTE",
         # Risk level    : Medium
         # Based Used For: European regional data, standard tables
