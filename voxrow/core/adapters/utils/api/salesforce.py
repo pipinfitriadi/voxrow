@@ -103,11 +103,11 @@ class BulkApiV2Query:
             ):
                 response: dict = self._uow.data.extract(source=self._uow.source)
 
-                for query_job in response["records"]:
-                    yield value_objects.SalesforceQueryJobInfo(**query_job)
+            for query_job in response["records"]:
+                yield value_objects.SalesforceQueryJobInfo(**query_job)
 
-                if response["done"]:
-                    break
+            if response["done"]:
+                break
 
             params.update(
                 queryLocator=dict(
