@@ -8,6 +8,7 @@
 
 import logging
 from collections.abc import Iterator
+from dataclasses import KW_ONLY
 from http import HTTPMethod
 from time import time
 from typing import Annotated
@@ -32,13 +33,14 @@ class BulkApiV2Query:
     Docs: https://developer.salesforce.com/docs/platform/api-asynch/guide/query-bulk-api-2-0.html
     """
 
-    api_version: Annotated[float, Field(frozen=True)]
     base_url: Annotated[HttpUrl, Field(frozen=True)]
     client_id: Annotated[str, Field(frozen=True)]
     client_secret: Annotated[SecretStr, Field(frozen=True)]
     _uow: httpx.HttpxDataUnitOfWork = PrivateAttr()
     _token: dict = PrivateAttr()
     _url: HttpUrl = PrivateAttr()
+    _: KW_ONLY
+    api_version: Annotated[float, Field(frozen=True)]
 
     def __post_init__(self) -> None:
         self._uow = httpx.HttpxDataUnitOfWork()
