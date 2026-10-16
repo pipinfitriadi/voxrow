@@ -110,12 +110,11 @@ class BulkApiV2Query:
                     break
 
             params.update(
-                queryLocator=next(
-                    filter(
-                        lambda row: row[0] == "queryLocator",
-                        HttpUrl(f"http://localhost/{response['nextRecordsUrl']}").query_params,
-                    )
-                )[1],
+                queryLocator=dict(
+                    HttpUrl(
+                        f"http://localhost/{response['nextRecordsUrl']}"
+                    ).query_params()
+                )["queryLocator"]
             )
 
     @validate_call(validate_return=True)
@@ -195,4 +194,14 @@ class BulkApiV2Query:
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def result(
         self, value: value_objects.SalesforceQueryJobInfo
-    ) -> value_objects.Data: ...
+    ) -> value_objects.Data:
+        """
+        Get Results for a Query Job.
+
+        Use the same API version to get query results that you used to create the query.
+        Otherwise, the call returns a 409 error.
+
+        In API version 50.0 and later, the order of the columns returned by the query
+        is the same as the order you requested them. In version 49.0 and earlier,
+        the order of the columns is returned alphabetically.
+        """
