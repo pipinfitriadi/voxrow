@@ -496,8 +496,8 @@ class TestHandlersEtl:
                 ),
             )
 
-            assert file == Path(temp_file.name)
-            assert file.read_text() == fake_message
+        assert file == Path(temp_file.name)
+        assert file.read_text() == fake_message
 
         with (tmp_path / "file.dat").open(mode="wb+") as temp_file:
             file: Path = await handlers.etl(

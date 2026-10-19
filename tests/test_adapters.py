@@ -6,7 +6,6 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 10 May 2026
 
-import asyncio
 import itertools
 import logging
 from collections.abc import Callable
@@ -27,8 +26,7 @@ from voxrow.core.services import handlers
 from voxrow.core.services.unit_of_work.data import pathlib
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
+    from anyio import Path
     from google.cloud.storage import Blob, Client
 
 
@@ -213,7 +211,7 @@ class TestApi:
             )
 
         assert (
-            await asyncio.to_thread(file.read_text)
+            file.read_text()
             == (test_files_dir / "salesforce" / "query_job" / filename).read_text()
         )
 
