@@ -15,7 +15,14 @@ from time import time
 from typing import Annotated
 
 from httpx import HTTPStatusError
-from pydantic import Field, HttpUrl, PositiveInt, SecretStr, validate_call
+from pydantic import (
+    Field,
+    HttpUrl,
+    PositiveFloat,
+    PositiveInt,
+    SecretStr,
+    validate_call,
+)
 from pydantic.dataclasses import dataclass
 
 from ....domain import domain_services, value_objects
@@ -45,7 +52,7 @@ class BulkApiV2Query:
     _token: Annotated[dict, Field(init=False, default_factory=dict)]
     _url: Annotated[HttpUrl, Field(None, init=False)]
     _: KW_ONLY
-    api_version: Annotated[float, Field(frozen=True)]
+    api_version: Annotated[PositiveFloat, Field(frozen=True)]
 
     def __post_init__(self) -> None:
         self._url = HttpUrl(
