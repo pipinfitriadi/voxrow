@@ -9,6 +9,7 @@
 import logging
 from collections.abc import AsyncIterable, Iterable, Iterator, Sequence
 from dataclasses import KW_ONLY
+from datetime import datetime
 from enum import IntEnum, StrEnum
 from http import HTTPMethod
 from pathlib import Path
@@ -17,6 +18,7 @@ from typing import Annotated, Any, Literal, ParamSpec, Protocol, runtime_checkab
 from zoneinfo import ZoneInfo
 
 from pydantic import (
+    AliasChoices,
     AnyUrl,
     ConfigDict,
     Field,
@@ -40,12 +42,14 @@ BATCH_SIZE: PositiveInt = 5_000
 CHUNK_SIZE: PositiveInt = 8 * (1_024**2)  # 8 MiB
 CONFIG_DICT: ConfigDict = ConfigDict(arbitrary_types_allowed=True)
 CSV_DELIMITERS: dict = {
+    "BACKQUOTE": "`",
     "CARET": "^",
     "COMMA": ",",
     "PIPE": "|",
     "RECORD-SEPARATOR": "\x1e",
     "SEMICOLON": ";",
     "TAB": "\t",
+    "TILDE": "~",
     "UNIT-SEPARATOR": "\x1f",
 }
 DATE_FMT: str = "%Y-%m-%d"
@@ -225,6 +229,7 @@ class ContentType(StrEnum):
     svg = "image/svg+xml"
     text = "text/plain"
     tsv = "text/tab-separated-values"
+    urlencoded = "application/x-www-form-urlencoded"
     xml = "application/xml"
 
 
@@ -247,6 +252,13 @@ class CsvDomain:
         # Risk level    : Very Low
         # Based Used For: Database exports, data integration, & text-heavy tabular data
         "TAB",
+        # Risk level    : Low
+        # Based Used For: General-purpose CSV delimiter
+        "TILDE",
+        # Risk level    : Low
+        # Based Used For: Alternative field delimiter to minimize conflicts with common
+        #                 punctuation characters in source data
+        "BACKQUOTE",
         # Risk level    : Medium
         # Based Used For: European regional data, standard tables
         "SEMICOLON",
@@ -436,6 +448,13 @@ class HttpxSource(Source):
     url: HttpUrl
     method: HTTPMethod = HTTPMethod.GET
     _: KW_ONLY
+    output_type: Literal["BYTES", "JSON", "TEXT"] = "JSON"
+    # For HTTPMethod: Patch & POST Only
+    content: str | bytes | Iterable[bytes] | AsyncIterable[bytes] | None = None
+    data: dict[str, Any] | None = None
+    files: dict[str, Any] | tuple[tuple[str, Any], ...] | None = None
+    json: Any | None = None
+    # For HTTPMethod: DELETE, GET, PATCH, & POST
     params: Any | None = None
     headers: dict | tuple | None = None
     cookies: dict[str, str] | list[tuple[str, str]] | None = None
@@ -445,11 +464,6 @@ class HttpxSource(Source):
     verify: SSLContext | str | bool = True
     timeout: float | tuple | None = None
     trust_env: bool = True
-    # For HTTPMethod.POST
-    content: str | bytes | Iterable[bytes] | AsyncIterable[bytes] | None = None
-    data: dict[str, Any] | None = None
-    files: dict[str, Any] | tuple[tuple[str, Any], ...] | None = None
-    json: Any | None = None
 
 
 @dataclass(frozen=True)
@@ -484,3 +498,132 @@ class SQLModelSource(Source):
     query: Any
     _: KW_ONLY
     batch_size: PositiveInt = BATCH_SIZE
+
+
+# =================================== API: Salesforce ==================================
+
+type SalesforceJobType = Literal[
+    "Classic",  # Bulk API jobs. This includes both query jobs and ingest jobs
+    "V2Query",  # Bulk API 2.0 query jobs
+    "V2Ingest",  # Bulk API 2.0 ingest (upload and upsert) jobs
+]
+type SalesforceObjectQueryLanguage = str
+type SalesforceQueryJobColumnDelimiter = Literal[
+    "BACKQUOTE",
+    "CARET",
+    "COMMA",
+    "PIPE",
+    "SEMICOLON",
+    "TAB",
+]
+type SalesforceQueryJobConcurrencyMode = Literal["serial", "parallel"]
+type SalesforceQueryJobContentType = Literal["CSV"]
+type SalesforceQueryJobId = str
+type SalesforceQueryJobLineEnding = Literal[
+    "LF",  # linefeed character
+    "CRLF",  # Carriage return character followed by a linefeed character
+]
+type SalesforceQueryJobOperation = Literal[
+    # Returns data that hasn't been deleted or archived. For more information,
+    # see query() in SOAP API Developer Guide.
+    # https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_calls_query.htm
+    "query",
+    # Returns records that have been deleted because of a merge or delete,
+    # and returns information about archived Task and Event records.
+    # For more information, see queryAll() in SOAP API Developer Guide.
+    # https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_calls_queryall.htm
+    "queryAll",
+]
+
+
+@dataclass(frozen=True)
+class SalesforceQueryJob:
+    id: SalesforceQueryJobId
+    operation: SalesforceQueryJobOperation
+    object: str
+    created_by_id: Annotated[
+        str,
+        Field(validation_alias=AliasChoices("created_by_id", "createdById")),
+    ]
+    created_date: Annotated[
+        datetime,
+        Field(validation_alias=AliasChoices("created_date", "createdDate")),
+    ]
+    system_modstamp: Annotated[
+        datetime,
+        Field(validation_alias=AliasChoices("system_modstamp", "systemModstamp")),
+    ]
+    state: Literal[
+        # The job is ready to be processed and Salesforce has put the job in the queue.
+        "UploadComplete",
+        # Salesforce is processing the job.
+        "InProgress",
+        # The job has been aborted. See Abort a Query Job.
+        # https://developer.salesforce.com/docs/platform/api-asynch/guide/query-abort-job.html
+        "Aborted",
+        # Salesforce has finished processing the job.
+        "JobComplete",
+        # The job failed.
+        "Failed",
+    ]
+    concurrency_mode: Annotated[
+        SalesforceQueryJobConcurrencyMode | str,
+        Field(validation_alias=AliasChoices("concurrency_mode", "concurrencyMode")),
+    ]
+    content_type: Annotated[
+        SalesforceQueryJobContentType,
+        Field(validation_alias=AliasChoices("content_type", "contentType")),
+    ]
+    api_version: Annotated[
+        float,
+        Field(validation_alias=AliasChoices("api_version", "apiVersion")),
+    ]
+    line_ending: Annotated[
+        SalesforceQueryJobLineEnding,
+        Field(validation_alias=AliasChoices("line_ending", "lineEnding")),
+    ]
+    column_delimiter: Annotated[
+        SalesforceQueryJobColumnDelimiter,
+        Field(validation_alias=AliasChoices("column_delimiter", "columnDelimiter")),
+    ]
+    job_type: Annotated[
+        SalesforceJobType | str | None,
+        Field(validation_alias=AliasChoices("job_type", "jobType")),
+    ] = None
+    number_records_processed: Annotated[
+        int | None,
+        Field(
+            validation_alias=AliasChoices(
+                "number_records_processed",
+                "numberRecordsProcessed",
+            )
+        ),
+    ] = None
+    retries: int | None = None
+    total_processing_time: Annotated[
+        int | None,
+        Field(
+            validation_alias=AliasChoices(
+                "total_processing_time",
+                "totalProcessingTime",
+            )
+        ),
+    ] = None
+    is_pk_chunking_supported: Annotated[
+        bool | None,
+        Field(
+            validation_alias=AliasChoices(
+                "is_pk_chunking_supported",
+                "isPkChunkingSupported",
+            )
+        ),
+    ] = None
+
+
+@dataclass(frozen=True)
+class SalesforceQueryJobCreate:
+    operation: SalesforceQueryJobOperation
+    query: SalesforceObjectQueryLanguage
+    content_type: SalesforceQueryJobContentType = "CSV"
+    column_delimiter: SalesforceQueryJobColumnDelimiter = "COMMA"
+    line_ending: SalesforceQueryJobLineEnding = "LF"

@@ -54,9 +54,11 @@ class TestDomainServices:
         )
 
         # Loads
-        assert tuple(domain_services.LoadsToCsv()(csv_with_header.open())) == fake_data
+        assert (
+            tuple(domain_services.LoadsFromCsv()(csv_with_header.open())) == fake_data
+        )
         assert tuple(
-            domain_services.LoadsToCsv(
+            domain_services.LoadsFromCsv(
                 delimiter=delimiter,
                 has_header=has_header,
             )(csv_without_header.open())

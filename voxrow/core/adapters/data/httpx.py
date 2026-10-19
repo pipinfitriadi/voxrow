@@ -8,7 +8,7 @@
 
 from http import HTTPMethod
 
-from httpx import Response, get, post
+from httpx import Response, delete, get, patch, post
 from pydantic import validate_call
 
 from ...domain.value_objects import (
@@ -22,14 +22,32 @@ from . import AbstractDataPort
 
 
 class HttpxDataAdapter(AbstractDataPort):
+    response: Response | None = None
+
     @validate_call(config=CONFIG_DICT, validate_return=True)
     def extract(self, *, source: HttpxSource) -> Data:
         methods: dict = {
+            HTTPMethod.DELETE: delete,
             HTTPMethod.GET: get,
+            HTTPMethod.PATCH: patch,
             HTTPMethod.POST: post,
         }
-        resp: Response = methods[source.method](
+        self.response = methods[source.method](
             url=str(source.url),
+            **(
+                dict(
+                    content=source.content,
+                    data=source.data,
+                    files=source.files,
+                    json=source.json,
+                )
+                if source.method
+                in (
+                    HTTPMethod.PATCH,
+                    HTTPMethod.POST,
+                )
+                else {}
+            ),
             params=source.params,
             headers=source.headers,
             cookies=source.cookies,
@@ -39,21 +57,19 @@ class HttpxDataAdapter(AbstractDataPort):
             verify=source.verify,
             timeout=source.timeout,
             trust_env=source.trust_env,
-            **(
-                dict(
-                    content=source.content,
-                    data=source.data,
-                    files=source.files,
-                    json=source.json,
-                )
-                if source.method is HTTPMethod.POST
-                else {}
-            ),
         )
 
-        resp.raise_for_status()
+        self.response.raise_for_status()
 
-        return resp.json()
+        return (
+            self.response.json()
+            if source.output_type == "JSON"
+            else (
+                self.response.text
+                if source.output_type == "TEXT"
+                else self.response.content
+            )
+        )
 
     @validate_call(config=CONFIG_DICT, validate_return=True)
     async def load(
