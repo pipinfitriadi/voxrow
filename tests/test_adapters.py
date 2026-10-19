@@ -19,11 +19,12 @@ from duckdb import DuckDBPyConnection
 from pydantic import DirectoryPath, FilePath
 from sqlalchemy import Engine
 
-from voxrow.core.adapters.data import pathlib
 from voxrow.core.adapters.utils.api import salesforce
 from voxrow.core.adapters.utils.database import duckdb, sqlmodel
 from voxrow.core.adapters.utils.storage import boto3, gcs
 from voxrow.core.domain import domain_services, value_objects
+from voxrow.core.services import handlers
+from voxrow.core.services.unit_of_work.data import pathlib
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -199,10 +200,16 @@ class TestApi:
 
         filename: str = "accounts.csv"
 
-        with (tmp_path / filename).open(mode="w+") as temp_file:
-            file: Path = await pathlib.PathDataAdapter().load(
-                domain_services.DumpsToCsv()(data_for_csv),
-                destination=value_objects.PathDestination(temp_file.name),
+        with (
+            (tmp_path / filename).open(mode="w+") as temp_file,
+            pathlib.PathDataUnitOfWork()(
+                destination=value_objects.PathDestination(temp_file.name)
+            ) as uow,
+        ):
+            file: Path = await handlers.etl(
+                source=data_for_csv,
+                destination=uow,
+                transform=domain_services.DumpsToCsv(),
             )
 
         assert (
