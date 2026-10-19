@@ -6,6 +6,8 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 13 January 2026
 
+from io import StringIO
+
 from pydantic import validate_call
 
 from ...domain.value_objects import (
@@ -41,7 +43,7 @@ class PathDataAdapter(AbstractDataPort):
             destination.file.write_bytes(data=data)
         else:
             destination.file.write_text(
-                data=data,
+                data=data.getvalue() if isinstance(data, StringIO) else data,
                 encoding=destination.encoding,
                 errors=destination.errors,
                 newline=destination.newline,

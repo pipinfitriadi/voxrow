@@ -6,6 +6,8 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 10 May 2026
 
+import asyncio
+import itertools
 import logging
 from collections.abc import Callable
 from time import time
@@ -17,12 +19,15 @@ from duckdb import DuckDBPyConnection
 from pydantic import DirectoryPath, FilePath
 from sqlalchemy import Engine
 
+from voxrow.core.adapters.data import pathlib
 from voxrow.core.adapters.utils.api import salesforce
 from voxrow.core.adapters.utils.database import duckdb, sqlmodel
 from voxrow.core.adapters.utils.storage import boto3, gcs
 from voxrow.core.domain import domain_services, value_objects
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from google.cloud.storage import Blob, Client
 
 
@@ -130,9 +135,12 @@ def mock_salesforce(
 
 
 class TestApi:
-    def test_salesforce(
+    @pytest.mark.asyncio
+    async def test_salesforce(
         self,
         caplog: pytest.LogCaptureFixture,
+        test_files_dir: DirectoryPath,
+        tmp_path: DirectoryPath,
         mock_salesforce: Callable,  # noqa: ARG002
     ) -> None:
         caplog.set_level(logging.WARNING)
@@ -170,13 +178,14 @@ class TestApi:
             value_objects.SalesforceQueryJobCreate(**query_job_create_params)
         )  # state == "UploadComplete"
 
-        assert tuple(
-            row
-            for row in api_query.result(
+        data_for_tuple, data_for_csv = itertools.tee(
+            api_query.result(
                 api_query.get(query_job.id),  # state == "JobComplete"
                 max_records=2,
             )
-        ) == (
+        )
+
+        assert tuple(data_for_tuple) == (
             dict(Id="005R0000000UyrWIAv", Name="James Wu"),
             dict(Id="005R0000000GiwjIxx", Name="Samantha Jones"),
             dict(Id="005R0000000GiwoIAB", Name="Doug West"),
@@ -186,6 +195,19 @@ class TestApi:
             "750R0000000zhjzIAA",
             "750R0000000zw4yIAA",
             "750R0000000zxikIAA",
+        )
+
+        filename: str = "accounts.csv"
+
+        with (tmp_path / filename).open(mode="w+") as temp_file:
+            file: Path = await pathlib.PathDataAdapter().load(
+                domain_services.DumpsToCsv()(data_for_csv),
+                destination=value_objects.PathDestination(temp_file.name),
+            )
+
+        assert (
+            await asyncio.to_thread(file.read_text)
+            == (test_files_dir / "salesforce" / "query_job" / filename).read_text()
         )
 
 

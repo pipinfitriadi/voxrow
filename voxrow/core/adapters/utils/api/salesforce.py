@@ -14,6 +14,7 @@ from io import StringIO
 from time import time
 from typing import Annotated
 
+from httpx import HTTPStatusError
 from pydantic import Field, HttpUrl, PositiveInt, SecretStr, validate_call
 from pydantic.dataclasses import dataclass
 
@@ -69,7 +70,14 @@ class BulkApiV2Query:
                     ),
                 )
             ):
-                self._token = self._uow.data.extract(source=self._uow.source)
+                try:
+                    self._token = self._uow.data.extract(source=self._uow.source)
+                except HTTPStatusError:  # pragma: no cover
+                    logger.exception(
+                        "Error response: %s", self._uow.data.response.json()
+                    )
+
+                    raise
 
         return SecretStr(self._token["access_token"])
 
@@ -97,10 +105,12 @@ class BulkApiV2Query:
         }
         headers: dict = {
             "Content-Type": value_objects.ContentType.json,
-            "Authorization": f"Bearer {self._access_token}",
+            "Authorization": f"Bearer {self._access_token.get_secret_value()}",
         }
 
         while True:
+            logger.debug("Request: %s", dict(url=self._url, params=params))
+
             with self._uow(
                 source=value_objects.HttpxSource(
                     self._url,
@@ -108,7 +118,14 @@ class BulkApiV2Query:
                     params=params,
                 )
             ):
-                response: dict = self._uow.data.extract(source=self._uow.source)
+                try:
+                    response: dict = self._uow.data.extract(source=self._uow.source)
+                except HTTPStatusError:  # pragma: no cover
+                    logger.exception(
+                        "Error response: %s", self._uow.data.response.json()
+                    )
+
+                    raise
 
             for query_job in response["records"]:
                 yield value_objects.SalesforceQueryJob(**query_job)
@@ -132,7 +149,7 @@ class BulkApiV2Query:
     ) -> value_objects.SalesforceQueryJob:
         headers: dict = {
             "Content-Type": value_objects.ContentType.json,
-            "Authorization": f"Bearer {self._access_token}",
+            "Authorization": f"Bearer {self._access_token.get_secret_value()}",
         }
 
         if isinstance(value, value_objects.SalesforceQueryJobCreate):
@@ -150,9 +167,16 @@ class BulkApiV2Query:
                     ),
                 )
             ):
-                return value_objects.SalesforceQueryJob(
-                    **self._uow.data.extract(source=self._uow.source)
-                )
+                try:
+                    return value_objects.SalesforceQueryJob(
+                        **self._uow.data.extract(source=self._uow.source)
+                    )
+                except HTTPStatusError:  # pragma: no cover
+                    logger.exception(
+                        "Error response: %s", self._uow.data.response.json()
+                    )
+
+                    raise
         else:
             with self._uow(
                 source=value_objects.HttpxSource(
@@ -160,9 +184,16 @@ class BulkApiV2Query:
                     headers=headers,
                 )
             ):
-                return value_objects.SalesforceQueryJob(
-                    **self._uow.data.extract(source=self._uow.source)
-                )
+                try:
+                    return value_objects.SalesforceQueryJob(
+                        **self._uow.data.extract(source=self._uow.source)
+                    )
+                except HTTPStatusError:  # pragma: no cover
+                    logger.exception(
+                        "Error response: %s", self._uow.data.response.json()
+                    )
+
+                    raise
 
     @validate_call(validate_return=True)
     def abort(self, value: value_objects.SalesforceQueryJob) -> None:
@@ -179,12 +210,21 @@ class BulkApiV2Query:
                     HTTPMethod.PATCH,
                     headers={
                         "Content-Type": value_objects.ContentType.json,
-                        "Authorization": f"Bearer {self._access_token}",
+                        "Authorization": (
+                            f"Bearer {self._access_token.get_secret_value()}"
+                        ),
                     },
                     json=dict(state="Aborted"),
                 )
             ):
-                self._uow.data.extract(source=self._uow.source)
+                try:
+                    self._uow.data.extract(source=self._uow.source)
+                except HTTPStatusError:  # pragma: no cover
+                    logger.exception(
+                        "Error response: %s", self._uow.data.response.json()
+                    )
+
+                    raise
 
     @validate_call(validate_return=True)
     def delete(self, value: value_objects.SalesforceQueryJob) -> None:
@@ -193,10 +233,19 @@ class BulkApiV2Query:
                 source=value_objects.HttpxSource(
                     f"{self._url}/{value.id}",
                     HTTPMethod.DELETE,
-                    headers=dict(Authorization=f"Bearer {self._access_token}"),
+                    headers=dict(
+                        Authorization=f"Bearer {self._access_token.get_secret_value()}",
+                    ),
                 )
             ):
-                self._uow.data.extract(source=self._uow.source)
+                try:
+                    self._uow.data.extract(source=self._uow.source)
+                except HTTPStatusError:  # pragma: no cover
+                    logger.exception(
+                        "Error response: %s", self._uow.data.response.json()
+                    )
+
+                    raise
 
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def result(
@@ -219,7 +268,7 @@ class BulkApiV2Query:
             params: dict = {**(dict(maxRecords=max_records) if max_records else {})}
             headers: dict = {
                 "Accept": value_objects.ContentType.csv,
-                "Authorization": f"Bearer {self._access_token}",
+                "Authorization": f"Bearer {self._access_token.get_secret_value()}",
                 # If encoding is enabled for Bulk API 2.0 Query job responses,
                 # there is a significant improvement in performance of query result
                 # downloads. This not the total query time, but a reduction in the time
@@ -229,6 +278,8 @@ class BulkApiV2Query:
             }
 
             while True:
+                logger.debug("Request: %s", dict(url=self._url, params=params))
+
                 with self._uow(
                     source=value_objects.HttpxSource(
                         f"{self._url}/{value.id}/results",
@@ -237,17 +288,26 @@ class BulkApiV2Query:
                         output_type="TEXT",
                     )
                 ):
-                    yield from domain_services.LoadsFromCsv(
-                        delimiter=value.column_delimiter,
-                        line_terminator=dict(
-                            LF="\n",
-                            CLRF="\r\n",
-                        )[value.line_ending],
-                    )(StringIO(self._uow.data.extract(source=self._uow.source)))
+                    try:
+                        yield from domain_services.LoadsFromCsv(
+                            delimiter=value.column_delimiter,
+                            line_terminator=dict(
+                                LF="\n",
+                                CLRF="\r\n",
+                            )[value.line_ending],
+                        )(StringIO(self._uow.data.extract(source=self._uow.source)))
+                    except HTTPStatusError:  # pragma: no cover
+                        logger.exception(
+                            "Error response: %s", self._uow.data.response.json()
+                        )
+
+                        raise
 
                     response_headers: dict = dict(self._uow.data.response.headers)
 
-                if locator := response_headers["sforce-locator"]:
+                locator: str = response_headers["sforce-locator"]
+
+                if locator != "null":
                     params.update(locator=locator)
                 else:
                     break
