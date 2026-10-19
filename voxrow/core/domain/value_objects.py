@@ -18,6 +18,7 @@ from typing import Annotated, Any, Literal, ParamSpec, Protocol, runtime_checkab
 from zoneinfo import ZoneInfo
 
 from pydantic import (
+    AliasChoices,
     AnyUrl,
     ConfigDict,
     Field,
@@ -540,9 +541,18 @@ class SalesforceQueryJob:
     id: SalesforceQueryJobId
     operation: SalesforceQueryJobOperation
     object: str
-    created_by_id: Annotated[str, Field(validation_alias="createdById")]
-    created_date: Annotated[datetime, Field(validation_alias="createdDate")]
-    system_modstamp: Annotated[datetime, Field(validation_alias="systemModstamp")]
+    created_by_id: Annotated[
+        str,
+        Field(validation_alias=AliasChoices("created_by_id", "createdById")),
+    ]
+    created_date: Annotated[
+        datetime,
+        Field(validation_alias=AliasChoices("created_date", "createdDate")),
+    ]
+    system_modstamp: Annotated[
+        datetime,
+        Field(validation_alias=AliasChoices("system_modstamp", "systemModstamp")),
+    ]
     state: Literal[
         # The job is ready to be processed and Salesforce has put the job in the queue.
         "UploadComplete",
@@ -558,37 +568,55 @@ class SalesforceQueryJob:
     ]
     concurrency_mode: Annotated[
         SalesforceQueryJobConcurrencyMode | str,
-        Field(validation_alias="concurrencyMode"),
+        Field(validation_alias=AliasChoices("concurrency_mode", "concurrencyMode")),
     ]
     content_type: Annotated[
         SalesforceQueryJobContentType,
-        Field(validation_alias="contentType"),
+        Field(validation_alias=AliasChoices("content_type", "contentType")),
     ]
-    api_version: Annotated[float, Field(validation_alias="apiVersion")]
+    api_version: Annotated[
+        float,
+        Field(validation_alias=AliasChoices("api_version", "apiVersion")),
+    ]
     line_ending: Annotated[
         SalesforceQueryJobLineEnding,
-        Field(validation_alias="lineEnding"),
+        Field(validation_alias=AliasChoices("line_ending", "lineEnding")),
     ]
     column_delimiter: Annotated[
         SalesforceQueryJobColumnDelimiter,
-        Field(validation_alias="columnDelimiter"),
+        Field(validation_alias=AliasChoices("column_delimiter", "columnDelimiter")),
     ]
     job_type: Annotated[
         SalesforceJobType | str | None,
-        Field(validation_alias="jobType"),
+        Field(validation_alias=AliasChoices("job_type", "jobType")),
     ] = None
     number_records_processed: Annotated[
         int | None,
-        Field(validation_alias="numberRecordsProcessed"),
+        Field(
+            validation_alias=AliasChoices(
+                "number_records_processed",
+                "numberRecordsProcessed",
+            )
+        ),
     ] = None
     retries: int | None = None
     total_processing_time: Annotated[
         int | None,
-        Field(validation_alias="totalProcessingTime"),
+        Field(
+            validation_alias=AliasChoices(
+                "total_processing_time",
+                "totalProcessingTime",
+            )
+        ),
     ] = None
     is_pk_chunking_supported: Annotated[
         bool | None,
-        Field(validation_alias="isPkChunkingSupported"),
+        Field(
+            validation_alias=AliasChoices(
+                "is_pk_chunking_supported",
+                "isPkChunkingSupported",
+            )
+        ),
     ] = None
 
 
