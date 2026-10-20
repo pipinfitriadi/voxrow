@@ -145,10 +145,12 @@ class TestApi:
         caplog.set_level(logging.WARNING)
 
         api_query: salesforce.BulkApiV2Query = salesforce.BulkApiV2Query(
-            "https://INSTANCE.salesforce.com",
-            "fake-client-id",
-            "fake-client-secret",
-            api_version=46.0,
+            credential=value_objects.SalesforceCredential(
+                "https://INSTANCE.salesforce.com",
+                "fake-client-id",
+                "fake-client-secret",
+                api_version=46.0,
+            )
         )
         query_job_create_params: dict = dict(
             operation="query",

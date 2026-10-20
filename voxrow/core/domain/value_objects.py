@@ -26,6 +26,7 @@ from pydantic import (
     HttpUrl,
     IPvAnyAddress,
     NameEmail,
+    PositiveFloat,
     PositiveInt,
     PostgresDsn,
     SecretStr,
@@ -534,6 +535,15 @@ type SalesforceQueryJobOperation = Literal[
     # https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_calls_queryall.htm
     "queryAll",
 ]
+
+
+@dataclass(frozen=True)
+class SalesforceCredential:
+    base_url: HttpUrl
+    client_id: str
+    client_secret: SecretStr
+    _: KW_ONLY
+    api_version: PositiveFloat
 
 
 @dataclass(frozen=True)

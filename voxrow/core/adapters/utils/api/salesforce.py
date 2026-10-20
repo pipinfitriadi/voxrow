@@ -8,7 +8,6 @@
 
 import logging
 from collections.abc import Iterator
-from dataclasses import KW_ONLY
 from http import HTTPMethod
 from io import StringIO
 from time import time
@@ -16,14 +15,15 @@ from typing import Annotated
 
 from httpx import HTTPStatusError
 from pydantic import (
+    BaseModel,
+    ConfigDict,
     Field,
     HttpUrl,
-    PositiveFloat,
     PositiveInt,
+    PrivateAttr,
     SecretStr,
     validate_call,
 )
-from pydantic.dataclasses import dataclass
 
 from ....domain import domain_services, value_objects
 from ....services.unit_of_work.data import httpx
@@ -34,29 +34,28 @@ TOKEN_EXPIRATION_SECONDS: PositiveInt = 2 * 60**2
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-@dataclass(config=value_objects.CONFIG_DICT)
-class BulkApiV2Query:
+class BulkApiV2Query(BaseModel):
     """
     Salesforce's Bulk API 2.0 Query.
 
     Docs: https://developer.salesforce.com/docs/platform/api-asynch/guide/query-bulk-api-2-0.html
     """
 
-    base_url: Annotated[HttpUrl, Field(frozen=True)]
-    client_id: Annotated[str, Field(frozen=True)]
-    client_secret: Annotated[SecretStr, Field(frozen=True)]
-    _uow: Annotated[
-        httpx.HttpxDataUnitOfWork,
-        Field(init=False, default_factory=httpx.HttpxDataUnitOfWork, frozen=True),
-    ]
-    _token: Annotated[dict, Field(init=False, default_factory=dict)]
-    _url: Annotated[HttpUrl, Field(None, init=False)]
-    _: KW_ONLY
-    api_version: Annotated[PositiveFloat, Field(frozen=True)]
+    model_config: ConfigDict = value_objects.CONFIG_DICT
 
-    def __post_init__(self) -> None:
+    credential: Annotated[
+        value_objects.SalesforceCredential,
+        Field(frozen=True),
+    ]
+    _uow: httpx.HttpxDataUnitOfWork = PrivateAttr()
+    _token: dict = PrivateAttr()
+    _url: HttpUrl = PrivateAttr()
+
+    def model_post_init(self, context: any) -> None:  # noqa: ARG002
+        self._uow = httpx.HttpxDataUnitOfWork()
+        self._token = {}
         self._url = HttpUrl(
-            f"{self.base_url}/services/data/v{self.api_version:.1f}/jobs/query"
+            f"{self.credential.base_url}/services/data/v{self.credential.api_version:.1f}/jobs/query"
         )
 
     @property
@@ -67,13 +66,13 @@ class BulkApiV2Query:
         ):
             with self._uow(
                 source=value_objects.HttpxSource(
-                    f"{self.base_url}/services/oauth2/token",
+                    f"{self.credential.base_url}/services/oauth2/token",
                     HTTPMethod.POST,
                     headers={"Content-Type": value_objects.ContentType.urlencoded},
                     data=dict(
                         grant_type="client_credentials",
-                        client_id=self.client_id,
-                        client_secret=self.client_secret.get_secret_value(),
+                        client_id=self.credential.client_id,
+                        client_secret=self.credential.client_secret.get_secret_value(),
                     ),
                 )
             ):
