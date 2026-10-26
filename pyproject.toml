@@ -57,7 +57,7 @@ http = [
     'httpx',
 ]
 not_supported_by_vercel = [
-    'duckdb',
+    'duckdb==2.0.0',
 ]
 storage = [
     'boto3',

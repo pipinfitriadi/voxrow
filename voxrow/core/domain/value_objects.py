@@ -284,6 +284,15 @@ class DbDialect(StrEnum):
 
 
 @dataclass(frozen=True)
+class DuckDBConfig:
+    connection: Any
+    view_name: str = "source"
+    _: KW_ONLY
+    fetch_size: PositiveInt = BATCH_SIZE
+    as_iterator: bool = False
+
+
+@dataclass(frozen=True)
 class DuckDBQuery:
     query: str
     alias: str = ""

@@ -6,7 +6,6 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 26 February 2026
 
-from dataclasses import KW_ONLY
 from typing import Any
 
 from duckdb import DuckDBPyConnection, DuckDBPyRelation
@@ -18,12 +17,8 @@ from ....domain import value_objects
 
 
 @dataclass(config=value_objects.CONFIG_DICT, frozen=True)
-class AbstractDuckDB:
+class AbstractDuckDB(value_objects.DuckDBConfig):
     connection: DuckDBPyConnection
-    view_name: str
-    fetch_size: int
-    _: KW_ONLY
-    as_iterator: bool
 
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def register(self, data: value_objects.Data) -> None:
@@ -42,13 +37,17 @@ class AbstractDuckDB:
     ) -> value_objects.Data:
         columns: tuple[str, ...] = tuple(col[0] for col in cursor.description)
 
-        while True:
-            rows: list[tuple[Any, ...]] = cursor.fetchmany(self.fetch_size)
+        if isinstance(cursor, DuckDBPyConnection):
+            while True:
+                rows: list[tuple[Any, ...]] = cursor.fetchmany(self.fetch_size)
 
-            if not rows:
-                break
+                if not rows:
+                    break
 
-            for row in rows:
+                for row in rows:
+                    yield dict(zip(columns, row, strict=True))
+        else:
+            for row in cursor.limit(self.fetch_size).fetchall():
                 yield dict(zip(columns, row, strict=True))
 
 

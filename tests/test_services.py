@@ -248,7 +248,7 @@ class TestHandlersEtl:
         fake_dataset: str = "dataset"
         fake_table: str = "table"
 
-        with uow(source=value_objects.BigquerySource("SELECT 1 a;")):
+        with uow(source=value_objects.BigquerySource("SELECT 1 AS a;")):
             result: tuple = tuple(uow.data.extract(source=uow.source))
 
             assert result == (dict(a=1),)
@@ -303,11 +303,10 @@ class TestHandlersEtl:
         data: tuple[dict, ...] = (dict(b=2),)
         destination_table: str = "destination"
         uow: duckdb.DuckDBDataUnitOfWork = duckdb.DuckDBDataUnitOfWork(
-            fake_duckdb_conn,
-            as_iterator=True,
+            value_objects.DuckDBConfig(fake_duckdb_conn, as_iterator=True)
         )
         table: value_objects.Table = await handlers.etl(
-            source=fake_duckdb_conn.query("SELECT 1 a;"),
+            source=fake_duckdb_conn.query("SELECT 1 AS a;"),
             destination=uow(
                 destination=value_objects.DuckDBDestination(
                     f"""

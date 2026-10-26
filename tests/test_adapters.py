@@ -239,6 +239,24 @@ class TestDatabase:
             == value_objects.DEFAULT_SCHEMA
         )
 
+        assert (dict(a=1), dict(a=2)) == tuple(
+            duckdb.AbstractDuckDB(
+                fake_duckdb_conn,
+                "source",
+                fetch_size=1,
+                as_iterator=False,
+            ).get_data(
+                fake_duckdb_conn.execute(
+                    """
+                    SELECT 1 AS a
+                    UNION ALL
+                    SELECT 2 AS a
+                    ;
+                    """
+                )
+            )
+        )
+
     def test_sqlmodel(self, fake_db_engine: Engine) -> None:
         assert sqlmodel.get_schema(fake_db_engine) == value_objects.DEFAULT_SCHEMA
 
