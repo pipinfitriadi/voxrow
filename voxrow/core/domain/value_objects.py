@@ -81,12 +81,13 @@ Param: ParamSpec = ParamSpec("Param")
 
 
 class Settings(BaseSettings):
-    console: Console
-
     model_config: SettingsConfigDict = SettingsConfigDict(
         env_nested_delimiter="__",
+        extra="allow",
         frozen=True,
     )
+
+    console: Console
 
 
 # =================================== Data & Resource ==================================
