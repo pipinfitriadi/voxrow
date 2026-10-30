@@ -26,6 +26,8 @@ from voxrow.core.services import handlers
 from voxrow.core.services.unit_of_work.data import pathlib
 
 if TYPE_CHECKING:
+    from datetime import datetime
+
     from anyio import Path
     from google.cloud.storage import Blob, Client
 
@@ -255,6 +257,22 @@ class TestDatabase:
                     """
                 )
             )
+        )
+
+        fake_datetime: datetime = salesforce.SalesforceDatetime.min()
+
+        assert salesforce.SalesforceDatetime(fake_datetime.date()) == fake_datetime
+        assert salesforce.SalesforceDatetime(fake_datetime.isoformat()) == fake_datetime
+
+        with pytest.raises(
+            ValueError,
+            match="Invalid ISO datetime format for Salesforce",
+        ):
+            salesforce.SalesforceDatetime("a")
+
+        assert (
+            str(salesforce.SalesforceDatetime(fake_datetime))
+            == "1700-01-01T00:00:00.000Z"
         )
 
     def test_sqlmodel(self, fake_db_engine: Engine) -> None:

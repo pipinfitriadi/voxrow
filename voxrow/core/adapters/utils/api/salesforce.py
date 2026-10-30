@@ -6,6 +6,7 @@
 # Proprietary and confidential
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 13 October 2026
 
+import datetime as dt
 import logging
 from collections.abc import Iterator
 from http import HTTPMethod
@@ -321,3 +322,44 @@ class BulkApiV2Query(BaseModel):
             logger.warning("Query Job ID %s's state is %s!", value.id, value.state)
 
             yield from ()
+
+
+class SalesforceDatetime(dt.datetime):
+    @validate_call(validate_return=True)
+    def __new__(cls, value: dt.datetime | str) -> dt.datetime:
+        if isinstance(value, dt.date):
+            value: dt.datetime = dt.datetime.combine(value, dt.time.min)
+        elif isinstance(value, str):
+            try:
+                value: dt.datetime = dt.datetime.fromisoformat(value)
+            except ValueError as error:
+                error_message: str = "Invalid ISO datetime format for Salesforce"
+
+                raise ValueError(error_message) from error
+
+        value: dt.datetime = (
+            value.replace(tzinfo=dt.UTC)
+            if value.tzinfo is None
+            else value.astimezone(dt.UTC)
+        )
+
+        return super().__new__(
+            cls,
+            year=value.year,
+            month=value.month,
+            day=value.day,
+            hour=value.hour,
+            minute=value.minute,
+            second=value.second,
+            microsecond=value.microsecond,
+            tzinfo=value.tzinfo,
+        )
+
+    @validate_call(validate_return=True)
+    def __str__(self) -> str:
+        return f"{self.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3]}Z"
+
+    @classmethod
+    @validate_call(validate_return=True)
+    def min(cls) -> dt.datetime:
+        return cls(dt.datetime(1700, 1, 1, tzinfo=dt.UTC))
