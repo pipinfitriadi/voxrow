@@ -148,6 +148,7 @@ type ResourceLocation = Table | HttpUrl | AnyUrl | Path | WritableStream | Any
 # ======================================================================================
 
 type DatabaseType = PostgresDsn | AnyUrl
+type DuckDBPyConnection = Any
 
 
 @dataclass(frozen=True)
@@ -285,7 +286,7 @@ class DbDialect(StrEnum):
 
 @dataclass(frozen=True)
 class DuckDBConfig:
-    connection: Any
+    connection: DuckDBPyConnection
     view_name: str = "source"
     _: KW_ONLY
     fetch_size: PositiveInt = BATCH_SIZE
