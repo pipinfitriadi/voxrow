@@ -59,6 +59,36 @@ ENCODING: str = "utf-8"
 LOG_TIME_FMT: str = f"[{DATE_FMT} %H:%M:%S]"
 TIME_ZONE: ZoneInfo = ZoneInfo("Asia/Jakarta")
 
+type CsvDelimiter = Literal[
+    # Risk level    : Zero
+    # Based Used For: Automated backend system-to-system transfers
+    "UNIT-SEPARATOR",
+    # Risk level    : Zero
+    # Based Used For: Automated backend system-to-system transfers
+    "RECORD-SEPARATOR",
+    # Risk level    : Very Low
+    # Based Used For: Databases, logs, text heavy data
+    "PIPE",
+    # Risk level    : Very Low
+    # Based Used For: Databases, logs, text heavy data
+    "CARET",
+    # Risk level    : Very Low
+    # Based Used For: Database exports, data integration, & text-heavy tabular data
+    "TAB",
+    # Risk level    : Low
+    # Based Used For: General-purpose CSV delimiter
+    "TILDE",
+    # Risk level    : Low
+    # Based Used For: Alternative field delimiter to minimize conflicts with common
+    #                 punctuation characters in source data
+    "BACKQUOTE",
+    # Risk level    : Medium
+    # Based Used For: European regional data, standard tables
+    "SEMICOLON",
+    # Risk level    : High (without quotes)
+    # Based Used For: Strictly numeric or fully escaped data
+    "COMMA",
+]
 type DomainName = Annotated[
     str,
     StringConstraints(
@@ -239,36 +269,7 @@ class ContentType(StrEnum):
 @dataclass(frozen=True)
 class CsvDomain:
     _: KW_ONLY
-    delimiter: Literal[
-        # Risk level    : Zero
-        # Based Used For: Automated backend system-to-system transfers
-        "UNIT-SEPARATOR",
-        # Risk level    : Zero
-        # Based Used For: Automated backend system-to-system transfers
-        "RECORD-SEPARATOR",
-        # Risk level    : Very Low
-        # Based Used For: Databases, logs, text heavy data
-        "PIPE",
-        # Risk level    : Very Low
-        # Based Used For: Databases, logs, text heavy data
-        "CARET",
-        # Risk level    : Very Low
-        # Based Used For: Database exports, data integration, & text-heavy tabular data
-        "TAB",
-        # Risk level    : Low
-        # Based Used For: General-purpose CSV delimiter
-        "TILDE",
-        # Risk level    : Low
-        # Based Used For: Alternative field delimiter to minimize conflicts with common
-        #                 punctuation characters in source data
-        "BACKQUOTE",
-        # Risk level    : Medium
-        # Based Used For: European regional data, standard tables
-        "SEMICOLON",
-        # Risk level    : High (without quotes)
-        # Based Used For: Strictly numeric or fully escaped data
-        "COMMA",
-    ] = "COMMA"
+    delimiter: CsvDelimiter = "COMMA"
     line_terminator: str = "\n"
     quoting: Literal[
         "QUOTE_ALL",
