@@ -11,6 +11,7 @@ from typing import Any, TypeAlias
 
 from pydantic import TypeAdapter, validate_call
 from pydantic.dataclasses import dataclass
+from pydantic_core import MultiHostUrl
 from sqlalchemy import JSON, Engine, TypeDecorator
 from sqlalchemy.engine.interfaces import Dialect
 from sqlalchemy.schema import CreateSchema
@@ -92,4 +93,26 @@ def get_db_engine(db_dsn: value_objects.DatabaseType) -> Engine:
             if "sqlite" in db_dsn.scheme.lower()
             else {}
         ),
+    )
+
+
+@validate_call(validate_return=True)
+def database_without_password(
+    db_dsn: value_objects.DatabaseType,
+) -> value_objects.DatabaseType:
+    base_url: MultiHostUrl = MultiHostUrl(str(db_dsn))
+
+    return db_dsn.__class__(
+        str(
+            MultiHostUrl.build(
+                scheme=base_url.scheme,
+                hosts=[
+                    {key: value for key, value in host.items() if key != "password"}
+                    for host in base_url.hosts()
+                ],
+                path=base_url.path.lstrip("/"),
+                query=base_url.query,
+                fragment=base_url.fragment,
+            )
+        )
     )

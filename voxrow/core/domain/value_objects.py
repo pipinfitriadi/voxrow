@@ -25,6 +25,8 @@ from pydantic import (
     GetCoreSchemaHandler,
     HttpUrl,
     IPvAnyAddress,
+    MariaDBDsn,
+    MySQLDsn,
     NameEmail,
     PositiveFloat,
     PositiveInt,
@@ -177,7 +179,7 @@ type ResourceLocation = Table | HttpUrl | AnyUrl | Path | WritableStream | Any
 
 # ======================================================================================
 
-type DatabaseType = PostgresDsn | AnyUrl
+type DatabaseType = PostgresDsn | MySQLDsn | MariaDBDsn | AnyUrl
 type DuckDBPyConnection = Any
 
 

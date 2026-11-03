@@ -15,7 +15,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from duckdb import DuckDBPyConnection
-from pydantic import DirectoryPath, FilePath
+from pydantic import DirectoryPath, FilePath, PostgresDsn
 from sqlalchemy import Engine
 
 from voxrow.core.adapters.utils.api import salesforce
@@ -277,6 +277,13 @@ class TestDatabase:
 
     def test_sqlmodel(self, fake_db_engine: Engine) -> None:
         assert sqlmodel.get_schema(fake_db_engine) == value_objects.DEFAULT_SCHEMA
+
+        db_dsn: PostgresDsn = PostgresDsn(
+            "postgresql+psycopg2://username:password@host:5432/database"
+        )
+        assert str(sqlmodel.database_without_password(db_dsn)) == str(db_dsn).replace(
+            ":password", ""
+        )
 
 
 class TestStorage:
