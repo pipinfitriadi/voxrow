@@ -56,7 +56,7 @@ class BulkApiV2Query(BaseModel):
         self._uow = httpx.HttpxDataUnitOfWork()
         self._token = {}
         self._url = HttpUrl(
-            f"{self.credential.base_url}/services/data/v{self.credential.api_version:.1f}/jobs/query"
+            f"{str(self.credential.base_url).rstrip('/')}/services/data/v{self.credential.api_version:.1f}/jobs/query"
         )
 
     @property

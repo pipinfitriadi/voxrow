@@ -15,7 +15,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from duckdb import DuckDBPyConnection
-from pydantic import DirectoryPath, FilePath, PostgresDsn
+from pydantic import DirectoryPath, FilePath, PositiveFloat, PostgresDsn
 from sqlalchemy import Engine
 
 from voxrow.core.adapters.utils.api import salesforce
@@ -146,14 +146,22 @@ class TestApi:
     ) -> None:
         caplog.set_level(logging.WARNING)
 
+        base_url: str = "https://INSTANCE.salesforce.com"
+        api_version: PositiveFloat = 46.0
         api_query: salesforce.BulkApiV2Query = salesforce.BulkApiV2Query(
             credential=value_objects.SalesforceCredential(
-                "https://INSTANCE.salesforce.com",
+                base_url,
                 "fake-client-id",
                 "fake-client-secret",
-                api_version=46.0,
+                api_version=api_version,
             )
         )
+
+        assert (
+            str(api_query._url)  # noqa: SLF001
+            == f"{base_url.lower()}/services/data/v{api_version:.1f}/jobs/query"
+        )
+
         query_job_create_params: dict = dict(
             operation="query",
             query="SELECT Id, Name FROM Account",
