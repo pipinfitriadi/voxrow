@@ -13,7 +13,8 @@ name = 'voxrow'
 description = "VOXROW's library"
 readme = 'README.md'
 requires-python = '>=3.12'
-license = {text = 'Proprietary'}
+license = 'LicenseRef-Proprietary'
+license-files = ['LICENSE']
 keywords = [
     'voxrow',
     'library',
@@ -24,7 +25,6 @@ classifiers = [
     'Development Status :: 3 - Alpha',
     'Intended Audience :: Developers',
     'Intended Audience :: Information Technology',
-    'License :: Other/Proprietary License',
     'Natural Language :: English',
     'Natural Language :: Indonesian',
     'Operating System :: OS Independent',
@@ -116,6 +116,9 @@ notice-rgx = "(?i)Copyright \\(C\\)"
 [tool.ruff.lint.per-file-ignores]
 'tests/*.py' = ['S101']
 '*.ipynb' = ['CPY001']
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = 'function'
 
 [tool.setuptools.packages.find]
 include = ['voxrow.core.*']
