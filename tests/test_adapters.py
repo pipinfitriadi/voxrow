@@ -269,17 +269,22 @@ class TestDatabase:
 
         fake_datetime: datetime = salesforce.SalesforceDatetime.min()
 
-        assert salesforce.SalesforceDatetime(fake_datetime.date()) == fake_datetime
-        assert salesforce.SalesforceDatetime(fake_datetime.isoformat()) == fake_datetime
+        assert (
+            salesforce.SalesforceDatetime.convert(fake_datetime.date()) == fake_datetime
+        )
+        assert (
+            salesforce.SalesforceDatetime.convert(fake_datetime.isoformat())
+            == fake_datetime
+        )
 
         with pytest.raises(
             ValueError,
             match="Invalid ISO datetime format for Salesforce",
         ):
-            salesforce.SalesforceDatetime("a")
+            salesforce.SalesforceDatetime.convert("a")
 
         assert (
-            str(salesforce.SalesforceDatetime(fake_datetime))
+            str(salesforce.SalesforceDatetime.convert(fake_datetime))
             == "1700-01-01T00:00:00.000Z"
         )
 

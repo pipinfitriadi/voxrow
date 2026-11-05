@@ -16,7 +16,7 @@ from google.cloud.bigquery import (
     QueryJob,
     Table,
 )
-from pydantic import validate_call
+from pydantic import PositiveInt, validate_call
 from pydantic.dataclasses import dataclass
 
 from ...domain import value_objects
@@ -71,7 +71,7 @@ class BigqueryDataAdapter(AbstractDataPort):
 
         job.result()
 
-        rows: int = job.output_rows or 0
+        rows: PositiveInt = job.output_rows or 0
 
         logger.info(
             "Loaded into Google BigQuery '%s': %s row%s",

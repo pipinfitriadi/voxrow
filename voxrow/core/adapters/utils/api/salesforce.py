@@ -325,8 +325,9 @@ class BulkApiV2Query(BaseModel):
 
 
 class SalesforceDatetime(dt.datetime):
+    @classmethod
     @validate_call(validate_return=True)
-    def __new__(cls, value: dt.datetime | str) -> dt.datetime:
+    def convert(cls, value: dt.date | dt.datetime | str) -> dt.datetime:
         if isinstance(value, dt.date):
             value: dt.datetime = dt.datetime.combine(value, dt.time.min)
         elif isinstance(value, str):
@@ -353,6 +354,7 @@ class SalesforceDatetime(dt.datetime):
             second=value.second,
             microsecond=value.microsecond,
             tzinfo=value.tzinfo,
+            fold=value.fold,
         )
 
     @validate_call(validate_return=True)
@@ -362,4 +364,4 @@ class SalesforceDatetime(dt.datetime):
     @classmethod
     @validate_call(validate_return=True)
     def min(cls) -> dt.datetime:
-        return cls(dt.datetime(1700, 1, 1, tzinfo=dt.UTC))
+        return cls.convert(dt.datetime(1700, 1, 1, tzinfo=dt.UTC))
