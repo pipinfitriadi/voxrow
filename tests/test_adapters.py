@@ -173,13 +173,12 @@ class TestApi:
         )  # state == "UploadComplete"
 
         assert len(tuple(api_query.result(query_job))) == 0
-
-        for record in caplog.records:
-            assert record.levelno == logging.WARNING
-            assert (
-                record.message
-                == f"Query Job ID {query_job.id}'s state is {query_job.state}!"
-            )
+        assert tuple((record.levelno, record.message) for record in caplog.records) == (
+            (
+                logging.WARNING,
+                f"Query Job ID {query_job.id}'s state is {query_job.state}!",
+            ),
+        )
 
         api_query.abort(query_job)  # state == "Aborted"
         api_query.delete(api_query.get(query_job.id))  # query_job removed

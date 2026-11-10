@@ -114,6 +114,8 @@ class TestTyper:
 
         assert log_file.is_file()
 
+        caplog.clear()
+
         test_date: str = "2026-01-01"
         test_log_message: str = f"{fake_message}: {test_date}"
         result = self.runner.invoke(
@@ -121,12 +123,9 @@ class TestTyper:
             ["--log-file", log_file, env_file, "command", "--date", test_date],
         )
 
-        assert len(caplog.records) == 1
-
-        for record in caplog.records:
-            assert record.levelno == logging.INFO
-            assert record.message == test_log_message
-
+        assert tuple((record.levelno, record.message) for record in caplog.records) == (
+            (logging.INFO, test_log_message),
+        )
         assert result.exit_code == 0
 
         for log_line, test_word in zip(
@@ -146,9 +145,9 @@ class TestTyper:
             [fake_env_file.as_posix(), "async_command", "2", "3"],
         )
 
-        assert len(caplog.records) == 1
-        assert caplog.records[0].levelno == logging.INFO
-        assert caplog.records[0].message == "2, 1, 3"
+        assert tuple((record.levelno, record.message) for record in caplog.records) == (
+            (logging.INFO, "2, 1, 3"),
+        )
         assert result.exit_code == 0
 
     def test_command_shouldbe_failed(
@@ -161,5 +160,6 @@ class TestTyper:
             ["--log-width", "100", fake_env_file.as_posix(), "command_shouldbe_failed"],
         )
 
-        assert caplog.records[0].levelno == logging.ERROR
-        assert caplog.records[0].message == "Task failed!"
+        assert tuple((record.levelno, record.message) for record in caplog.records) == (
+            (logging.ERROR, "Task failed!"),
+        )

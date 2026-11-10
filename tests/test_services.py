@@ -265,11 +265,11 @@ class TestHandlersEtl:
             ),
         )
 
-        assert len(caplog.records) == 1
-        assert caplog.records[0].levelno == logging.INFO
-        assert (
-            caplog.records[0].message
-            == f"Loaded into Google BigQuery '{fake_google_project_id}.{fake_dataset}.{fake_table}': 1 row"  # noqa: E501
+        assert tuple((record.levelno, record.message) for record in caplog.records) == (
+            (
+                logging.INFO,
+                f"Loaded into Google BigQuery '{fake_google_project_id}.{fake_dataset}.{fake_table}': 1 row",  # noqa: E501
+            ),
         )
 
     @pytest.mark.asyncio
