@@ -58,21 +58,7 @@ def fake_typer_callback_with_log(
             except Exception:
                 html_file_for_error.write_text(
                     minify_html.minify(
-                        context.obj.console.export_html(inline_styles=True).replace(
-                            "</style>",
-                            """
-                            pre {
-                                white-space: pre;        /* No wrap */
-                                overflow-x: auto;        /* Scroll horizontal */
-                            }
-
-                            code {
-                                display: inline-block;   /* Follow pre rule */
-                                min-width: 100%;         /* Active scroll */
-                            }
-                            </style>
-                            """,
-                        ),
+                        context.obj.console.export_html(inline_styles=True),
                         minify_js=True,
                         minify_css=True,
                         remove_processing_instructions=True,
@@ -119,7 +105,7 @@ class TestTyper:
             ),
             log_level: typer.LogLevelType = value_objects.LogLevel.INFO.name,
             log_file: typer.get_log_file_type() = None,
-            log_width: PositiveInt | None = None,
+            log_width: PositiveInt | None = 150,
         ) -> None:
             console: Console = get_console(log_file)
 
