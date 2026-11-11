@@ -10,12 +10,7 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 from functools import wraps
-from inspect import (
-    Parameter,
-    Signature,
-    iscoroutinefunction,
-    signature,
-)
+from inspect import Parameter, Signature, isawaitable, signature
 from pathlib import Path
 from typing import Annotated, Literal, TypeAlias
 from zoneinfo import ZoneInfo
@@ -92,24 +87,26 @@ def inject_settings(task: Task) -> Task:
         }
         settings: value_objects.Settings = context.obj
         logger: logging.Logger = logging.getLogger(__name__)
-        result: any = None
 
         settings.console.log(Rule(f"Start: {task.__name__}"))
 
         try:
-            result = (
-                asyncio.run(task(settings, *args, **kwargs))
-                if iscoroutinefunction(task)
-                else task(settings, *args, **kwargs)
-            )
+            result: any = task(settings, *args, **kwargs)
+
+            if isawaitable(result):
+
+                async def await_result() -> any:
+                    return await result
+
+                return asyncio.run(await_result())
+
+            return result  # noqa: TRY300
         except Exception:
             logger.exception("Task failed!")
 
             raise
         finally:
             settings.console.log(Rule(f"Finish: {task.__name__}"))
-
-        return result
 
     wrapper.__signature__ = Signature(
         parameters=(
