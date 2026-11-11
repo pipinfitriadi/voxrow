@@ -11,7 +11,7 @@ import logging
 from collections.abc import Iterator
 from http import HTTPMethod
 from io import StringIO
-from time import time
+from time import sleep, time
 from typing import Annotated
 
 from httpx import HTTPStatusError
@@ -20,6 +20,7 @@ from pydantic import (
     ConfigDict,
     Field,
     HttpUrl,
+    PositiveFloat,
     PositiveInt,
     PrivateAttr,
     SecretStr,
@@ -35,13 +36,7 @@ TOKEN_EXPIRATION_SECONDS: PositiveInt = 2 * 60**2
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-class BulkApiV2Query(BaseModel):
-    """
-    Salesforce's Bulk API 2.0 Query.
-
-    Docs: https://developer.salesforce.com/docs/platform/api-asynch/guide/query-bulk-api-2-0.html
-    """
-
+class Auth(BaseModel):
     model_config: ConfigDict = value_objects.CONFIG_DICT
 
     credential: Annotated[
@@ -56,7 +51,7 @@ class BulkApiV2Query(BaseModel):
         self._uow = httpx.HttpxDataUnitOfWork()
         self._token = {}
         self._url = HttpUrl(
-            f"{str(self.credential.base_url).rstrip('/')}/services/data/v{self.credential.api_version:.1f}/jobs/query"
+            f"{str(self.credential.base_url).rstrip('/')}/services/data/v{self.credential.api_version:.1f}"
         )
 
     @property
@@ -87,6 +82,19 @@ class BulkApiV2Query(BaseModel):
                     raise
 
         return SecretStr(self._token["access_token"])
+
+
+class BulkApiV2Query(Auth):
+    """
+    Salesforce's Bulk API 2.0 Query.
+
+    Docs: https://developer.salesforce.com/docs/platform/api-asynch/guide/query-bulk-api-2-0.html
+    """
+
+    def model_post_init(self, context: any) -> None:
+        super().model_post_init(context)
+
+        self._url = HttpUrl(f"{self._url}/jobs/query")
 
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def all(
@@ -255,7 +263,7 @@ class BulkApiV2Query(BaseModel):
                     raise
 
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
-    def result(
+    def _result(
         self,
         value: value_objects.SalesforceQueryJob,
         *,
@@ -322,6 +330,21 @@ class BulkApiV2Query(BaseModel):
             logger.warning("Query Job ID %s's state is %s!", value.id, value.state)
 
             yield from ()
+
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
+    def result(
+        self,
+        value: value_objects.SalesforceQueryJob,
+        *,
+        max_records: PositiveInt | None = None,
+        sleep_seconds: PositiveFloat = value_objects.SLEEP_SECONDS,
+    ) -> value_objects.Data:
+        while value.state not in ("Aborted", "JobComplete", "Failed"):
+            sleep(sleep_seconds)
+
+            value = self.get(value.id)
+
+        yield from self._result(value, max_records=max_records)
 
 
 class SalesforceDatetime(dt.datetime):

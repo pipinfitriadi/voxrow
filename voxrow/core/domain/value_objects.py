@@ -59,6 +59,7 @@ DATE_FMT: str = "%Y-%m-%d"
 DEFAULT_SCHEMA: str = "main"
 ENCODING: str = "utf-8"
 LOG_TIME_FMT: str = f"[{DATE_FMT} %H:%M:%S]"
+SLEEP_SECONDS: PositiveFloat = 1.0
 TIME_ZONE: ZoneInfo = ZoneInfo("Asia/Jakarta")
 
 type CsvDelimiter = Literal[

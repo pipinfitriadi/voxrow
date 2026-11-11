@@ -133,6 +133,10 @@ def mock_salesforce(
             ),
         ),
     )
+    monkeypatch.setattr(
+        "voxrow.core.adapters.utils.api.salesforce.sleep",
+        MagicMock(),
+    )
 
 
 class TestApi:
@@ -172,7 +176,7 @@ class TestApi:
             value_objects.SalesforceQueryJobCreate(**query_job_create_params)
         )  # state == "UploadComplete"
 
-        assert len(tuple(api_query.result(query_job))) == 0
+        assert len(tuple(api_query._result(query_job))) == 0  # noqa: SLF001
         assert tuple((record.levelno, record.message) for record in caplog.records) == (
             (
                 logging.WARNING,
@@ -189,10 +193,7 @@ class TestApi:
         )  # state == "UploadComplete"
 
         data_for_tuple, data_for_csv = itertools.tee(
-            api_query.result(
-                api_query.get(query_job.id),  # state == "JobComplete"
-                max_records=2,
-            )
+            api_query.result(query_job, max_records=2)
         )
 
         assert tuple(data_for_tuple) == (
