@@ -105,7 +105,9 @@ def inject_settings(task: Task) -> Task:
         except Exception:
             logger.exception("Task failed!")
 
-        settings.console.log(Rule(f"Finish: {task.__name__}"))
+            raise
+        finally:
+            settings.console.log(Rule(f"Finish: {task.__name__}"))
 
         return result
 

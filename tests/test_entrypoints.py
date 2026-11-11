@@ -7,13 +7,19 @@
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 21 May 2026
 
 import logging
+from collections.abc import Callable
+from functools import wraps
+from pathlib import Path
 from typing import TYPE_CHECKING
 
+import minify_html
 import pytest
 from pydantic import DirectoryPath, FilePath, PositiveInt, validate_call
 from typer import Context, Typer
+from typer.models import CommandInfo
 from typer.testing import CliRunner, Result
 
+from voxrow.core.adapters import tasks
 from voxrow.core.domain import value_objects
 from voxrow.core.entrypoints import get_console, set_logging_config, typer
 
@@ -30,12 +36,77 @@ def fake_env_file(tmp_path: DirectoryPath) -> FilePath:
     return env_file
 
 
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
+def fake_typer_callback_with_log(
+    command: CommandInfo,
+    *,
+    html_file_for_error: Path,
+) -> CommandInfo:
+    callback: Callable | None = command.callback
+
+    if callback:
+
+        @wraps(callback)
+        def wrapper(
+            context: Context,
+            *args: value_objects.Param.args,
+            __callback: Callable = callback,
+            **kwargs: value_objects.Param.kwargs,
+        ) -> any:
+            try:
+                return __callback(context, *args, **kwargs)
+            except Exception:
+                html_file_for_error.write_text(
+                    minify_html.minify(
+                        context.obj.console.export_html(inline_styles=True).replace(
+                            "</style>",
+                            """
+                            pre {
+                                white-space: pre;        /* No wrap */
+                                overflow-x: auto;        /* Scroll horizontal */
+                            }
+
+                            code {
+                                display: inline-block;   /* Follow pre rule */
+                                min-width: 100%;         /* Active scroll */
+                            }
+                            </style>
+                            """,
+                        ),
+                        minify_js=True,
+                        minify_css=True,
+                        remove_processing_instructions=True,
+                    )
+                )
+
+                raise
+
+        command.callback = wrapper
+
+    return command
+
+
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
+def fake_typer_add_tasks(
+    app: Typer,
+    /,
+    *tasks: tasks.Task,
+    html_file_for_error: Path,
+) -> None:
+    typer.add_tasks(app, *tasks)
+
+    app.registered_commands = [
+        fake_typer_callback_with_log(command, html_file_for_error=html_file_for_error)
+        for command in app.registered_commands
+    ]
+
+
 class TestTyper:
     app: Typer
     runner: CliRunner
 
     @pytest.fixture(autouse=True)
-    def setup(self, fake_message: str) -> None:
+    def setup(self, fake_message: str, tmp_path: DirectoryPath) -> None:
         self.runner = CliRunner()
         self.app = Typer(no_args_is_help=True, rich_markup_mode="markdown")
         logger: logging.Logger = logging.getLogger(__name__)
@@ -85,11 +156,12 @@ class TestTyper:
         def command_shouldbe_failed(settings: value_objects.Settings) -> float:  # noqa: ARG001
             return 1 / 0
 
-        typer.add_tasks(
+        fake_typer_add_tasks(
             self.app,
             command,
             async_command,
             command_shouldbe_failed,
+            html_file_for_error=tmp_path / "error.html",
         )
 
     def test_command(
@@ -139,6 +211,7 @@ class TestTyper:
         self,
         caplog: pytest.LogCaptureFixture,
         fake_env_file: FilePath,
+        tmp_path: DirectoryPath,
     ) -> None:
         result: Result = self.runner.invoke(
             self.app,
@@ -149,13 +222,15 @@ class TestTyper:
             (logging.INFO, "2, 1, 3"),
         )
         assert result.exit_code == 0
+        assert not (tmp_path / "error.html").is_file()
 
     def test_command_shouldbe_failed(
         self,
         caplog: pytest.LogCaptureFixture,
         fake_env_file: FilePath,
+        tmp_path: DirectoryPath,
     ) -> None:
-        self.runner.invoke(
+        result: Result = self.runner.invoke(
             self.app,
             ["--log-width", "100", fake_env_file.as_posix(), "command_shouldbe_failed"],
         )
@@ -163,3 +238,5 @@ class TestTyper:
         assert tuple((record.levelno, record.message) for record in caplog.records) == (
             (logging.ERROR, "Task failed!"),
         )
+        assert result.exit_code != 0
+        assert (tmp_path / "error.html").is_file()

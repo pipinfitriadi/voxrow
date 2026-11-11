@@ -68,6 +68,7 @@ storage = [
 [dependency-groups]
 code-coverage = [
     'coverage',
+    'minify-html',
     'pytest',
     'pytest-asyncio',
     'toml',

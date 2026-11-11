@@ -64,6 +64,7 @@ def get_console(log_file: Path | None = None) -> Console:
     console_kwargs: dict = dict(
         log_path=False,
         log_time_format=value_objects.LOG_TIME_FMT,
+        record=True,
     )
 
     if log_file:

@@ -8,5 +8,21 @@
 
 {
     "version": "0.2.0",
-    "configurations": []
+    "configurations": [
+        {
+            "name": "Pytest",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["-vv", "-s", "${input:pytest}"]
+        }
+    ],
+    "inputs": [
+        {
+            "id": "pytest",
+            "type": "promptString",
+            "description": "Put your pytest location to run",
+            "default": ""
+        }
+    ]
 }
