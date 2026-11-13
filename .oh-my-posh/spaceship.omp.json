@@ -12,7 +12,7 @@
           },
           {
             "foreground": "cyan",
-            "properties": {
+            "options": {
               "style": "folder"
             },
             "style": "plain",
@@ -21,7 +21,7 @@
           },
           {
             "foreground": "#ff94df",
-            "properties": {
+            "options": {
               "branch_icon": " <#ff94df><b>\ue0a0 </b></>"
             },
             "style": "plain",
@@ -33,7 +33,7 @@
             "style": "plain",
             "template": " {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}",
             "type": "python",
-            "properties": {
+            "options": {
               "folder_name_fallback": false
             }
           }

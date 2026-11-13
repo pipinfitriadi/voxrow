@@ -9,3 +9,4 @@ MD013:
 MD033:
   allowed_elements:
     - kbd
+MD049: false

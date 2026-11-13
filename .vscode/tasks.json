@@ -149,8 +149,7 @@
           "--require-virtualenv",
           "--editable",
           "${workspaceFolder}[cli, cryptography, database, http, not_supported_by_vercel, storage]",
-          "--group",
-          "dev"
+          "--group", "dev"
       ]
     },
     {
@@ -161,8 +160,7 @@
           "Python: Create VEnv",
           "Python: Upgrade PIP",
           "Python: Environment dependencies"
-      ],
-      "type": "shell"
+      ]
     },
   ],
   "inputs": [
