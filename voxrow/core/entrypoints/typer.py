@@ -22,7 +22,7 @@ from typer import Argument, Context, Option, Typer
 from ..adapters.tasks import Task
 from ..domain import domain_services, value_objects
 
-LogLevelType: TypeAlias = Annotated[  # noqa: UP040
+LogLevelType: TypeAlias = Annotated[
     Literal[*value_objects.LogLevel._member_names_],
     Option(case_sensitive=False),
 ]

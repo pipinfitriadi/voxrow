@@ -48,7 +48,7 @@ class SQLModelEntity(SQLModelDomain, entity.Entity):
 
 
 class PydanticJSON(TypeDecorator):
-    impl: TypeAlias = JSON  # noqa: PYI042,UP040
+    impl: TypeAlias = JSON  # noqa: PYI042
     cache_ok: bool = True
 
     def __init__(self, model_cls: type) -> None:
