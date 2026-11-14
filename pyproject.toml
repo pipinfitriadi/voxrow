@@ -96,11 +96,6 @@ Repository = 'https://github.com/pipinfitriadi/voxrow'
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = 'function'
 
-[tool.ruff]
-extend-exclude = [
-    'tests/files/**/*.py',
-]
-
 [tool.ruff.lint]
 select = ['ALL']
 ignore = [
@@ -130,7 +125,6 @@ notice-rgx = "(?i)Copyright \\(C\\)"
 
 [tool.setuptools.packages.find]
 include = ['voxrow.core.*']
-'*.ipynb' = ['CPY001']
 
 [tool.setuptools-git-versioning]
 enabled = true
