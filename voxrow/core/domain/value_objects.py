@@ -32,6 +32,7 @@ from pydantic import (
     PositiveInt,
     PostgresDsn,
     SecretStr,
+    SkipValidation,
     StringConstraints,
     validate_call,
 )
@@ -62,6 +63,9 @@ LOG_TIME_FMT: str = f"[{DATE_FMT} %H:%M:%S]"
 SLEEP_SECONDS: PositiveFloat = 1.0
 TIME_ZONE: ZoneInfo = ZoneInfo("Asia/Jakarta")
 
+Param: ParamSpec = ParamSpec("Param")
+
+type Args = Annotated[Param.args, SkipValidation]
 type CsvDelimiter = Literal[
     # Risk level    : Zero
     # Based Used For: Automated backend system-to-system transfers
@@ -103,11 +107,11 @@ type Host = Annotated[
     IPvAnyAddress | DomainName,
     Field(union_mode="left_to_right"),
 ]
+type Kwargs = Annotated[Param.kwargs, SkipValidation]
 type NetworkPort = Annotated[
     PositiveInt,
     Field(le=65_535, description="Valid network port"),
 ]
-Param: ParamSpec = ParamSpec("Param")
 
 
 # ====================================== Settings ======================================

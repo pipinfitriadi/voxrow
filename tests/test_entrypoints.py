@@ -49,9 +49,9 @@ def fake_typer_callback_with_log(
         @wraps(callback)
         def wrapper(
             context: Context,
-            *args: value_objects.Param.args,
+            *args: value_objects.Args,
             __callback: Callable = callback,
-            **kwargs: value_objects.Param.kwargs,
+            **kwargs: value_objects.Kwargs,
         ) -> any:
             try:
                 return __callback(context, *args, **kwargs)

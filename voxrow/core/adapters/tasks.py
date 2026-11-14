@@ -16,6 +16,6 @@ class Task(Protocol[value_objects.Param]):
     def __call__(
         self,
         settings: value_objects.Settings,
-        *args: value_objects.Param.args,
-        **kwargs: value_objects.Param.kwargs,
+        *args: value_objects.Args,
+        **kwargs: value_objects.Kwargs,
     ) -> any: ...

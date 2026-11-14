@@ -11,7 +11,7 @@ from datetime import timedelta
 from pathlib import Path
 
 from pydantic import validate_call
-from rich.console import Console, ConsoleRenderable
+from rich.console import Console, ConsoleRenderable, OverflowMethod
 from rich.logging import RichHandler
 from rich.table import Table
 from rich.text import Text
@@ -21,13 +21,29 @@ from ..domain import value_objects
 
 
 class DeltaRichHandler(RichHandler):
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def __init__(
         self,
-        *args: value_objects.Param.args,
-        **kwargs: value_objects.Param.kwargs,
+        *args: value_objects.Args,
+        overflow_method: OverflowMethod = "fold",
+        **kwargs: value_objects.Kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
         self._last: dict = {}
+        self._overflow_method: OverflowMethod = overflow_method
+
+    @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
+    def render_message(
+        self,
+        record: logging.LogRecord,
+        message: str,
+    ) -> ConsoleRenderable:
+        message_text: ConsoleRenderable = super().render_message(record, message)
+
+        if hasattr(message_text, "overflow"):
+            message_text.overflow = self._overflow_method
+
+        return message_text
 
     @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
     def render(

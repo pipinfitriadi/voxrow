@@ -72,8 +72,8 @@ def inject_settings(task: Task) -> Task:
     @wraps(task)
     def wrapper(
         context: Context,
-        *args: value_objects.Param.args,
-        **kwargs: value_objects.Param.kwargs,
+        *args: value_objects.Args,
+        **kwargs: value_objects.Kwargs,
     ) -> any:  # pragma: no cover
         args = tuple(
             arg
