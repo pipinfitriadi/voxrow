@@ -84,7 +84,7 @@ jobs:
           report_paths: code-coverage.xml
           annotate_only: true
       - name: Percentage passed
-        run: if [ $(printf '%.0f' $(coverage report | awk '$1 == "TOTAL" {print $NF+0}')) -ge ${{ github.event.inputs.codecoverage-percentage-passed || 100 }} ]; then exit; else exit 1; fi
+        run: coverage report -m --fail-under=${{ github.event.inputs.codecoverage-percentage-passed || 100 }}
   release:
     name: Release
     needs: [code-quality, code-coverage]

@@ -51,14 +51,7 @@
       "dependsOn": "CI/CD: Test",
       "type": "shell",
       "command": "${PYTHON_INTERPRETER_PATH}",
-      "args": ["-m", "coverage", "report", "-m"]
-    },
-    {
-      "problemMatcher": [],
-      "label": "CI/CD: Code Coverage - Percentage passed",
-      "dependsOn": "CI/CD: Code Coverage",
-      "type": "shell",
-      "command": "if [ $(printf '%.0f' $(${PYTHON_INTERPRETER_PATH} -m coverage report | awk '$1 == \"TOTAL\" {print $NF+0}')) -ge ${input:codecoverage-percentage-passed} ]; then exit; else exit 1; fi",
+      "args": ["-m", "coverage", "report", "-m", "--fail-under=${input:codecoverage-percentage-passed}"]
     },
     {
       "problemMatcher": [],
@@ -66,7 +59,7 @@
       "dependsOrder": "parallel",
       "dependsOn": [
           "CI/CD: Code Quality",
-          "CI/CD: Code Coverage - Percentage passed",
+          "CI/CD: Code Coverage",
       ]
     },
     {
