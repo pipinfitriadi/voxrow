@@ -43,7 +43,7 @@
       "label": "CI/CD: Test",
       "type": "shell",
       "command": "${PYTHON_INTERPRETER_PATH}",
-      "args": ["-m", "coverage", "run", "-m", "pytest", "-rfEP", "-q", "--junit-xml=code-coverage.xml"]
+      "args": ["-m", "coverage", "run", "-m", "pytest", "-rfEP", "-q", "-o", "verbosity_assertions=2", "--junit-xml=code-coverage.xml"]
     },
     {
       "problemMatcher": [],

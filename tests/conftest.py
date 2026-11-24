@@ -28,23 +28,25 @@ from voxrow.core.domain import value_objects
 def mock_boto3(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "voxrow.core.adapters.utils.storage.boto3.boto3.client",
-        lambda *args, **kwargs: MagicMock(  # noqa: ARG005
-            spec=BaseClient,
-            copy_object=MagicMock(),
-            delete_object=MagicMock(),
-            get_paginator=MagicMock(
-                return_value=MagicMock(
-                    paginate=MagicMock(
-                        return_value=(
-                            dict(
-                                Contents=(dict(Key="fake_file.json"),),
+        MagicMock(
+            return_value=MagicMock(
+                spec=BaseClient,
+                copy_object=MagicMock(),
+                delete_object=MagicMock(),
+                get_paginator=MagicMock(
+                    return_value=MagicMock(
+                        paginate=MagicMock(
+                            return_value=(
+                                dict(
+                                    Contents=(dict(Key="fake_file.json"),),
+                                ),
                             ),
-                        ),
+                        )
                     )
-                )
-            ),
-            get_object=MagicMock(),
-            put_object=MagicMock(),
+                ),
+                get_object=MagicMock(),
+                put_object=MagicMock(),
+            )
         ),
     )
 
@@ -53,7 +55,7 @@ def mock_boto3(monkeypatch: pytest.MonkeyPatch) -> None:
 def mock_google_service_account(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "voxrow.core.adapters.utils.database.bigquery.Credentials.from_service_account_file",
-        lambda *args, **kwargs: MagicMock(spec=Credentials),  # noqa: ARG005
+        MagicMock(return_value=MagicMock(spec=Credentials)),
     )
 
 
@@ -74,15 +76,17 @@ def mock_gcs(
     mock_blob.configure_mock(name=fake_blob, bucket=fake_bucket)
     monkeypatch.setattr(
         "voxrow.core.adapters.utils.storage.gcs.Client",
-        lambda *args, **kwargs: MagicMock(  # noqa: ARG005
-            spec=GcsClient,
-            list_blobs=MagicMock(
-                spec=HTTPIterator,
-                return_value=(mock_blob for _ in range(1)),
-            ),
-            bucket=MagicMock(
-                return_value=MagicMock(get_blob=MagicMock(return_value=mock_blob))
-            ),
+        MagicMock(
+            return_value=MagicMock(
+                spec=GcsClient,
+                list_blobs=MagicMock(
+                    spec=HTTPIterator,
+                    return_value=(mock_blob for _ in range(1)),
+                ),
+                bucket=MagicMock(
+                    return_value=MagicMock(get_blob=MagicMock(return_value=mock_blob))
+                ),
+            )
         ),
     )
 

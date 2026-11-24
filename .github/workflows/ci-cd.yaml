@@ -70,7 +70,7 @@ jobs:
       - name: Install dependencies
         run: pip install --editable '.[cli, cryptography, database, http, not_supported_by_vercel, storage]' --group code-coverage
       - name: Test
-        run: coverage run -m pytest -rfEP -q --junit-xml=code-coverage.xml
+        run: coverage run -m pytest -rfEP -q -o verbosity_assertions=2 --junit-xml=code-coverage.xml
       - name: Display coverage
         run: coverage report -m
       - name: Upload coverage to Codecov

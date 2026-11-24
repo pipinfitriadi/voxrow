@@ -71,16 +71,18 @@ def mock_bigquery(
 ) -> None:
     monkeypatch.setattr(
         "voxrow.core.adapters.utils.database.bigquery.Client",
-        lambda *args, **kwargs: MagicMock(  # noqa: ARG005
-            spec=BigqueryClient,
-            load_table_from_json=MagicMock(return_value=MagicMock(output_rows=1)),
-            query=MagicMock(
-                return_value=MagicMock(
-                    result=MagicMock(
-                        return_value=(dict(a=1),),
+        MagicMock(
+            return_value=MagicMock(
+                spec=BigqueryClient,
+                load_table_from_json=MagicMock(return_value=MagicMock(output_rows=1)),
+                query=MagicMock(
+                    return_value=MagicMock(
+                        result=MagicMock(
+                            return_value=(dict(a=1),),
+                        ),
                     ),
                 ),
-            ),
+            )
         ),
     )
 
@@ -89,14 +91,16 @@ def mock_bigquery(
 def mock_httpx(test_files_dir: DirectoryPath, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "voxrow.core.adapters.data.httpx.get",
-        lambda *args, **kwargs: MagicMock(  # noqa: ARG005
-            json=MagicMock(
-                return_value=domain_services.loads_from_json(
-                    (
-                        test_files_dir / "jsonplaceholder" / "users" / "get.json"
-                    ).read_text()
+        MagicMock(
+            return_value=MagicMock(
+                json=MagicMock(
+                    return_value=domain_services.loads_from_json(
+                        (
+                            test_files_dir / "jsonplaceholder" / "users" / "get.json"
+                        ).read_text()
+                    ),
                 ),
-            ),
+            )
         ),
     )
 
@@ -109,27 +113,29 @@ def mock_obs(
 ) -> None:
     monkeypatch.setattr(
         "voxrow.core.adapters.utils.storage.obs.ObsClient",
-        lambda *args, **kwargs: MagicMock(  # noqa: ARG005
-            spec=ObsClient,
-            completeMultipartUpload=MagicMock(
-                **{"return_value.status": 200},
-            ),
-            getObject=MagicMock(
-                return_value=MagicMock(
-                    status=200,
-                    **{
-                        "body.response.read.side_effect": (
-                            fake_message_bytes,
-                            None,
-                            fake_parquet_bytes.read(),
-                            None,
-                        ),
-                    },
+        MagicMock(
+            return_value=MagicMock(
+                spec=ObsClient,
+                completeMultipartUpload=MagicMock(
+                    **{"return_value.status": 200},
                 ),
-            ),
-            initiateMultipartUpload=MagicMock(
-                **{"return_value.status": 200},
-            ),
+                getObject=MagicMock(
+                    return_value=MagicMock(
+                        status=200,
+                        **{
+                            "body.response.read.side_effect": (
+                                fake_message_bytes,
+                                None,
+                                fake_parquet_bytes.read(),
+                                None,
+                            ),
+                        },
+                    ),
+                ),
+                initiateMultipartUpload=MagicMock(
+                    **{"return_value.status": 200},
+                ),
+            )
         ),
     )
 
@@ -138,9 +144,11 @@ def mock_obs(
 def mock_smtp(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "voxrow.core.services.unit_of_work.message.smtplib.SMTP",
-        lambda *args, **kwargs: MagicMock(  # noqa: ARG005
-            spec=SMTP,
-            send_message=MagicMock(return_value={}),
+        MagicMock(
+            return_value=MagicMock(
+                spec=SMTP,
+                send_message=MagicMock(return_value={}),
+            )
         ),
     )
 
