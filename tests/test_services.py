@@ -123,7 +123,7 @@ def mock_obs(
                     return_value=MagicMock(
                         status=200,
                         **{
-                            "body.response.read.side_effect": (
+                            "body.response.__enter__.return_value.read.side_effect": (
                                 fake_message_bytes,
                                 None,
                                 fake_parquet_bytes.read(),
@@ -156,23 +156,6 @@ def mock_smtp(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.fixture
 def fake_email() -> NameEmail:
     return "Pipin Fitriadi <pipinfitriadi@gmail.com>"
-
-
-@pytest.fixture
-def fake_pandas_dataframe() -> pd.DataFrame:
-    return pd.DataFrame({"Name": ["Alice", "Bob"], "Age": [25, 30]})
-
-
-@pytest.fixture
-def fake_parquet_bytes(fake_pandas_dataframe: pd.DataFrame) -> BytesIO:
-    buffer: BytesIO = BytesIO()
-
-    fake_pandas_dataframe.to_parquet(buffer, engine="pyarrow", index=False)
-    buffer.seek(0)
-
-    yield buffer
-
-    buffer.close()
 
 
 class FakeSQLModel(SQLModelEntity):
@@ -427,9 +410,8 @@ class TestHandlersEtl:
                 ),
             ),
             BytesIO() as value,
+            uow.data.extract(source=uow.source) as data,
         ):
-            data: value_objects.Data = uow.data.extract(source=uow.source)
-
             while True:
                 chunk: any | None = data.read()
 
@@ -438,7 +420,6 @@ class TestHandlersEtl:
 
                 value.write(chunk)
 
-            data.close()
             value.seek(0)
 
             assert value.read().decode(value_objects.ENCODING) == fake_message
@@ -452,9 +433,8 @@ class TestHandlersEtl:
                 ),
             ),
             BytesIO() as value,
+            uow.data.extract(source=uow.source) as data,
         ):
-            data: value_objects.Data = uow.data.extract(source=uow.source)
-
             while True:
                 chunk: any | None = data.read()
 
@@ -463,7 +443,6 @@ class TestHandlersEtl:
 
                 value.write(chunk)
 
-            data.close()
             value.seek(0)
             assert_frame_equal(
                 fake_pandas_dataframe,

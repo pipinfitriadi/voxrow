@@ -7,8 +7,10 @@
 # Written by Pipin Fitriadi <pipinfitriadi@gmail.com>, 2 March 2026
 
 from collections.abc import Callable
+from io import BytesIO
 from unittest.mock import MagicMock
 
+import pandas as pd
 import pytest
 from botocore.client import BaseClient
 from duckdb import DuckDBPyConnection, connect
@@ -20,7 +22,7 @@ from pydantic import AnyUrl, DirectoryPath, FilePath
 from sqlalchemy import Engine
 
 from voxrow.core.adapters.utils.database import sqlmodel
-from voxrow.core.domain import value_objects
+from voxrow.core.domain import domain_services, value_objects
 
 
 # Mocks
@@ -118,6 +120,17 @@ def fake_blob() -> str:
 @pytest.fixture
 def fake_data() -> value_objects.Data:
     return (dict(a="1", b="abc"), dict(a="2", b="def"))
+
+
+@pytest.fixture
+def fake_pandas_dataframe(fake_data: value_objects.Data) -> pd.DataFrame:
+    return pd.DataFrame(fake_data)
+
+
+@pytest.fixture
+def fake_parquet_bytes(fake_data: value_objects.Data) -> BytesIO:
+    with domain_services.dumps_to_parquet(fake_data) as buffer:
+        yield buffer
 
 
 @pytest.fixture

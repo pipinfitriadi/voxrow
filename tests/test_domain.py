@@ -97,6 +97,16 @@ class TestDomainServices:
         assert domain_services.dumps_to_json(*(TEST_DATA,)) == TEST_DATA_JSON
         assert tuple(domain_services.loads_from_json(TEST_DATA_JSON)) == TEST_DATA
 
+    def test_parquet(self, fake_data: value_objects.Data) -> None:
+        assert (
+            tuple(
+                domain_services.loads_from_parquet(
+                    domain_services.dumps_to_parquet(fake_data)
+                )
+            )
+            == fake_data
+        )
+
 
 class TestValueObjects:
     @pytest.fixture(scope="class", autouse=True)

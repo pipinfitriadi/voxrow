@@ -11,10 +11,12 @@ import csv
 import gzip
 import json
 from datetime import date, datetime
-from io import StringIO
+from io import BytesIO, StringIO
 from typing import Protocol, runtime_checkable
 from zoneinfo import ZoneInfo
 
+import pandas as pd
+import pyarrow.parquet as pq
 from pydantic import validate_call
 from pydantic.dataclasses import dataclass
 
@@ -121,3 +123,19 @@ def dumps_to_json(data: value_objects.Data) -> value_objects.Data:
 @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
 def loads_from_json(data: value_objects.Data) -> value_objects.Data:
     return json.loads(data)
+
+
+# Parquet
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
+def dumps_to_parquet(data: value_objects.Data) -> value_objects.Data:
+    buffer: BytesIO = BytesIO()
+
+    pd.DataFrame(data).to_parquet(buffer, engine="pyarrow", index=False)
+    buffer.seek(0)
+
+    return buffer
+
+
+@validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
+def loads_from_parquet(data: value_objects.Data) -> value_objects.Data:
+    yield from pq.read_table(data).to_pylist()
