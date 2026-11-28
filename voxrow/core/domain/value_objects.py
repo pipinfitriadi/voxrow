@@ -186,6 +186,12 @@ type ResourceLocation = Table | HttpUrl | AnyUrl | Path | WritableStream | Any
 
 type DatabaseType = PostgresDsn | MySQLDsn | MariaDBDsn | AnyUrl
 type DuckDBPyConnection = Any
+type WriteDisposition = Literal[
+    "WRITE_APPEND",
+    "WRITE_TRUNCATE",
+    "WRITE_TRUNCATE_DATA",
+    "WRITE_EMPTY",
+]
 
 
 @dataclass(frozen=True)
@@ -406,12 +412,7 @@ class BigqueryDestination(Destination):
     dataset: str
     table: str
     schema: Sequence[BigqquerySchemaField] | None = None
-    write_disposition: Literal[
-        "WRITE_APPEND",
-        "WRITE_TRUNCATE",
-        "WRITE_TRUNCATE_DATA",
-        "WRITE_EMPTY",
-    ] = "WRITE_APPEND"
+    write_disposition: WriteDisposition = "WRITE_APPEND"
 
 
 @dataclass(frozen=True)
