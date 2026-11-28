@@ -14,7 +14,15 @@ from enum import IntEnum, StrEnum
 from http import HTTPMethod
 from pathlib import Path
 from ssl import SSLContext
-from typing import Annotated, Any, Literal, ParamSpec, Protocol, runtime_checkable
+from typing import (
+    Annotated,
+    Any,
+    Literal,
+    ParamSpec,
+    Protocol,
+    TypedDict,
+    runtime_checkable,
+)
 from zoneinfo import ZoneInfo
 
 from pydantic import (
@@ -184,6 +192,32 @@ type ResourceLocation = Table | HttpUrl | AnyUrl | Path | WritableStream | Any
 
 # ======================================================================================
 
+type BigqquerySchemaFieldMode = Literal[
+    "NULLABLE",
+    "REQUIRED",
+    "REPEATED",
+]
+type BigqquerySchemaFieldType = Literal[
+    "STRING",
+    "BYTES",
+    "INTEGER",
+    "INT64",
+    "FLOAT",
+    "FLOAT64",
+    "BOOLEAN",
+    "BOOL",
+    "TIMESTAMP",
+    "DATE",
+    "TIME",
+    "DATETIME",
+    "GEOGRAPHY",
+    "NUMERIC",
+    "BIGNUMERIC",
+    "JSON",
+    "RECORD",
+    "STRUCT",
+    "RANGE",
+]
 type DatabaseType = PostgresDsn | MySQLDsn | MariaDBDsn | AnyUrl
 type DuckDBPyConnection = Any
 type WriteDisposition = Literal[
@@ -194,35 +228,20 @@ type WriteDisposition = Literal[
 ]
 
 
+class BigqueryDictSchemaField(TypedDict):
+    name: str
+    type: BigqquerySchemaFieldType
+    mode: BigqquerySchemaFieldMode = "NULLABLE"
+    description: str = ""
+    fields: list["BigqueryDictSchemaField"] = []  # noqa: RUF012
+
+
 @dataclass(frozen=True)
 class BigqquerySchemaField:
     name: str
-    field_type: Literal[
-        "STRING",
-        "BYTES",
-        "INTEGER",
-        "INT64",
-        "FLOAT",
-        "FLOAT64",
-        "BOOLEAN",
-        "BOOL",
-        "TIMESTAMP",
-        "DATE",
-        "TIME",
-        "DATETIME",
-        "GEOGRAPHY",
-        "NUMERIC",
-        "BIGNUMERIC",
-        "JSON",
-        "RECORD",
-        "STRUCT",
-        "RANGE",
-    ]
-    mode: Literal[
-        "NULLABLE",
-        "REQUIRED",
-        "REPEATED",
-    ] = "NULLABLE"
+    field_type: BigqquerySchemaFieldType
+    mode: BigqquerySchemaFieldMode = "NULLABLE"
+    description: str = ""
     fields: Iterable["BigqquerySchemaField"] = ()
 
 
@@ -406,12 +425,12 @@ class Source: ...
 # --------------------------------------------------------------------------------------
 
 
-@dataclass(frozen=True)
+@dataclass(config=CONFIG_DICT, frozen=True)
 class BigqueryDestination(Destination):
     project: str
     dataset: str
     table: str
-    schema: Sequence[BigqquerySchemaField] | None = None
+    schema: Sequence[BigqueryDictSchemaField | BigqquerySchemaField] | None = None
     write_disposition: WriteDisposition = "WRITE_APPEND"
 
 

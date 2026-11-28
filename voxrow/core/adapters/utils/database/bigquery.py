@@ -23,11 +23,31 @@ def get_client(project: str, service_account_file: FilePath) -> Client:
 
 @validate_call(config=value_objects.CONFIG_DICT, validate_return=True)
 def schema_field_mapper(
-    schema_field: value_objects.BigqquerySchemaField,
+    schema_field: value_objects.BigqueryDictSchemaField
+    | value_objects.BigqquerySchemaField,
 ) -> SchemaField:
-    return SchemaField(
-        schema_field.name,
-        schema_field.field_type,
-        schema_field.mode,
-        fields=(schema_field_mapper(field) for field in schema_field.fields),
+    return (
+        SchemaField(
+            schema_field.name,
+            schema_field.field_type,
+            schema_field.mode,
+            **(
+                dict(description=schema_field.description)
+                if schema_field.description
+                else {}
+            ),
+            fields=(schema_field_mapper(field) for field in schema_field.fields),
+        )
+        if isinstance(schema_field, value_objects.BigqquerySchemaField)
+        else SchemaField(
+            schema_field["name"],
+            schema_field["type"],
+            schema_field["mode"],
+            **(
+                dict(description=schema_field["description"])
+                if schema_field["description"]
+                else {}
+            ),
+            fields=(schema_field_mapper(field) for field in schema_field["fields"]),
+        )
     )

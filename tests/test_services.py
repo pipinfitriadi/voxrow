@@ -65,7 +65,13 @@ from voxrow.core.services.unit_of_work.message import smtplib
 
 # Mocks
 @pytest.fixture
+def fake_bigquery_records() -> tuple[dict, ...]:
+    return (dict(a=1, b="b"),)
+
+
+@pytest.fixture
 def mock_bigquery(
+    fake_bigquery_records: tuple[dict, ...],
     monkeypatch: pytest.MonkeyPatch,
     mock_google_service_account: Callable,  # noqa: ARG001
 ) -> None:
@@ -78,7 +84,7 @@ def mock_bigquery(
                 query=MagicMock(
                     return_value=MagicMock(
                         result=MagicMock(
-                            return_value=(dict(a=1),),
+                            return_value=fake_bigquery_records,
                         ),
                     ),
                 ),
@@ -226,6 +232,7 @@ class TestHandlersEtl:
     async def test_bigquery(
         self,
         caplog: pytest.LogCaptureFixture,
+        fake_bigquery_records: tuple[dict, ...],
         fake_google_project_id: str,
         fake_google_service_account_file: FilePath,
         mock_bigquery: Callable,  # noqa: ARG002
@@ -239,10 +246,10 @@ class TestHandlersEtl:
         fake_dataset: str = "dataset"
         fake_table: str = "table"
 
-        with uow(source=value_objects.BigquerySource("SELECT 1 AS a;")):
+        with uow(source=value_objects.BigquerySource("SELECT 1 AS a, 'b' AS b;")):
             result: tuple = tuple(uow.data.extract(source=uow.source))
 
-            assert result == (dict(a=1),)
+            assert result == fake_bigquery_records
 
         await handlers.etl(
             source=result,
@@ -251,7 +258,16 @@ class TestHandlersEtl:
                     fake_google_project_id,
                     fake_dataset,
                     fake_table,
-                    schema=[value_objects.BigqquerySchemaField("a", "INTEGER")],
+                    schema=[
+                        value_objects.BigqquerySchemaField("a", "INTEGER"),
+                        {
+                            "name": "b",
+                            "mode": "REQUIRED",
+                            "type": "STRING",
+                            "description": "",
+                            "fields": [],
+                        },
+                    ],
                 ),
             ),
         )
